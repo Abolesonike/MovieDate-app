@@ -1,17 +1,55 @@
 {
-	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+	"pages": [
 		{
-			"path": "pages/index/index",
+			"path": "pages/calendar/calendar",
 			"style": {
-				"navigationBarTitleText": "uni-app"
+				"navigationBarTitleText": "日历"
+			}
+		},
+		{
+			"path": "pages/movie/movie",
+			"style": {
+				"navigationBarTitleText": "电影"
+			}
+		},
+		{
+			"path": "pages/me/me",
+			"style": {
+				"navigationBarTitleText": "我的"
 			}
 		}
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "uni-app",
+		"navigationBarTitleText": "MovieDate",
 		"navigationBarBackgroundColor": "#F8F8F8",
 		"backgroundColor": "#F8F8F8"
+	},
+	"tabBar": {
+		"color": "#7A7E83",
+		"selectedColor": "#007AFF",
+		"borderStyle": "black",
+		"backgroundColor": "#ffffff",
+		"list": [
+			{
+				"pagePath": "pages/calendar/calendar",
+				"text": "日历",
+				"iconPath": "static/icons/rili-b.svg",
+				"selectedIconPath": "static/icons/rili.svg"
+			},
+			{
+				"pagePath": "pages/movie/movie",
+				"text": "电影",
+				"iconPath": "static/icons/dianying-b.svg",
+				"selectedIconPath": "static/icons/dianying.svg"
+			},
+			{
+				"pagePath": "pages/me/me",
+				"text": "我",
+				"iconPath": "static/icons/wo-b.svg",
+				"selectedIconPath": "static/icons/wo.svg"
+			}
+		]
 	},
 	"uniIdRouter": {}
 }
