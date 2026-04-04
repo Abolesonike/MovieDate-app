@@ -29,7 +29,7 @@
       <text class="card-title">{{ movie.title }}</text>
       <view class="card-meta">
         <text class="card-rating">
-          <van-icon name="star" :size="ratingIconSize" color="#ff976a" />
+          <text class="star-icon">⭐</text>
           {{ movie.rating }}
         </text>
         <text v-if="showGenre" class="card-genre">{{ movie.genre }}</text>
@@ -39,9 +39,9 @@
 
       <!-- 状态标签 -->
       <view v-if="showStatus" class="card-status">
-        <van-tag :type="statusType" :size="variant === 'compact' ? 'mini' : 'small'">
+        <view class="status-tag" :class="['tag-' + statusType, variant === 'compact' ? 'tag-mini' : 'tag-small']">
           {{ statusText }}
-        </van-tag>
+        </view>
       </view>
     </view>
 
@@ -218,6 +218,10 @@ export default {
   gap: 2px;
   color: #ff976a;
   font-weight: 600;
+}
+
+.star-icon {
+  font-size: 12px;
 }
 
 .movie-card--horizontal .card-genre {
@@ -428,5 +432,49 @@ export default {
   background: linear-gradient(135deg, #cd7f32 0%, #e8a87c 100%);
   color: #fff;
   box-shadow: 0 2px 8px rgba(205, 127, 50, 0.4);
+}
+
+/* 状态标签样式 */
+.status-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.tag-default {
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
+}
+
+.tag-warning {
+  background-color: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+.tag-primary {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+}
+
+.tag-success {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.tag-mini {
+  font-size: 10px;
+  padding: 1px 6px;
+}
+
+.tag-small {
+  font-size: 12px;
+  padding: 2px 8px;
 }
 </style>

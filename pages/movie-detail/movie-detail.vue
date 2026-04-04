@@ -7,7 +7,7 @@
         <text class="header-title">{{ movie.title }}</text>
         <view class="header-meta">
           <text class="header-rating">
-            <van-icon name="star" size="14" color="#ff976a" />
+            <text class="star-icon">⭐</text>
             {{ movie.rating }}
           </text>
           <text class="header-year">{{ movie.year }}</text>
@@ -19,60 +19,63 @@
     <!-- 当前状态 -->
     <view class="status-section">
       <text class="status-label">当前状态：</text>
-      <van-tag :type="getStatusTagType(movieCurrentStatus)" size="large">
+      <view class="status-tag" :class="'tag-' + getStatusTagType(movieCurrentStatus)">
         {{ getStatusText(movieCurrentStatus) }}
-      </van-tag>
+      </view>
     </view>
 
     <!-- 操作按钮 -->
     <view class="action-section">
-      <van-button
-        :type="movieCurrentStatus === 'want' ? 'primary' : 'default'"
-        size="small"
-        class="action-btn"
+      <button
+        :class="['action-btn', movieCurrentStatus === 'want' ? 'btn-primary' : 'btn-default']"
         @click="toggleWantToWatch"
       >
-        <van-icon :name="movieCurrentStatus === 'want' ? 'like' : 'like-o'" />
+        <text class="btn-icon">{{ movieCurrentStatus === 'want' ? '👍' : '👍🏻' }}</text>
         {{ movieCurrentStatus === 'want' ? '已想看' : '想看' }}
-      </van-button>
+      </button>
 
-      <van-button
-        :type="movieCurrentStatus === 'planned' ? 'primary' : 'default'"
-        size="small"
-        class="action-btn"
+      <button
+        :class="['action-btn', movieCurrentStatus === 'planned' ? 'btn-primary' : 'btn-default']"
         @click="showCalendarPicker = true"
       >
-        <van-icon name="calendar-o" />
+        <text class="btn-icon">📅</text>
         {{ movieCurrentStatus === 'planned' ? '已添加日历' : '添加日历' }}
-      </van-button>
+      </button>
 
-      <van-button
-        :type="movieCurrentStatus === 'watched' ? 'primary' : 'default'"
-        size="small"
-        class="action-btn"
+      <button
+        :class="['action-btn', movieCurrentStatus === 'watched' ? 'btn-primary' : 'btn-default']"
         @click="markAsWatched"
       >
-        <van-icon :name="movieCurrentStatus === 'watched' ? 'passed' : 'circle'" />
+        <text class="btn-icon">{{ movieCurrentStatus === 'watched' ? '✓' : '○' }}</text>
         {{ movieCurrentStatus === 'watched' ? '已看过' : '标记已看' }}
-      </van-button>
+      </button>
     </view>
 
     <!-- 评分和评价（已看状态显示） -->
     <view v-if="movieCurrentStatus === 'watched'" class="review-section">
       <view class="rating-row">
         <text class="label">我的评分：</text>
-        <van-rate v-model="userRating" :count="5" allow-half @change="saveRating" />
+        <view class="rating-stars">
+          <text 
+            v-for="star in 5" 
+            :key="star"
+            class="star"
+            :class="{ 'star-active': star <= userRating }"
+            @click="setRating(star)"
+          >
+            ⭐
+          </text>
+        </view>
         <text class="rating-value">{{ userRating }} 分</text>
       </view>
-      <van-field
+      <textarea
         v-model="userReview"
-        type="textarea"
+        class="review-textarea"
         placeholder="写下你的观影感受..."
-        rows="3"
-        show-word-limit
-        maxlength="200"
+        :maxlength="200"
         @blur="saveReview"
       />
+      <text class="word-count">{{ userReview.length }}/200</text>
     </view>
 
     <!-- 电影简介 -->
@@ -82,21 +85,27 @@
     </view>
 
     <!-- 日历选择器 -->
-    <van-calendar
-      :show="showCalendarPicker"
-      :show-title="true"
-      :poppable="true"
-      :min-date="minCalendarDate"
-      @confirm="onCalendarConfirm"
-      @close="showCalendarPicker = false"
-    />
+    <view v-if="showCalendarPicker" class="calendar-mask" @click="showCalendarPicker = false">
+      <view class="calendar-popup" @click.stop>
+        <view class="calendar-header">
+          <text class="calendar-title">选择日期</text>
+          <text class="calendar-close" @click="showCalendarPicker = false">✕</text>
+        </view>
+        <picker mode="date" :value="selectedDate" :start="minDateStr" @change="onDateChange">
+          <view class="date-picker">
+            <text class="date-text">{{ selectedDate || '请选择日期' }}</text>
+            <text class="picker-arrow">›</text>
+          </view>
+        </picker>
+        <button class="confirm-btn" @click="onCalendarConfirm">确定</button>
+      </view>
+    </view>
   </view>
 </template>
 
 <script>
 import tmdbApi from '@/utils/tmdb.js'
 import storage, { MOVIE_STATUS } from '@/utils/storage.js'
-import { showToast, showSuccessToast } from 'vant'
 
 export default {
   data() {
@@ -114,7 +123,13 @@ export default {
       userRating: 0,
       userReview: '',
       showCalendarPicker: false,
-      minCalendarDate: new Date()
+      selectedDate: '',
+      minDateStr: ''
+    }
+  },
+  computed: {
+    minCalendarDate() {
+      return new Date()
     }
   },
   onLoad(options) {
@@ -138,6 +153,11 @@ export default {
       // 加载电影状态（评分、评价等）
       this.loadMovieStatus(movieId)
     }
+
+    // 设置最小日期为今天
+    const today = new Date()
+    this.minDateStr = this.formatDate(today)
+    this.selectedDate = this.minDateStr
   },
   onShow() {
     // 每次显示时重新加载状态（因为可能从其他页面返回）
@@ -159,7 +179,7 @@ export default {
           summary: result.summary
         }
       } catch (err) {
-        showToast('加载电影详情失败')
+        uni.showToast({ title: '加载电影详情失败', icon: 'none' })
         console.error(err)
       }
     },
@@ -176,7 +196,7 @@ export default {
       if (this.movieCurrentStatus === MOVIE_STATUS.WANT_TO_WATCH) {
         storage.removeMovieStatus(movieId)
         this.movieCurrentStatus = MOVIE_STATUS.UNWATCHED
-        showSuccessToast('已取消')
+        uni.showToast({ title: '已取消', icon: 'success' })
       } else {
         storage.markAsWant(movieId, {
           title: this.movie.title,
@@ -184,12 +204,21 @@ export default {
           year: this.movie.year
         })
         this.movieCurrentStatus = MOVIE_STATUS.WANT_TO_WATCH
-        showSuccessToast('已添加想看')
+        uni.showToast({ title: '已添加想看', icon: 'success' })
       }
     },
 
-    onCalendarConfirm(date) {
-      const dateStr = this.formatDate(date)
+    onDateChange(e) {
+      this.selectedDate = e.detail.value
+    },
+
+    onCalendarConfirm() {
+      if (!this.selectedDate) {
+        uni.showToast({ title: '请选择日期', icon: 'none' })
+        return
+      }
+
+      const dateStr = this.selectedDate
       const result = storage.addCalendarEvent(dateStr, {
         movieId: this.movie.id,
         title: this.movie.title,
@@ -199,9 +228,9 @@ export default {
 
       if (result.success) {
         this.movieCurrentStatus = MOVIE_STATUS.PLANNED
-        showSuccessToast(`已添加到 ${dateStr}`)
+        uni.showToast({ title: `已添加到 ${dateStr}`, icon: 'success' })
       } else {
-        showToast(result.message)
+        uni.showToast({ title: result.message, icon: 'none' })
       }
 
       this.showCalendarPicker = false
@@ -225,13 +254,14 @@ export default {
             this.movieCurrentStatus = MOVIE_STATUS.WATCHED
             this.userRating = 0
             this.userReview = ''
-            showSuccessToast('已标记为已看')
+            uni.showToast({ title: '已标记为已看', icon: 'success' })
           }
         }
       })
     },
 
-    saveRating(value) {
+    setRating(value) {
+      this.userRating = value
       storage.setMovieStatus(this.movie.id, this.movieCurrentStatus, {
         rating: value
       })
@@ -330,6 +360,10 @@ export default {
   font-weight: 500;
 }
 
+.star-icon {
+  font-size: 14px;
+}
+
 .header-year {
   color: #999;
   font-size: 13px;
@@ -357,6 +391,38 @@ export default {
   color: #666;
 }
 
+.status-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tag-default {
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
+}
+
+.tag-warning {
+  background-color: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+.tag-primary {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+}
+
+.tag-success {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
 /* 操作按钮 */
 .action-section {
   display: flex;
@@ -374,6 +440,25 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 4px;
+  padding: 10px 8px;
+  font-size: 13px;
+  border: none;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.btn-default {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+.btn-icon {
+  font-size: 16px;
 }
 
 /* 评价区域 */
@@ -397,10 +482,50 @@ export default {
   color: #666;
 }
 
+.rating-stars {
+  display: flex;
+  gap: 4px;
+}
+
+.star {
+  font-size: 24px;
+  cursor: pointer;
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+
+.star-active {
+  opacity: 1;
+}
+
 .rating-value {
   font-size: 14px;
   color: #ff976a;
   font-weight: 500;
+}
+
+.review-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  resize: none;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.review-textarea:focus {
+  border-color: #667eea;
+}
+
+.word-count {
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
 }
 
 /* 简介区域 */
@@ -423,5 +548,75 @@ export default {
   font-size: 14px;
   color: #666;
   line-height: 1.8;
+}
+
+/* 日历选择器 */
+.calendar-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.calendar-popup {
+  width: 100%;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 20px;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.calendar-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.calendar-close {
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.date-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.date-text {
+  font-size: 15px;
+  color: #333;
+}
+
+.picker-arrow {
+  font-size: 20px;
+  color: #999;
+}
+
+.confirm-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
 }
 </style>

@@ -1,28 +1,27 @@
-
 <template>
   <view class="calendar-page">
     <!-- 顶部切换栏 -->
     <view class="header">
       <view class="mode-switch">
-        <van-button
-          :type="viewMode === 'week' ? 'primary' : 'default'"
-          size="small"
+        <button
+          :class="['mode-btn', viewMode === 'week' ? 'mode-btn-active' : '']"
+          size="mini"
           @click="switchMode('week')"
         >
           周视图
-        </van-button>
-        <van-button
-            :type="viewMode === 'month' ? 'primary' : 'default'"
-            size="small"
+        </button>
+        <button
+            :class="['mode-btn', viewMode === 'month' ? 'mode-btn-active' : '']"
+            size="mini"
             @click="switchMode('month')"
         >
           月视图
-        </van-button>
+        </button>
       </view>
       <view class="date-nav">
-        <van-icon name="arrow-left" @click="prevPeriod" />
+        <text class="nav-icon" @click="prevPeriod">‹</text>
         <text class="current-date">{{ currentDateText }}</text>
-        <van-icon name="arrow" @click="nextPeriod" />
+        <text class="nav-icon" @click="nextPeriod">›</text>
       </view>
       <view class="today-btn" @click="goToToday">
         <text>回到今日</text>
@@ -55,7 +54,7 @@
           <view v-else-if="day.plannedCount > 0" class="status-dot planned-dot" title="计划观看"></view>
           <!-- 数量徽章 -->
           <view v-if="day.movieCount > 0" class="movie-indicator">
-            <van-badge :content="day.movieCount" :max="99" />
+            <view class="badge">{{ day.movieCount > 99 ? '99+' : day.movieCount }}</view>
           </view>
         </view>
       </view>
@@ -97,7 +96,7 @@
               />
             </view>
             <view v-else class="no-movie">
-              <van-icon name="todo-list-o" size="24" />
+              <text class="empty-icon">📋</text>
               <text>暂无影片</text>
             </view>
           </view>
@@ -112,26 +111,22 @@
     </view>
 
     <!-- 电影详情弹窗 -->
-    <van-popup
-      v-model:show="showMoviePopup"
-      position="bottom"
-      round
-      :style="{ height: '70%' }"
-    >
-      <view class="movie-detail-popup">
+    <view v-if="showMoviePopup" class="popup-mask" @click="closePopup">
+      <view class="movie-detail-popup" @click.stop>
         <view class="popup-header">
           <text class="popup-title">{{ selectedDateStr }}</text>
           <view class="popup-actions">
-            <van-button v-if="!isPastDate" type="primary" size="small" @click="showAddMovieDialog">添加电影</van-button>
-            <van-icon name="cross" size="20" @click="closePopup" />
+            <button v-if="!isPastDate" class="add-btn" @click="showAddMovieDialog">添加电影</button>
+            <text class="close-icon" @click="closePopup">✕</text>
           </view>
         </view>
 
         <scroll-view scroll-y class="movie-list-container">
           <view v-if="selectedDayMovies.length === 0" class="empty-state">
-            <van-empty description="暂无电影安排">
-              <van-button v-if="!isPastDate" type="primary" size="small" @click="showAddMovieDialog">添加电影</van-button>
-            </van-empty>
+            <view class="empty-content">
+              <text class="empty-text">暂无电影安排</text>
+              <button v-if="!isPastDate" class="add-btn-small" @click="showAddMovieDialog">添加电影</button>
+            </view>
           </view>
 
           <view v-for="(movie, index) in selectedDayMovies" :key="index" class="movie-detail-item">
@@ -142,52 +137,50 @@
               @click="goToMovieDetail(movie)"
             />
             <view class="movie-detail-actions">
-              <van-button
+              <button
                 v-if="(isPastDate || isToday) && movie.status !== 'watched'"
-                type="success"
-                size="small"
+                class="action-btn success-btn"
                 @click="markEventAsWatched(movie)"
               >
                 标记已看
-              </van-button>
-              <van-button
-                type="danger"
-                size="small"
+              </button>
+              <button
+                class="action-btn danger-btn"
                 @click="removeEvent(movie)"
               >
                 删除
-              </van-button>
+              </button>
             </view>
-            <van-divider v-if="index < selectedDayMovies.length - 1" />
+            <view v-if="index < selectedDayMovies.length - 1" class="divider" />
           </view>
         </scroll-view>
       </view>
-    </van-popup>
+    </view>
 
     <!-- 添加电影弹窗 -->
-    <van-popup
-      v-model:show="showAddMoviePopup"
-      position="bottom"
-      round
-      :style="{ height: '60%' }"
-    >
-      <view class="add-movie-popup">
+    <view v-if="showAddMoviePopup" class="popup-mask" @click="showAddMoviePopup = false">
+      <view class="add-movie-popup" @click.stop>
         <view class="popup-header">
           <text class="popup-title">添加电影到 {{ selectedDateStr }}</text>
-          <van-icon name="cross" size="20" @click="showAddMoviePopup = false" />
+          <text class="close-icon" @click="showAddMoviePopup = false">✕</text>
         </view>
 
         <view class="search-section">
-          <van-search
-            v-model="searchKeyword"
-            placeholder="搜索电影名称"
-            shape="round"
-            @search="onSearchMovie"
-          />
+          <view class="search-box">
+            <input
+              v-model="searchKeyword"
+              class="search-input"
+              placeholder="搜索电影名称"
+              @confirm="onSearchMovie"
+            />
+            <text class="search-icon" @click="onSearchMovie">🔍</text>
+          </view>
         </view>
 
         <scroll-view scroll-y class="search-results">
-          <van-loading v-if="searching" size="24px" class="loading-center">搜索中...</van-loading>
+          <view v-if="searching" class="loading-center">
+            <text class="loading-text">搜索中...</text>
+          </view>
 
           <view v-else-if="searchResults.length > 0" class="result-list">
             <view
@@ -204,21 +197,22 @@
                   <text class="result-year">{{ movie.year }}</text>
                 </view>
               </view>
-              <van-icon name="plus" size="20" color="#667eea" />
+              <text class="plus-icon">➕</text>
             </view>
           </view>
 
-          <van-empty v-else description="搜索电影添加到日历" />
+          <view v-else class="empty-search">
+            <text class="empty-text">搜索电影添加到日历</text>
+          </view>
         </scroll-view>
       </view>
-    </van-popup>
+    </view>
   </view>
 </template>
 
 <script>
 import storage, { MOVIE_STATUS } from '@/utils/storage.js'
 import tmdbApi from '@/utils/tmdb.js'
-import { showToast, showSuccessToast } from 'vant'
 import MovieCard from '@/components/movie-card/movie-card.vue'
 
 export default {
@@ -455,7 +449,7 @@ export default {
       if (this.viewMode === 'week') {
         this.$nextTick(() => this.scrollToToday())
       }
-      showSuccessToast('已回到今日')
+      uni.showToast({ title: '已回到今日', icon: 'success' })
     },
 
     scrollToToday() {
@@ -496,7 +490,7 @@ export default {
         const result = await tmdbApi.searchMovies(this.searchKeyword)
         this.searchResults = result.movies
       } catch (err) {
-        showToast(err.message || '搜索失败')
+        uni.showToast({ title: err.message || '搜索失败', icon: 'none' })
       } finally {
         this.searching = false
       }
@@ -511,13 +505,13 @@ export default {
       })
 
       if (result.success) {
-        showSuccessToast('添加成功')
+        uni.showToast({ title: '添加成功', icon: 'success' })
         this.showAddMoviePopup = false
         this.generateCalendar()
         this.selectedDayMovies = storage.getEventsByDate(this.selectedDateKey)
         this.showMoviePopup = true
       } else {
-        showToast(result.message)
+        uni.showToast({ title: result.message, icon: 'none' })
       }
     },
 
@@ -532,7 +526,7 @@ export default {
 
       this.selectedDayMovies = storage.getEventsByDate(this.selectedDateKey)
       this.generateCalendar()
-      showSuccessToast('已标记为已看')
+      uni.showToast({ title: '已标记为已看', icon: 'success' })
     },
 
     removeEvent(event) {
@@ -544,7 +538,7 @@ export default {
             storage.removeCalendarEvent(this.selectedDateKey, event.id)
             this.selectedDayMovies = storage.getEventsByDate(this.selectedDateKey)
             this.generateCalendar()
-            showSuccessToast('已移除')
+            uni.showToast({ title: '已移除', icon: 'success' })
           }
         }
       })
@@ -626,11 +620,34 @@ export default {
   margin-bottom: 15px;
 }
 
+.mode-btn {
+  padding: 6px 16px;
+  font-size: 13px;
+  border-radius: 16px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.2s;
+}
+
+.mode-btn-active {
+  background-color: #fff;
+  color: #667eea;
+  font-weight: 600;
+}
+
 .date-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
+}
+
+.nav-icon {
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 8px;
 }
 
 .current-date {
@@ -730,6 +747,16 @@ export default {
   margin-bottom: 4px;
 }
 
+.badge {
+  background-color: #ff4d4f;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+}
+
 /* 周视图样式 */
 .week-view {
   background-color: #fff;
@@ -742,50 +769,11 @@ export default {
   max-height: calc(100vh - 320px);
 }
 
-.week-header {
-  display: flex;
-  padding: 0 0 15px 0;
-  margin-bottom: 10px;
-  border-bottom: 2px solid #667eea;
-  font-weight: bold;
-  font-size: 14px;
-  color: #666;
-}
-
-.header-date {
-  width: 80px;
-  text-align: center;
-}
-
-.header-movies {
-  flex: 1;
-}
-
-.day-name {
-  font-size: 12px;
-  color: #999;
-}
-
-.day-num {
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-}
-
 .week-content {
   display: block;
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-}
-
-.week-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.week-content::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 3px;
 }
 
 .week-day-row {
@@ -799,64 +787,40 @@ export default {
   border-bottom: 1px solid #e0e0e0;
 }
 
-.week-day-row:last-child {
-  border-bottom: none;
-}
-
 .week-day-row:active {
-  transform: scale(0.98);
   background-color: #f0f0f0;
 }
 
-.is-today {
-  background-color: #e6f0ff;
-  border-left: 4px solid #667eea;
-}
-
 .day-info {
-  width: 80px;
+  width: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  flex-shrink: 0;
-  align-self: stretch;
+  justify-content: center;
+  margin-right: 12px;
 }
 
 .weekday-name {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.day-number {
   font-size: 18px;
   font-weight: bold;
   color: #333;
 }
 
-.day-number {
-  font-size: 14px;
-
-  color: #999;
-}
-
 .movies-container {
   flex: 1;
-  height: 100%;
   min-width: 0;
 }
 
 .movie-list {
-  width: 100%;
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-content: flex-start;
-}
-
-.movie-list::-webkit-scrollbar {
-  width: 3px;
-}
-
-.movie-list::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 2px;
+  gap: 8px;
+  overflow-x: auto;
 }
 
 .no-movie {
@@ -864,83 +828,274 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #ccc;
-  gap: 5px;
-  flex: 1;
+  padding: 20px;
+  color: #999;
+  font-size: 13px;
 }
 
-/* 电影详情弹窗样式 */
-.movie-detail-popup {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.popup-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #eee;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.popup-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.popup-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.movie-list-container {
-  flex: 1;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: 12px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.movie-detail-item {
-  margin-bottom: 16px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.movie-detail-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-  justify-content: flex-end;
-  flex-wrap: nowrap;
+.empty-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
 }
 
 /* 底部统计 */
 .footer-stats {
   position: fixed;
-  bottom: 50px; /* 留出 tabBar 的空间 */
+  bottom: 0;
   left: 0;
   right: 0;
-  background-color: #fff;
-  padding: 12px 20px;
-  display: flex;
-  border-top: 1px solid #eee;
+  background: #fff;
+  padding: 12px;
+  text-align: center;
   font-size: 14px;
   color: #666;
-  justify-content: center;
-  z-index: 999;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* 弹窗遮罩 */
+.popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* 电影详情弹窗 */
+.movie-detail-popup {
+  width: 100%;
+  height: 70%;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.popup-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.popup-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.add-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+}
+
+.close-icon {
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.movie-list-container {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: #999;
+}
+
+.add-btn-small {
+  padding: 8px 16px;
+  font-size: 13px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+}
+
+.movie-detail-item {
+  padding: 12px;
+}
+
+.movie-detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+}
+
+.success-btn {
+  background-color: #52c41a;
+}
+
+.danger-btn {
+  background-color: #ff4d4f;
+}
+
+.divider {
+  height: 1px;
+  background-color: #eee;
+  margin: 12px 0;
+}
+
+/* 添加电影弹窗 */
+.add-movie-popup {
+  width: 100%;
+  height: 60%;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-section {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 20px;
+  padding: 8px 12px;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 14px;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+.search-icon {
+  font-size: 18px;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.loading-center {
+  padding: 40px;
+  text-align: center;
+}
+
+.loading-text {
+  font-size: 14px;
+  color: #999;
+}
+
+.result-list {
+  padding: 12px;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.result-item:active {
+  background: #f0f0f0;
+}
+
+.result-poster {
+  width: 50px;
+  height: 70px;
+  border-radius: 4px;
+  background-color: #ddd;
+  margin-right: 12px;
+}
+
+.result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-title {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.result-rating {
+  color: #ff9800;
+}
+
+.result-year {
+  color: #999;
+}
+
+.plus-icon {
+  font-size: 20px;
+  color: #667eea;
+  margin-left: 8px;
+}
+
+.empty-search {
+  padding: 40px;
+  text-align: center;
+}
+
+.empty-search .empty-text {
+  font-size: 14px;
+  color: #999;
 }
 </style>

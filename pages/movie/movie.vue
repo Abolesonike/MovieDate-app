@@ -2,30 +2,58 @@
   <view class="movie-page">
     <!-- 无 API Key 状态 -->
     <view v-if="!hasApiKey" class="no-api-key">
-      <van-empty description="请先配置 TMDB API Key">
-        <van-button type="primary" @click="goToSettings">
+      <view class="empty-state">
+        <text class="empty-text">请先配置 TMDB API Key</text>
+        <button class="setting-btn" @click="goToSettings">
           前往设置
-        </van-button>
-      </van-empty>
+        </button>
+      </view>
     </view>
 
     <!-- 主内容 -->
-    <van-tabs v-else v-model:active="activeTab" swipeable sticky @change="onTabChange">
-      <van-tab name="hot" title="热门电影">
-        <view class="tab-content">
+    <view v-else class="tabs-container">
+      <!-- Tab 头部 -->
+      <view class="tab-header">
+        <view 
+          :class="['tab-item', activeTab === 'hot' ? 'tab-active' : '']"
+          @click="activeTab = 'hot'; onTabChange('hot')"
+        >
+          热门电影
+        </view>
+        <view 
+          :class="['tab-item', activeTab === 'find' ? 'tab-active' : '']"
+          @click="activeTab = 'find'; onTabChange('find')"
+        >
+          找电影
+        </view>
+        <view 
+          :class="['tab-item', activeTab === 'top250' ? 'tab-active' : '']"
+          @click="activeTab = 'top250'; onTabChange('top250')"
+        >
+          Top250
+        </view>
+      </view>
+
+      <!-- Tab 内容区域 -->
+      <scroll-view scroll-y class="tab-content-scroll">
+        <!-- 热门电影 Tab -->
+        <view v-if="activeTab === 'hot'" class="tab-content">
           <!-- 加载状态 -->
           <view v-if="loading.hot" class="loading-wrapper">
-            <van-loading size="24px">加载中...</van-loading>
+            <text class="loading-text">加载中...</text>
           </view>
           <!-- 错误状态 -->
           <view v-else-if="error.hot" class="error-wrapper">
-            <van-empty description="加载失败">
-              <van-button type="primary" size="small" @click="fetchPopularMovies">重试</van-button>
-            </van-empty>
+            <view class="empty-state">
+              <text class="empty-text">加载失败</text>
+              <button class="retry-btn" @click="fetchPopularMovies">重试</button>
+            </view>
           </view>
           <!-- 空状态 -->
           <view v-else-if="hotMovies.length === 0" class="empty-wrapper">
-            <van-empty description="暂无数据" />
+            <view class="empty-state">
+              <text class="empty-text">暂无数据</text>
+            </view>
           </view>
           <!-- 电影列表 -->
           <view v-else class="movie-list">
@@ -39,59 +67,64 @@
           </view>
           <!-- 加载更多 -->
           <view v-if="hotMovies.length > 0 && hasMore.hot" class="load-more">
-            <van-button type="default" size="small" @click="loadMoreHot" :loading="loadingMore.hot">
-              加载更多
-            </van-button>
+            <button class="load-more-btn" :disabled="loadingMore.hot" @click="loadMoreHot">
+              {{ loadingMore.hot ? '加载中...' : '加载更多' }}
+            </button>
           </view>
         </view>
-      </van-tab>
 
-      <van-tab name="find" title="找电影">
-        <view class="tab-content">
+        <!-- 找电影 Tab -->
+        <view v-if="activeTab === 'find'" class="tab-content">
           <!-- 搜索框 -->
           <view class="search-box">
-            <van-search
-              v-model="searchValue"
-              placeholder="搜索电影名称"
-              shape="round"
-              @search="onSearch"
-              @clear="onClearSearch"
-            />
+            <view class="search-input-wrapper">
+              <input
+                v-model="searchValue"
+                class="search-input"
+                placeholder="搜索电影名称"
+                @confirm="onSearch"
+              />
+              <text v-if="searchValue" class="clear-icon" @click="onClearSearch">✕</text>
+            </view>
           </view>
 
           <!-- 筛选条件 -->
           <view class="filter-section">
             <view class="filter-title">类型筛选</view>
             <view class="filter-tags">
-              <van-tag
+              <view
                 v-for="(type, index) in movieTypes"
                 :key="index"
-                :type="selectedType === type ? 'primary' : 'plain'"
-                class="filter-tag"
+                :class="['filter-tag', selectedType === type ? 'filter-tag-active' : '']"
                 @click="selectType(type)"
               >
                 {{ type }}
-              </van-tag>
+              </view>
             </view>
           </view>
 
           <!-- 加载状态 -->
           <view v-if="loading.find" class="loading-wrapper">
-            <van-loading size="24px">搜索中...</van-loading>
+            <text class="loading-text">搜索中...</text>
           </view>
           <!-- 错误状态 -->
           <view v-else-if="error.find" class="error-wrapper">
-            <van-empty description="搜索失败">
-              <van-button type="primary" size="small" @click="searchMovies">重试</van-button>
-            </van-empty>
+            <view class="empty-state">
+              <text class="empty-text">搜索失败</text>
+              <button class="retry-btn" @click="searchMovies">重试</button>
+            </view>
           </view>
           <!-- 空状态 -->
           <view v-else-if="findMovies.length === 0 && hasSearched" class="empty-wrapper">
-            <van-empty description="未找到相关电影" />
+            <view class="empty-state">
+              <text class="empty-text">未找到相关电影</text>
+            </view>
           </view>
           <!-- 初始提示 -->
           <view v-else-if="findMovies.length === 0 && !hasSearched" class="empty-wrapper">
-            <van-empty description="输入关键词搜索电影" />
+            <view class="empty-state">
+              <text class="empty-text">输入关键词搜索电影</text>
+            </view>
           </view>
           <!-- 电影列表 -->
           <view v-else class="movie-list">
@@ -104,14 +137,13 @@
             />
           </view>
         </view>
-      </van-tab>
 
-      <van-tab name="top250" title="Top250">
-        <view class="tab-content">
+        <!-- Top250 Tab -->
+        <view v-if="activeTab === 'top250'" class="tab-content">
           <!-- Top250 排行榜头部 -->
           <view class="top250-header">
             <view class="ranking-title">
-              <van-icon name="medal" size="20" color="#ffd700" />
+              <text class="medal-icon">🏅</text>
               <text>高分电影榜单</text>
             </view>
             <text class="ranking-desc">来自 TMDB 的经典高分电影</text>
@@ -119,17 +151,20 @@
 
           <!-- 加载状态 -->
           <view v-if="loading.top250" class="loading-wrapper">
-            <van-loading size="24px">加载中...</van-loading>
+            <text class="loading-text">加载中...</text>
           </view>
           <!-- 错误状态 -->
           <view v-else-if="error.top250" class="error-wrapper">
-            <van-empty description="加载失败">
-              <van-button type="primary" size="small" @click="fetchTopRatedMovies">重试</van-button>
-            </van-empty>
+            <view class="empty-state">
+              <text class="empty-text">加载失败</text>
+              <button class="retry-btn" @click="fetchTopRatedMovies">重试</button>
+            </view>
           </view>
           <!-- 空状态 -->
           <view v-else-if="top250Movies.length === 0" class="empty-wrapper">
-            <van-empty description="暂无数据" />
+            <view class="empty-state">
+              <text class="empty-text">暂无数据</text>
+            </view>
           </view>
           <!-- Top250 列表 -->
           <view v-else class="top250-list">
@@ -147,7 +182,7 @@
                 <text class="top250-title">{{ movie.title }}</text>
                 <view class="top250-meta">
                   <text class="top250-rating">
-                    <van-icon name="star" size="14" color="#ff976a" />
+                    <text class="star-icon">⭐</text>
                     {{ movie.rating }}
                   </text>
                   <text class="top250-genre">{{ movie.genre }}</text>
@@ -159,20 +194,19 @@
           </view>
           <!-- 加载更多 -->
           <view v-if="top250Movies.length > 0 && hasMore.top250" class="load-more">
-            <van-button type="default" size="small" @click="loadMoreTop250" :loading="loadingMore.top250">
-              加载更多
-            </van-button>
+            <button class="load-more-btn" :disabled="loadingMore.top250" @click="loadMoreTop250">
+              {{ loadingMore.top250 ? '加载中...' : '加载更多' }}
+            </button>
           </view>
         </view>
-      </van-tab>
-    </van-tabs>
+      </scroll-view>
+    </view>
   </view>
 </template>
 
 <script>
 import tmdbApi from '@/utils/tmdb.js'
 import storage, { MOVIE_STATUS } from '@/utils/storage.js'
-import { showToast } from 'vant'
 import MovieCard from '@/components/movie-card/movie-card.vue'
 
 export default {
@@ -286,7 +320,7 @@ export default {
         this.hasMore.hot = result.page < result.totalPages
       } catch (err) {
         this.currentPage.hot--
-        showToast(err.message || '加载失败')
+        uni.showToast({ title: err.message || '加载失败', icon: 'none' })
       } finally {
         this.loadingMore.hot = false
       }
@@ -374,7 +408,7 @@ export default {
         this.hasMore.top250 = result.page < result.totalPages
       } catch (err) {
         this.currentPage.top250--
-        showToast(err.message || '加载失败')
+        uni.showToast({ title: err.message || '加载失败', icon: 'none' })
       } finally {
         this.loadingMore.top250 = false
       }
@@ -396,6 +430,13 @@ export default {
         ...movie,
         status: statusData.status || MOVIE_STATUS.UNWATCHED
       }
+    },
+
+    getRankingClass(index) {
+      if (index === 0) return 'gold'
+      if (index === 1) return 'silver'
+      if (index === 2) return 'bronze'
+      return ''
     }
   }
 }
@@ -414,8 +455,75 @@ export default {
   justify-content: center;
 }
 
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: #999;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.setting-btn,
+.retry-btn {
+  padding: 8px 20px;
+  font-size: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+}
+
+/* Tabs 容器 */
+.tabs-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-header {
+  display: flex;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 14px 0;
+  font-size: 15px;
+  color: #666;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.tab-active {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 3px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+}
+
+.tab-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+}
+
 .tab-content {
-  min-height: calc(100vh - 100px);
+  min-height: calc(100vh - 150px);
   padding-bottom: 20px;
 }
 
@@ -428,6 +536,11 @@ export default {
   padding: 40px 0;
 }
 
+.loading-text {
+  font-size: 14px;
+  color: #999;
+}
+
 /* 电影列表布局 */
 .movie-list {
   padding: 12px;
@@ -437,6 +550,29 @@ export default {
 .search-box {
   padding: 12px;
   background: #fff;
+}
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 20px;
+  padding: 8px 12px;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 14px;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+.clear-icon {
+  font-size: 16px;
+  color: #999;
+  margin-left: 8px;
+  cursor: pointer;
 }
 
 .filter-section {
@@ -459,8 +595,19 @@ export default {
 }
 
 .filter-tag {
-  margin-right: 8px;
-  margin-bottom: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  background: #f5f5f5;
+  color: #666;
+  border-radius: 16px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s;
+}
+
+.filter-tag-active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-color: #667eea;
 }
 
 /* Top250 排行榜样式 */
@@ -479,6 +626,10 @@ export default {
   font-size: 18px;
   font-weight: bold;
   margin-bottom: 6px;
+}
+
+.medal-icon {
+  font-size: 20px;
 }
 
 .ranking-desc {
@@ -581,6 +732,10 @@ export default {
   font-weight: 500;
 }
 
+.star-icon {
+  font-size: 14px;
+}
+
 .top250-genre {
   color: #999;
 }
@@ -605,5 +760,18 @@ export default {
   display: flex;
   justify-content: center;
   padding: 16px 0;
+}
+
+.load-more-btn {
+  padding: 8px 24px;
+  font-size: 14px;
+  background: #fff;
+  color: #667eea;
+  border: 1px solid #667eea;
+  border-radius: 20px;
+}
+
+.load-more-btn:disabled {
+  opacity: 0.6;
 }
 </style>

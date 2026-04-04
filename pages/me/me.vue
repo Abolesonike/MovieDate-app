@@ -2,7 +2,7 @@
   <view class="me-page">
     <!-- 加载状态 -->
     <view v-if="isLoading" class="loading-container">
-      <van-loading type="spinner" size="24px" />
+      <text class="loading-spinner">⏳</text>
       <text class="loading-text">加载中...</text>
     </view>
 
@@ -16,7 +16,7 @@
     <!-- 数据统计 -->
     <view class="stats-section">
       <view class="section-header">
-        <van-icon name="chart-trending-o" size="20" color="#666" />
+        <text class="section-icon">📊</text>
         <text class="section-title">数据统计</text>
       </view>
       <view class="stats-content">
@@ -44,48 +44,49 @@
     <!-- API Key 配置区域 -->
     <view class="settings-section">
       <view class="section-header">
-        <van-icon name="setting-o" size="20" color="#666" />
+        <text class="section-icon">⚙️</text>
         <text class="section-title">TMDB API 设置</text>
       </view>
 
       <view class="api-key-content">
         <!-- API Key 输入框 -->
         <view class="input-wrapper">
-          <van-field
-            v-model="apiKeyInput"
+          <input
+            :value="apiKeyInput"
+            class="api-input"
             type="text"
             placeholder="请输入 TMDB API Key"
-            :border="true"
-            clearable
+            @input="onApiKeyInput"
+            @blur="onInputBlur"
+            @confirm="saveApiKey"
           />
         </view>
 
         <!-- 操作按钮 -->
         <view class="action-buttons">
-          <van-button
-            type="primary"
-            size="small"
-            @click="saveApiKey"
+          <button
+            class="save-btn"
+            native-type="button"
             :disabled="!apiKeyInput.trim() || isValidating"
-            :loading="isValidating"
+            @click="saveApiKey"
           >
-            保存
-          </van-button>
-          <van-button
-            type="default"
-            size="small"
-            @click="clearApiKey"
+            {{ isValidating ? '验证中...' : '保存' }}
+          </button>
+          <button
             v-if="hasApiKey"
+            class="clear-btn"
+            native-type="button"
+            @click="clearApiKey"
           >
             清除
-          </van-button>
+          </button>
         </view>
 
         <!-- 状态标签 -->
         <view class="status-wrapper">
-          <van-tag :type="hasApiKey ? 'success' : 'warning'" size="medium">
+          <view class="status-tag" :class="hasApiKey ? 'tag-success' : 'tag-warning'">
             {{ hasApiKey ? '已配置' : '未配置' }}
-          </van-tag>
+          </view>
         </view>
       </view>
     </view>
@@ -93,61 +94,59 @@
     <!-- 数据管理 -->
     <view class="data-section">
       <view class="section-header">
-        <van-icon name="cluster-o" size="20" color="#666" />
+        <text class="section-icon">💾</text>
         <text class="section-title">数据管理</text>
       </view>
 
       <view class="data-content">
-        <van-cell-group inset>
-          <van-cell title="导出数据" is-link @click="handleExport">
-            <template #icon>
-              <van-icon name="upgrade" size="18" color="#667eea" />
-            </template>
-            <template #value>
-              <text class="cell-desc">备份到本地</text>
-            </template>
-          </van-cell>
-          <van-cell title="导入数据" is-link @click="handleImport">
-            <template #icon>
-              <van-icon name="downgrade" size="18" color="#667eea" />
-            </template>
-            <template #value>
-              <text class="cell-desc">从备份恢复</text>
-            </template>
-          </van-cell>
-          <van-cell title="清除所有数据" is-link @click="handleClearData">
-            <template #icon>
-              <van-icon name="delete-o" size="18" color="#ee0a24" />
-            </template>
-            <template #value>
-              <text class="cell-desc-danger">不可恢复</text>
-            </template>
-          </van-cell>
-        </van-cell-group>
+        <view class="data-item" @click="handleExport">
+          <text class="item-icon">⬆️</text>
+          <view class="item-info">
+            <text class="item-title">导出数据</text>
+            <text class="item-desc">备份到本地</text>
+          </view>
+          <text class="item-arrow">›</text>
+        </view>
+        <view class="data-item" @click="handleImport">
+          <text class="item-icon">⬇️</text>
+          <view class="item-info">
+            <text class="item-title">导入数据</text>
+            <text class="item-desc">从备份恢复</text>
+          </view>
+          <text class="item-arrow">›</text>
+        </view>
+        <view class="data-item danger" @click="handleClearData">
+          <text class="item-icon">🗑️</text>
+          <view class="item-info">
+            <text class="item-title">清除所有数据</text>
+            <text class="item-desc-danger">不可恢复</text>
+          </view>
+          <text class="item-arrow">›</text>
+        </view>
       </view>
     </view>
 
     <!-- 云同步（预留） -->
     <view class="sync-section">
       <view class="section-header">
-        <van-icon name="cloud-o" size="20" color="#666" />
+        <text class="section-icon">☁️</text>
         <text class="section-title">云同步</text>
-        <van-tag type="warning" size="mini">开发中</van-tag>
+        <view class="dev-tag">开发中</view>
       </view>
 
       <view class="sync-content">
-        <van-cell-group inset>
-          <van-cell title="配置云同步" is-link disabled>
-            <template #icon>
-              <van-icon name="setting-o" size="18" color="#999" />
-            </template>
-          </van-cell>
-          <van-cell title="立即同步" is-link disabled>
-            <template #icon>
-              <van-icon name="replay" size="18" color="#999" />
-            </template>
-          </van-cell>
-        </van-cell-group>
+        <view class="sync-item disabled">
+          <text class="item-icon">⚙️</text>
+          <view class="item-info">
+            <text class="item-title">配置云同步</text>
+          </view>
+        </view>
+        <view class="sync-item disabled">
+          <text class="item-icon">🔄</text>
+          <view class="item-info">
+            <text class="item-title">立即同步</text>
+          </view>
+        </view>
 
         <view class="sync-tip">
           <text>云同步功能即将上线，敬请期待</text>
@@ -158,7 +157,7 @@
     <!-- 帮助说明 -->
     <view class="help-section">
       <view class="section-header">
-        <van-icon name="question-o" size="20" color="#666" />
+        <text class="section-icon">❓</text>
         <text class="section-title">如何获取 TMDB API Key?</text>
       </view>
 
@@ -182,22 +181,16 @@
           </view>
         </view>
 
-        <van-button
-          type="primary"
-          plain
-          size="small"
-          class="link-button"
-          @click="openTmdbWebsite"
-        >
+        <button class="link-button" @click="openTmdbWebsite">
           前往 TMDB 官网
-        </van-button>
+        </button>
       </view>
     </view>
 
     <!-- 调试信息 -->
     <view class="debug-section" v-if="debugMode">
       <view class="section-header">
-        <van-icon name="bug-o" size="20" color="#ff6b6b" />
+        <text class="section-icon">🐛</text>
         <text class="section-title">调试信息</text>
       </view>
       <view class="debug-content">
@@ -223,7 +216,7 @@
     <!-- 关于信息 -->
     <view class="about-section">
       <view class="section-header">
-        <van-icon name="info-o" size="20" color="#666" />
+        <text class="section-icon">ℹ️</text>
         <text class="section-title">关于</text>
       </view>
       <view class="about-content">
@@ -232,14 +225,12 @@
         <text class="about-text">本应用使用 TMDB API 获取电影数据</text>
         <text class="about-text">所有数据仅存储在本地，不会上传至服务器</text>
       </view>
-      <van-button
-        type="default"
-        size="small"
+      <button
+        class="debug-toggle-btn"
         @click="toggleDebugMode"
-        style="margin-top: 16px;"
       >
         {{ debugMode ? '关闭调试' : '开启调试' }}
-      </van-button>
+      </button>
     </view>
     </view>
     </view>
@@ -498,6 +489,35 @@ export default {
         this.updateDebugInfo('调试模式已关闭', 'info')
       }
     },
+
+    // API Key 输入处理
+    onApiKeyInput(event) {
+      console.log('输入事件触发, event类型:', typeof event)
+      
+      let value = ''
+      
+      // 确保正确处理输入事件，兼容不同平台
+      if (typeof event === 'string') {
+        value = event
+      } else if (event && event.detail && typeof event.detail.value !== 'undefined') {
+        value = event.detail.value
+      } else if (event && event.target && typeof event.target.value !== 'undefined') {
+        value = event.target.value
+      } else {
+        console.warn('无法从事件中获取值, event:', event)
+        return
+      }
+      
+      console.log('提取的值:', value)
+      this.apiKeyInput = value
+    },
+
+    // 输入框失焦处理
+    onInputBlur() {
+      // 收起键盘，避免影响后续操作
+      uni.hideKeyboard()
+    },
+
     // 加载已保存的 API Key
     loadApiKey() {
       if (!this.storageReady) {
@@ -690,11 +710,35 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .me-page {
   min-height: 100vh;
   background-color: #f5f5f5;
   padding-bottom: 20px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.loading-spinner {
+  font-size: 32px;
+  margin-bottom: 12px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 14px;
+  color: #999;
 }
 
 .page-header {
@@ -767,11 +811,24 @@ export default {
   border-bottom: 1px solid #f0f0f0;
 }
 
+.section-icon {
+  font-size: 20px;
+}
+
 .section-title {
   font-size: 16px;
   font-weight: 500;
   color: #333;
   flex: 1;
+}
+
+.dev-tag {
+  padding: 2px 8px;
+  font-size: 11px;
+  background: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+  border-radius: 4px;
 }
 
 .api-key-content {
@@ -780,6 +837,27 @@ export default {
 
 .input-wrapper {
   margin-bottom: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.api-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  z-index: 1;
+}
+
+.api-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
 }
 
 .action-buttons {
@@ -788,9 +866,51 @@ export default {
   margin-bottom: 12px;
 }
 
+.save-btn {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+}
+
+.clear-btn {
+  padding: 10px 16px;
+  font-size: 14px;
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
 .status-wrapper {
   display: flex;
   align-items: center;
+}
+
+.status-tag {
+  padding: 4px 12px;
+  font-size: 13px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.tag-success {
+  background: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.tag-warning {
+  background: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
 }
 
 /* 数据管理 */
@@ -798,14 +918,57 @@ export default {
   padding: 0;
 }
 
-.cell-desc {
+.data-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.data-item:active {
+  background: #f5f5f5;
+}
+
+.data-item:last-child {
+  border-bottom: none;
+}
+
+.data-item.danger .item-title {
+  color: #ee0a24;
+}
+
+.item-icon {
+  font-size: 20px;
+  margin-right: 12px;
+}
+
+.item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-title {
+  font-size: 15px;
+  color: #333;
+}
+
+.item-desc {
   font-size: 12px;
   color: #999;
 }
 
-.cell-desc-danger {
+.item-desc-danger {
   font-size: 12px;
   color: #ee0a24;
+}
+
+.item-arrow {
+  font-size: 20px;
+  color: #ccc;
 }
 
 /* 云同步 */
@@ -813,14 +976,27 @@ export default {
   padding: 0;
 }
 
+.sync-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.sync-item.disabled {
+  opacity: 0.5;
+}
+
+.sync-item:last-child {
+  border-bottom: none;
+}
+
 .sync-tip {
   padding: 16px;
   text-align: center;
-}
-
-.sync-tip text {
-  font-size: 12px;
+  font-size: 13px;
   color: #999;
+  background: #fafafa;
 }
 
 /* 帮助说明 */
@@ -834,19 +1010,19 @@ export default {
 
 .step-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 12px;
 }
 
 .step-number {
   width: 24px;
   height: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #667eea;
+  color: #fff;
+  border-radius: 50%;
   font-size: 12px;
   font-weight: bold;
   margin-right: 12px;
@@ -854,50 +1030,30 @@ export default {
 }
 
 .step-text {
-  color: #666;
+  flex: 1;
   font-size: 14px;
-  line-height: 1.5;
+  color: #666;
+  line-height: 1.6;
+  padding-top: 2px;
 }
 
 .link-button {
   width: 100%;
-}
-
-/* 关于 */
-.about-content {
-  padding: 16px;
-}
-
-.about-text {
-  display: block;
-  color: #999;
-  font-size: 13px;
-  line-height: 1.8;
-}
-
-/* 加载状态 */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  min-height: 200px;
-}
-
-.loading-text {
-  margin-top: 12px;
-  color: #666;
+  padding: 10px;
   font-size: 14px;
+  background: transparent;
+  color: #667eea;
+  border: 1px solid #667eea;
+  border-radius: 8px;
 }
 
-/* 调试区域 */
+/* 调试信息 */
 .debug-section {
   background: #fff;
   margin: 12px;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #ff6b6b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .debug-content {
@@ -906,23 +1062,42 @@ export default {
 
 .debug-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 8px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .debug-label {
-  color: #666;
-  font-weight: 500;
+  color: #999;
+  margin-right: 8px;
+  min-width: 80px;
 }
 
 .debug-value {
   color: #333;
-  font-family: monospace;
-  text-align: right;
-  max-width: 60%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: 1;
+  word-break: break-all;
+}
+
+/* 关于信息 */
+.about-content {
+  padding: 16px;
+}
+
+.about-text {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.8;
+  margin-bottom: 4px;
+}
+
+.debug-toggle-btn {
+  margin: 0 16px 16px;
+  padding: 10px;
+  font-size: 14px;
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
 }
 </style>

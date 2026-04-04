@@ -13,11 +13,9 @@ app.$mount()
 
 // #ifdef VUE3
 import { createSSRApp } from 'vue'
-import Vant from 'vant'
-import 'vant/lib/index.css'
 export function createApp() {
   const app = createSSRApp(App)
-  app.use(Vant)
+  // Vant 4 已移除，使用 uni-app 原生组件
   return {
     app
   }

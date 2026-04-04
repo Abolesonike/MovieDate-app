@@ -1,18 +1,4 @@
-const { VantResolver } = require('@vant/auto-import-resolver');
-const AutoImport = require('unplugin-auto-import/webpack');
-const Components = require('unplugin-vue-components/webpack');
-
+// Vant 4 已移除，使用 uni-app 原生组件
 module.exports = {
-    configureWebpack: {
-        plugins: [
-            // 当 unplugin-vue-components 版本小于 0.26.0 时，使用以下写法
-            AutoImport({ resolvers: [VantResolver()] }),
-            Components({ resolvers: [VantResolver()] }),
-            //当 unplugin-vue-components 版本大于等于 0.26.0 时，使用以下写法
-            AutoImport.default({
-                resolvers: [VantResolver()],
-            }),
-            Components.default({ resolvers: [VantResolver()] }),
-        ],
-    },
+    // 无需额外配置
 };
