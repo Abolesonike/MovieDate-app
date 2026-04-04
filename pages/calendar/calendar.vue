@@ -134,11 +134,20 @@
     >
       <view class="movie-detail-popup">
         <view class="popup-header">
-          <text class="popup-title">{{ selectedDateStr }} - 电影列表</text>
-          <van-icon name="cross" size="20" @click="closePopup" />
+          <text class="popup-title">{{ selectedDateStr }}</text>
+          <view class="popup-actions">
+            <van-button type="primary" size="small" @click="showAddMovieDialog">添加电影</van-button>
+            <van-icon name="cross" size="20" @click="closePopup" />
+          </view>
         </view>
-        
+
         <scroll-view scroll-y class="movie-list-container">
+          <view v-if="selectedDayMovies.length === 0" class="empty-state">
+            <van-empty description="暂无电影安排">
+              <van-button type="primary" size="small" @click="showAddMovieDialog">添加电影</van-button>
+            </van-empty>
+          </view>
+
           <view v-for="(movie, index) in selectedDayMovies" :key="index" class="movie-detail-item">
             <view class="movie-info-row">
               <image
@@ -150,66 +159,93 @@
               <view v-else class="detail-poster-placeholder">
                 <van-icon name="film-o" size="30" />
               </view>
-              
+
               <view class="movie-info">
                 <text class="detail-title">{{ movie.title }}</text>
                 <view class="status-tags">
-                  <van-tag v-if="movie.status === 'watched'" type="primary" size="mini">已观看</van-tag>
-                  <van-tag v-else type="success" size="mini">计划观看</van-tag>
-                  <van-tag v-if="isPastDate" type="warning" size="mini">过去日期</van-tag>
-                  <van-tag v-else-if="isFutureDate" type="default" size="mini">未来日期</van-tag>
+                  <van-tag v-if="movie.status === 'watched'" type="success" size="mini">已看</van-tag>
+                  <van-tag v-else type="primary" size="mini">待看</van-tag>
                 </view>
+              </view>
+
+              <view class="movie-actions">
+                <van-icon v-if="isPastDate && movie.status !== 'watched'" name="passed" size="20" color="#07c160" @click="markEventAsWatched(movie)" />
+                <van-icon name="delete-o" size="20" color="#ee0a24" @click="removeEvent(movie)" />
               </view>
             </view>
-            
-            <!-- 评分和评价区域 -->
-            <view class="rating-review-section">
-              <!-- 评分 -->
+
+            <!-- 评分区域（已看状态） -->
+            <view v-if="movie.status === 'watched'" class="rating-review-section">
               <view class="rating-section">
-                <text class="section-label">评分：</text>
-                <view v-if="movie.status === 'watched' || movie.rating" class="rating-display">
-                  <van-rate
-                    v-model="movie.rating"
-                    size="18"
-                    :readonly="false"
-                    allow-half
-                    @change="onRatingChange(movie)"
-                  />
-                </view>
-                <text v-else class="no-rating-text">未评分</text>
-              </view>
-              
-              <!-- 评价 -->
-              <view class="review-section">
-                <text class="section-label">评价：</text>
-                <van-field
-                  v-model="movie.review"
-                  type="textarea"
-                  placeholder="写下你的观影感受..."
-                  :readonly="!isPastDate"
-                  :disabled="!isPastDate && movie.status !== 'watched'"
-                  rows="3"
-                  show-word-limit
-                  maxlength="200"
-                  @blur="onReviewChange(movie)"
+                <text class="section-label">我的评分：</text>
+                <van-rate
+                  v-model="movie.rating"
+                  size="18"
+                  allow-half
+                  @change="onRatingChange(movie)"
                 />
               </view>
-              
-              <!-- 状态切换按钮（仅过去日期且未观看） -->
-              <view v-if="isPastDate && movie.status !== 'watched'" class="action-buttons">
-                <van-button
-                  type="primary"
-                  size="small"
-                  block
-                  @click="markAsWatched(movie)"
-                >
-                  标记为已观看
-                </van-button>
-              </view>
+              <van-field
+                v-model="movie.review"
+                type="textarea"
+                placeholder="写下你的观影感受..."
+                rows="2"
+                maxlength="200"
+                @blur="onReviewChange(movie)"
+              />
             </view>
-            
+
             <van-divider v-if="index < selectedDayMovies.length - 1" />
           </view>
+        </scroll-view>
+      </view>
+    </van-popup>
+
+    <!-- 添加电影弹窗 -->
+    <van-popup
+      v-model:show="showAddMoviePopup"
+      position="bottom"
+      round
+      :style="{ height: '60%' }"
+    >
+      <view class="add-movie-popup">
+        <view class="popup-header">
+          <text class="popup-title">添加电影到 {{ selectedDateStr }}</text>
+          <van-icon name="cross" size="20" @click="showAddMoviePopup = false" />
+        </view>
+
+        <view class="search-section">
+          <van-search
+            v-model="searchKeyword"
+            placeholder="搜索电影名称"
+            shape="round"
+            @search="onSearchMovie"
+          />
+        </view>
+
+        <scroll-view scroll-y class="search-results">
+          <van-loading v-if="searching" size="24px" class="loading-center">搜索中...</van-loading>
+
+          <view v-else-if="searchResults.length > 0" class="result-list">
+            <view
+              v-for="movie in searchResults"
+              :key="movie.id"
+              class="result-item"
+              @click="selectMovieToAdd(movie)"
+            >
+              <image :src="movie.poster" class="result-poster" mode="aspectFill" />
+              <view class="result-info">
+                <text class="result-title">{{ movie.title }}</text>
+                <view class="result-meta">
+                  <text class="result-rating">⭐ {{ movie.rating }}</text>
+                  <text class="result-year">{{ movie.year }}</text>
+                </view>
+              </view>
+              <van-icon name="plus" size="20" color="#667eea" />
+            </view>
+          </view>
+
+          <van-empty v-else description="搜索电影添加到日历" />
         </scroll-view>
       </view>
     </van-popup>
@@ -217,25 +253,31 @@
 </template>
 
 <script>
-import * as uni from "vant";
+import storage, { MOVIE_STATUS } from '@/utils/storage.js'
+import tmdbApi from '@/utils/tmdb.js'
+import { showToast, showSuccessToast } from 'vant'
 
 export default {
   data() {
     return {
-      viewMode: 'week', // 'month' 或 'week'
+      viewMode: 'week',
       currentDate: new Date(),
       weekdays: ['一', '二', '三', '四', '五', '六', '日'],
       calendarDays: [],
       currentWeekDays: [],
-      // 模拟电影数据
-      movieData: {},
       // 弹窗相关
       showMoviePopup: false,
       selectedDateStr: '',
+      selectedDateKey: '',
       selectedDayMovies: [],
       isPastDate: false,
       isFutureDate: false,
-      scrollToTodayId: ''
+      scrollToTodayId: '',
+      // 添加电影相关
+      showAddMoviePopup: false,
+      searchKeyword: '',
+      searchResults: [],
+      searching: false
     }
   },
   computed: {
@@ -250,7 +292,6 @@ export default {
         endOfWeek.setDate(endOfWeek.getDate() + 6)
         const startMonth = startOfWeek.getMonth() + 1
         const endMonth = endOfWeek.getMonth() + 1
-        // 计算是当月的第几周（从当月 1 号所在周开始算第 1 周）
         const weekOfMonth = this.getWeekOfMonth(this.currentDate)
         if (startMonth === endMonth) {
           return `${startMonth}月第${weekOfMonth}周`
@@ -263,7 +304,7 @@ export default {
       let total = 0
       this.calendarDays.forEach(day => {
         if (day.isCurrentMonth) {
-          total += day.movieCount || 0
+          total += day.watchedCount || 0
         }
       })
       return total
@@ -271,293 +312,304 @@ export default {
     weekTotalMovies() {
       let total = 0
       this.currentWeekDays.forEach(day => {
-        total += day.movies ? day.movies.length : 0
+        total += day.watchedCount || 0
       })
       return total
     }
   },
   mounted() {
-    this.initMovieData()
-    if (this.viewMode === 'month') {
-      this.generateMonthCalendar()
-    } else {
-      this.generateWeekCalendar()
-      this.scrollToToday()
+    this.generateCalendar()
+    if (this.viewMode === 'week') {
+      this.$nextTick(() => this.scrollToToday())
     }
   },
+  onShow() {
+    storage.clearCache()
+    this.generateCalendar()
+  },
   methods: {
-    // 初始化模拟电影数据
-    initMovieData() {
-      const year = new Date().getFullYear()
-      const month = new Date().getMonth()
-      
-      // 生成一些示例电影数据
-      for (let day = 1; day <= 31; day++) {
-        const dateKey = `${year}-${month}-${day}`
-        // 随机为某些日期分配电影
-        if (Math.random() > 0.7) {
-          this.movieData[dateKey] = [
-            {
-              title: `非穷尽列举`,
-              poster: 'https://nenya.doubanio.com/view/photo/xl/public/p2929612705.jpg?sa_cv=99b91dbd236203418771e02ceac274bd&sa_ct=69b426bb' // 可以添加实际的海报 URL
-            },
-            {
-              title: `非穷尽列举`,
-              poster: 'https://nenya.doubanio.com/view/photo/xl/public/p2929612705.jpg?sa_cv=99b91dbd236203418771e02ceac274bd&sa_ct=69b426bb' // 可以添加实际的海报 URL
-            },
-            {
-              title: `非穷尽列举`,
-              poster: 'https://nenya.doubanio.com/view/photo/xl/public/p2929612705.jpg?sa_cv=99b91dbd236203418771e02ceac274bd&sa_ct=69b426bb' // 可以添加实际的海报 URL
-            },
-            {
-              title: `非穷尽列举`,
-              poster: 'https://nenya.doubanio.com/view/photo/xl/public/p2929612705.jpg?sa_cv=99b91dbd236203418771e02ceac274bd&sa_ct=69b426bb' // 可以添加实际的海报 URL
-            },
-            {
-              title: `非穷尽列举`,
-              poster: 'https://nenya.doubanio.com/view/photo/xl/public/p2929612705.jpg?sa_cv=99b91dbd236203418771e02ceac274bd&sa_ct=69b426bb' // 可以添加实际的海报 URL
-            }
-          ]
-        }
-      }
-    },
-    
-    // 切换视图模式
-    switchMode(mode) {
-      this.viewMode = mode
-      if (mode === 'month') {
+    generateCalendar() {
+      if (this.viewMode === 'month') {
         this.generateMonthCalendar()
       } else {
         this.generateWeekCalendar()
       }
     },
-    
-    // 生成月历
+
+    switchMode(mode) {
+      this.viewMode = mode
+      this.generateCalendar()
+      if (mode === 'week') {
+        this.$nextTick(() => this.scrollToToday())
+      }
+    },
+
     generateMonthCalendar() {
       const year = this.currentDate.getFullYear()
       const month = this.currentDate.getMonth()
       const firstDay = new Date(year, month, 1)
-      const lastDay = new Date(year, month + 1, 0)
       const startDate = new Date(firstDay)
-      startDate.setDate(startDate.getDate() - firstDay.getDay())
-      
+      const dayOfWeek = firstDay.getDay() || 7
+      startDate.setDate(startDate.getDate() - dayOfWeek + 1)
+
       const days = []
       const today = new Date()
-      
+      today.setHours(0, 0, 0, 0)
+
       for (let i = 0; i < 42; i++) {
         const date = new Date(startDate)
         date.setDate(startDate.getDate() + i)
-        
-        const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
-        const movies = this.movieData[dateKey] || []
-        
+
+        const dateKey = this.formatDate(date)
+        const events = storage.getEventsByDate(dateKey)
+
+        const isPast = date < today
+        const isFuture = date > today
+
+        const watchedCount = events.filter(e => e.status === MOVIE_STATUS.WATCHED).length
+        const plannedCount = events.filter(e => e.status === MOVIE_STATUS.PLANNED).length
+
         days.push({
           day: date.getDate(),
           fullDate: date,
+          dateKey: dateKey,
           isCurrentMonth: date.getMonth() === month,
           isToday: this.isSameDate(date, today),
-          movieCount: movies.length,
-          movies: movies
+          isPast,
+          isFuture,
+          movies: events,
+          movieCount: events.length,
+          watchedCount,
+          plannedCount
         })
       }
-      
+
       this.calendarDays = days
     },
-    
-    // 生成周历
+
     generateWeekCalendar() {
       const weekStart = this.getWeekStart(this.currentDate)
       const days = []
       const today = new Date()
-      
+      today.setHours(0, 0, 0, 0)
+
       for (let i = 0; i < 7; i++) {
         const date = new Date(weekStart)
         date.setDate(weekStart.getDate() + i)
-        
-        const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
-        const movies = this.movieData[dateKey] || []
-        
-        // 判断是过去、今天还是未来
-        const isPast = date < today && !this.isSameDate(date, today)
-        const isFuture = date > today && !this.isSameDate(date, today)
-        
+
+        const dateKey = this.formatDate(date)
+        const events = storage.getEventsByDate(dateKey)
+
+        const isPast = date < today
+        const isFuture = date > today
+
+        const watchedCount = events.filter(e => e.status === MOVIE_STATUS.WATCHED).length
+        const plannedCount = events.filter(e => e.status === MOVIE_STATUS.PLANNED).length
+
         days.push({
           day: date.getDate(),
-          weekday: this.weekdays[date.getDay()],
+          weekday: this.weekdays[(date.getDay() + 6) % 7],
           fullDate: date,
+          dateKey: dateKey,
           isToday: this.isSameDate(date, today),
-          isPast: isPast,
-          isFuture: isFuture,
-          movies: movies
+          isPast,
+          isFuture,
+          movies: events,
+          watchedCount,
+          plannedCount
         })
       }
-      
+
       this.currentWeekDays = days
     },
-    
-    // 获取一周的起始日期（周日）
+
     getWeekStart(date) {
       const d = new Date(date)
-      const day = d.getDay()
-      d.setDate(d.getDate() - day)
+      const day = d.getDay() || 7
+      d.setDate(d.getDate() - day + 1)
       return d
     },
-    
-    // 获取周数
-    getWeekNumber(date) {
-      const d = new Date(date)
-      const startOfYear = new Date(d.getFullYear(), 0, 1)
-      const diff = d - startOfYear
-      const oneWeek = 7 * 24 * 60 * 60 * 1000
-      return Math.ceil((diff + startOfYear.getDay() * oneWeek) / oneWeek)
-    },
-    
-    // 获取当月第几周（从月的第一天开始算）
+
     getWeekOfMonth(date) {
       const d = new Date(date)
       const year = d.getFullYear()
       const month = d.getMonth()
-      // 获取当月 1 号是星期几
       const firstDayOfMonth = new Date(year, month, 1).getDay()
-      // 计算从当月 1 号到当前日期的天数
       const dayOfMonth = d.getDate()
-      // 计算周数（向上取整，并考虑 1 号的星期偏移）
       return Math.ceil((dayOfMonth + firstDayOfMonth) / 7)
     },
-    
-    // 判断两个日期是否为同一天
+
     isSameDate(date1, date2) {
       return date1.getFullYear() === date2.getFullYear() &&
              date1.getMonth() === date2.getMonth() &&
              date1.getDate() === date2.getDate()
     },
-    
-    // 上一周期
+
+    formatDate(date) {
+      const y = date.getFullYear()
+      const m = String(date.getMonth() + 1).padStart(2, '0')
+      const d = String(date.getDate()).padStart(2, '0')
+      return `${y}-${m}-${d}`
+    },
+
     prevPeriod() {
       if (this.viewMode === 'month') {
         const newDate = new Date(this.currentDate)
         newDate.setMonth(newDate.getMonth() - 1)
         this.currentDate = newDate
-        this.generateMonthCalendar()
       } else {
         const newDate = new Date(this.currentDate)
         newDate.setDate(newDate.getDate() - 7)
         this.currentDate = newDate
-        this.generateWeekCalendar()
       }
+      this.generateCalendar()
     },
-    
-    // 下一周期
+
     nextPeriod() {
       if (this.viewMode === 'month') {
         const newDate = new Date(this.currentDate)
         newDate.setMonth(newDate.getMonth() + 1)
         this.currentDate = newDate
-        this.generateMonthCalendar()
       } else {
         const newDate = new Date(this.currentDate)
         newDate.setDate(newDate.getDate() + 7)
         this.currentDate = newDate
-        this.generateWeekCalendar()
       }
-    },
-    
-    // 选择日期
-    selectDay(day) {
-      const date = day.fullDate
-      const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
-      const movies = this.movieData[dateKey] || []
-      
-      const year = date.getFullYear()
-      const month = date.getMonth() + 1
-      const dayNum = date.getDate()
-      this.selectedDateStr = `${year}年${month}月${dayNum}日`
-      
-      // 设置弹窗数据
-      this.selectedDayMovies = JSON.parse(JSON.stringify(movies)) // 深拷贝
-      this.isPastDate = day.isPast
-      this.isFutureDate = day.isFuture
-      
-      // 打开弹窗
-      this.showMoviePopup = true
-    },
-    
-    // 关闭弹窗
-    closePopup() {
-      this.showMoviePopup = false
-    },
-    
-    // 评分变化
-    onRatingChange(movie) {
-      // 更新原始数据
-      const dateKey = `${movie.id.split('_')[0]}-${movie.id.split('_')[1]}-${movie.id.split('_')[2]}`
-      const originalMovie = this.movieData[dateKey]?.find(m => m.id === movie.id)
-      if (originalMovie) {
-        originalMovie.rating = movie.rating
-      }
-      uni.showToast({
-        title: `评分：${movie.rating}星`,
-        icon: 'none'
-      })
-    },
-    
-    // 评价变化
-    onReviewChange(movie) {
-      const dateKey = `${movie.id.split('_')[0]}-${movie.id.split('_')[1]}-${movie.id.split('_')[2]}`
-      const originalMovie = this.movieData[dateKey]?.find(m => m.id === movie.id)
-      if (originalMovie) {
-        originalMovie.review = movie.review
-      }
-    },
-    
-    // 标记为已观看
-    markAsWatched(movie) {
-      movie.status = 'watched'
-      movie.rating = 0 // 重置评分以便用户打分
-      movie.review = '' // 清空评价
-      
-      // 同步到原始数据
-      const dateKey = `${movie.id.split('_')[0]}-${movie.id.split('_')[1]}-${movie.id.split('_')[2]}`
-      const originalMovie = this.movieData[dateKey]?.find(m => m.id === movie.id)
-      if (originalMovie) {
-        Object.assign(originalMovie, movie)
-      }
-      
-      // 重新生成日历以更新统计
-      if (this.viewMode === 'month') {
-        this.generateMonthCalendar()
-      } else {
-        this.generateWeekCalendar()
-      }
-      
-      uni.showToast({
-        title: '已标记为已观看',
-        icon: 'success'
-      })
+      this.generateCalendar()
     },
 
     goToToday() {
-      this.currentDate = new Date()  // 重置为今天
-      if (this.viewMode === 'month') {
-        this.generateMonthCalendar()
-      } else {
-        this.generateWeekCalendar()
-        this.$nextTick(() => {
-          this.scrollToToday()
-        })
+      this.currentDate = new Date()
+      this.generateCalendar()
+      if (this.viewMode === 'week') {
+        this.$nextTick(() => this.scrollToToday())
       }
-      uni.showToast({
-        title: '已回到今日',
-        icon: 'success'
-      })
+      showSuccessToast('已回到今日')
     },
 
-    // 滚动到今天所在的行
     scrollToToday() {
       const todayIndex = this.currentWeekDays.findIndex(day => day.isToday)
       if (todayIndex !== -1) {
         this.scrollToTodayId = 'day-row-' + todayIndex
       }
+    },
+
+    selectDay(day) {
+      this.selectedDateKey = day.dateKey
+      const date = day.fullDate
+      this.selectedDateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+      this.selectedDayMovies = [...day.movies]
+      this.isPastDate = day.isPast
+      this.isFutureDate = day.isFuture
+      this.showMoviePopup = true
+    },
+
+    closePopup() {
+      this.showMoviePopup = false
+    },
+
+    // 添加电影相关方法
+    showAddMovieDialog() {
+      this.showMoviePopup = false
+      this.showAddMoviePopup = true
+      this.searchKeyword = ''
+      this.searchResults = []
+    },
+
+    async onSearchMovie() {
+      if (!this.searchKeyword.trim()) return
+
+      this.searching = true
+      try {
+        const result = await tmdbApi.searchMovies(this.searchKeyword)
+        this.searchResults = result.movies
+      } catch (err) {
+        showToast(err.message || '搜索失败')
+      } finally {
+        this.searching = false
+      }
+    },
+
+    selectMovieToAdd(movie) {
+      const result = storage.addCalendarEvent(this.selectedDateKey, {
+        movieId: movie.id,
+        title: movie.title,
+        poster: movie.poster,
+        rating: movie.rating
+      })
+
+      if (result.success) {
+        showSuccessToast('添加成功')
+        this.showAddMoviePopup = false
+        this.generateCalendar()
+        this.selectedDayMovies = storage.getEventsByDate(this.selectedDateKey)
+        this.showMoviePopup = true
+      } else {
+        showToast(result.message)
+      }
+    },
+
+    markEventAsWatched(event) {
+      storage.updateCalendarEvent(this.selectedDateKey, event.id, {
+        status: MOVIE_STATUS.WATCHED
+      })
+      storage.markAsWatched(event.movieId, {
+        title: event.title,
+        poster: event.poster
+      })
+
+      this.selectedDayMovies = storage.getEventsByDate(this.selectedDateKey)
+      this.generateCalendar()
+      showSuccessToast('已标记为已看')
+    },
+
+    removeEvent(event) {
+      uni.showModal({
+        title: '确认移除',
+        content: `确定移除「${event.title}」？`,
+        success: (res) => {
+          if (res.confirm) {
+            storage.removeCalendarEvent(this.selectedDateKey, event.id)
+            this.selectedDayMovies = storage.getEventsByDate(this.selectedDateKey)
+            this.generateCalendar()
+            showSuccessToast('已移除')
+          }
+        }
+      })
+    },
+
+    onRatingChange(movie) {
+      storage.updateCalendarEvent(this.selectedDateKey, movie.id, {
+        rating: movie.rating
+      })
+      storage.setMovieStatus(movie.movieId, MOVIE_STATUS.WATCHED, {
+        rating: movie.rating
+      })
+      showSuccessToast(`评分：${movie.rating}星`)
+    },
+
+    onReviewChange(movie) {
+      storage.updateCalendarEvent(this.selectedDateKey, movie.id, {
+        review: movie.review
+      })
+      storage.setMovieStatus(movie.movieId, MOVIE_STATUS.WATCHED, {
+        review: movie.review
+      })
+    },
+
+    markAsWatched(movie) {
+      movie.status = MOVIE_STATUS.WATCHED
+      movie.rating = 0
+      movie.review = ''
+      storage.updateCalendarEvent(this.selectedDateKey, movie.id, {
+        status: MOVIE_STATUS.WATCHED
+      })
+      storage.markAsWatched(movie.movieId, {
+        title: movie.title,
+        poster: movie.poster
+      })
+      this.generateCalendar()
+      showSuccessToast('已标记为已观看')
     }
   }
 }
