@@ -175,13 +175,20 @@ class StorageManager {
    */
   getEventsByDate(dateStr) {
     const all = this.getAllCalendarEvents()
-    return all[dateStr] || []
+    if (all[dateStr]) {
+      all[dateStr].forEach(e => {
+        const statusData = this.getMovieStatus(e.movieId)
+        e.status = statusData.status
+      })
+      return all[dateStr]
+    }
+    return []
   }
 
   /**
    * 添加电影到日历
    * @param {string} dateStr - 'YYYY-MM-DD'
-   * @param {Object} movieEvent - { movieId, title, poster, rating }
+   * @param {Object} movieEvent - { movieId }
    * @returns {Object} { success, event?, message? }
    */
   addCalendarEvent(dateStr, movieEvent) {
@@ -198,10 +205,7 @@ class StorageManager {
 
     const event = {
       id: `${dateStr}_${movieEvent.movieId}_${Date.now()}`,
-      movieId: movieEvent.movieId,
-      title: movieEvent.title,
-      poster: movieEvent.poster,
-      rating: movieEvent.rating,
+      movieId: movieEvent.movieId,  // 只存储 movieId
       status: this._getDateStatus(dateStr), // 'planned' 或 'watched'
       createdAt: Date.now()
     }
@@ -211,9 +215,7 @@ class StorageManager {
 
     // 同步更新电影状态
     this.setMovieStatus(movieEvent.movieId, MOVIE_STATUS.PLANNED, {
-      plannedDate: dateStr,
-      title: movieEvent.title,
-      poster: movieEvent.poster
+      plannedDate: dateStr
     })
 
     return { success: true, event }

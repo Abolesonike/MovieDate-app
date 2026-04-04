@@ -62,9 +62,20 @@ class TMDBApi {
   /**
    * 设置 API Key
    * @param {string} key
+   * @returns {boolean} 是否成功保存
    */
   setApiKey(key) {
-    uni.setStorageSync(this.API_KEY_STORAGE, key)
+    try {
+      if (!key || typeof key !== 'string') {
+        console.error('Invalid API Key:', key)
+        return false
+      }
+      uni.setStorageSync(this.API_KEY_STORAGE, key)
+      return true
+    } catch (error) {
+      console.error('保存 API Key 失败:', error)
+      return false
+    }
   }
 
   /**
@@ -72,7 +83,13 @@ class TMDBApi {
    * @returns {string|null}
    */
   getApiKey() {
-    return uni.getStorageSync(this.API_KEY_STORAGE) || null
+    try {
+      const key = uni.getStorageSync(this.API_KEY_STORAGE)
+      return key || null
+    } catch (error) {
+      console.error('获取 API Key 失败:', error)
+      return null
+    }
   }
 
   /**
@@ -85,9 +102,16 @@ class TMDBApi {
 
   /**
    * 清除 API Key
+   * @returns {boolean} 是否成功清除
    */
   clearApiKey() {
-    uni.removeStorageSync(this.API_KEY_STORAGE)
+    try {
+      uni.removeStorageSync(this.API_KEY_STORAGE)
+      return true
+    } catch (error) {
+      console.error('清除 API Key 失败:', error)
+      return false
+    }
   }
 
   // ========== 核心请求方法 ==========

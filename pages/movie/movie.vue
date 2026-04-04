@@ -29,26 +29,13 @@
           </view>
           <!-- 电影列表 -->
           <view v-else class="movie-list">
-            <view
+            <movie-card
               v-for="(movie, index) in hotMovies"
               :key="movie.id || index"
-              class="movie-item"
+              :movie="getMovieWithStatus(movie)"
+              variant="horizontal"
               @click="goToMovieDetail(movie)"
-            >
-              <image :src="movie.poster" mode="aspectFill" class="movie-poster-h" />
-              <view class="movie-item-content">
-                <text class="movie-item-title">{{ movie.title }}</text>
-                <view class="movie-item-meta">
-                  <text class="movie-item-rating">
-                    <van-icon name="star" size="12" color="#ff976a" />
-                    {{ movie.rating }}
-                  </text>
-                  <text class="movie-item-genre">{{ movie.genre }}</text>
-                  <text class="movie-item-year">{{ movie.year }}</text>
-                </view>
-                <text class="movie-item-summary">{{ movie.summary || '暂无简介' }}</text>
-              </view>
-            </view>
+            />
           </view>
           <!-- 加载更多 -->
           <view v-if="hotMovies.length > 0 && hasMore.hot" class="load-more">
@@ -108,26 +95,13 @@
           </view>
           <!-- 电影列表 -->
           <view v-else class="movie-list">
-            <view
+            <movie-card
               v-for="(movie, index) in findMovies"
               :key="movie.id || index"
-              class="movie-item"
+              :movie="getMovieWithStatus(movie)"
+              variant="horizontal"
               @click="goToMovieDetail(movie)"
-            >
-              <image :src="movie.poster" mode="aspectFill" class="movie-poster-h" />
-              <view class="movie-item-content">
-                <text class="movie-item-title">{{ movie.title }}</text>
-                <view class="movie-item-meta">
-                  <text class="movie-item-rating">
-                    <van-icon name="star" size="12" color="#ff976a" />
-                    {{ movie.rating }}
-                  </text>
-                  <text class="movie-item-genre">{{ movie.genre }}</text>
-                  <text class="movie-item-year">{{ movie.year }}</text>
-                </view>
-                <text class="movie-item-summary">{{ movie.summary || '暂无简介' }}</text>
-              </view>
-            </view>
+            />
           </view>
         </view>
       </van-tab>
@@ -192,121 +166,19 @@
         </view>
       </van-tab>
     </van-tabs>
-
-    <!-- 电影详情弹窗 -->
-    <van-popup
-      v-model:show="showDetailPopup"
-      position="bottom"
-      round
-      :style="{ height: '80%'}"
-    >
-      <view class="movie-detail-popup">
-        <!-- 头部 -->
-        <view class="detail-header">
-          <image :src="selectedMovie.poster" class="detail-poster" mode="aspectFill" />
-          <view class="detail-info">
-            <text class="detail-title">{{ selectedMovie.title }}</text>
-            <view class="detail-meta">
-              <text class="detail-rating">
-                <van-icon name="star" size="14" color="#ff976a" />
-                {{ selectedMovie.rating }}
-              </text>
-              <text class="detail-year">{{ selectedMovie.year }}</text>
-              <text class="detail-genre">{{ selectedMovie.genre }}</text>
-            </view>
-          </view>
-          <van-icon name="cross" size="24" @click="closeDetailPopup" class="close-icon" />
-        </view>
-
-        <!-- 当前状态 -->
-        <view class="current-status">
-          <text class="status-label">当前状态：</text>
-          <van-tag :type="getStatusTagType(movieCurrentStatus)" size="large">
-            {{ getStatusText(movieCurrentStatus) }}
-          </van-tag>
-        </view>
-
-        <!-- 操作按钮 -->
-        <view class="action-section">
-          <van-button
-            :type="movieCurrentStatus === 'want' ? 'primary' : 'default'"
-            size="small"
-            class="action-btn"
-            @click="toggleWantToWatch"
-          >
-            <van-icon :name="movieCurrentStatus === 'want' ? 'like' : 'like-o'" />
-            {{ movieCurrentStatus === 'want' ? '已想看' : '想看' }}
-          </van-button>
-
-          <van-button
-            :type="movieCurrentStatus === 'planned' ? 'primary' : 'default'"
-            size="small"
-            class="action-btn"
-            @click="showCalendarPicker = true"
-          >
-            <van-icon name="calendar-o" />
-            {{ movieCurrentStatus === 'planned' ? '已添加日历' : '添加日历' }}
-          </van-button>
-
-          <van-button
-            :type="movieCurrentStatus === 'watched' ? 'primary' : 'default'"
-            size="small"
-            class="action-btn"
-            @click="markAsWatched"
-          >
-            <van-icon :name="movieCurrentStatus === 'watched' ? 'passed' : 'circle'" />
-            {{ movieCurrentStatus === 'watched' ? '已看过' : '标记已看' }}
-          </van-button>
-        </view>
-
-        <!-- 评分和评价（已看状态显示） -->
-        <view v-if="movieCurrentStatus === 'watched'" class="review-section">
-          <view class="rating-row">
-            <text class="label">我的评分：</text>
-            <van-rate v-model="userRating" :count="5" allow-half @change="saveRating" />
-            <text class="rating-value">{{ userRating }} 分</text>
-          </view>
-          <van-field
-            v-model="userReview"
-            type="textarea"
-            placeholder="写下你的观影感受..."
-            rows="3"
-            show-word-limit
-            maxlength="200"
-            @blur="saveReview"
-          />
-        </view>
-
-        <!-- 电影简介 -->
-        <view class="summary-section">
-          <text class="section-title">剧情简介</text>
-          <text class="summary-text">{{ selectedMovie.summary || '暂无简介' }}</text>
-        </view>
-      </view>
-    </van-popup>
-
-    <!-- 日历选择器 -->
-    <van-calendar
-      :show="showCalendarPicker"
-      :show-title="true"
-      :poppable="true"
-      :min-date="minCalendarDate"
-      @confirm="onCalendarConfirm"
-      @close="showCalendarPicker = false"
-    />
-
-    <!-- Toast 组件 -->
-    <van-toast id="van-toast" />
   </view>
 </template>
 
 <script>
 import tmdbApi from '@/utils/tmdb.js'
 import storage, { MOVIE_STATUS } from '@/utils/storage.js'
-import { showToast, showSuccessToast } from 'vant'
-import zIndex from 'uview-ui/libs/config/zIndex';
+import { showToast } from 'vant'
+import MovieCard from '@/components/movie-card/movie-card.vue'
 
 export default {
+  components: {
+    MovieCard
+  },
   data() {
     return {
       activeTab: 'hot',
@@ -347,16 +219,7 @@ export default {
       hasMore: {
         hot: true,
         top250: true
-      },
-
-      // 电影详情弹窗
-      showDetailPopup: false,
-      showCalendarPicker: false,
-      selectedMovie: {},
-      movieCurrentStatus: MOVIE_STATUS.UNWATCHED,
-      userRating: 0,
-      userReview: '',
-      minCalendarDate: new Date()
+      }
     }
   },
   onLoad() {
@@ -520,135 +383,25 @@ export default {
     // ========== 通用方法 ==========
 
     goToMovieDetail(movie) {
-      this.selectedMovie = movie
-      this.loadMovieStatus(movie.id)
-      this.showDetailPopup = true
-    },
-
-    getRankingClass(index) {
-      if (index === 0) return 'gold'
-      if (index === 1) return 'silver'
-      if (index === 2) return 'bronze'
-      return ''
-    },
-
-    // ========== 电影状态管理 ==========
-
-    loadMovieStatus(movieId) {
-      const statusData = storage.getMovieStatus(movieId)
-      this.movieCurrentStatus = statusData.status
-      this.userRating = statusData.rating || 0
-      this.userReview = statusData.review || ''
-    },
-
-    closeDetailPopup() {
-      this.showDetailPopup = false
-    },
-
-    toggleWantToWatch() {
-      const movieId = this.selectedMovie.id
-      if (this.movieCurrentStatus === MOVIE_STATUS.WANT_TO_WATCH) {
-        storage.removeMovieStatus(movieId)
-        this.movieCurrentStatus = MOVIE_STATUS.UNWATCHED
-        showSuccessToast('已取消')
-      } else {
-        storage.markAsWant(movieId, {
-          title: this.selectedMovie.title,
-          poster: this.selectedMovie.poster,
-          year: this.selectedMovie.year
-        })
-        this.movieCurrentStatus = MOVIE_STATUS.WANT_TO_WATCH
-        showSuccessToast('已添加想看')
-      }
-    },
-
-    onCalendarConfirm(date) {
-      const dateStr = this.formatDate(date)
-      const result = storage.addCalendarEvent(dateStr, {
-        movieId: this.selectedMovie.id,
-        title: this.selectedMovie.title,
-        poster: this.selectedMovie.poster,
-        rating: this.selectedMovie.rating
-      })
-
-      if (result.success) {
-        this.movieCurrentStatus = MOVIE_STATUS.PLANNED
-        showSuccessToast(`已添加到 ${dateStr}`)
-      } else {
-        showToast(result.message)
-      }
-
-      this.showCalendarPicker = false
-    },
-
-    markAsWatched() {
-      if (this.movieCurrentStatus === MOVIE_STATUS.WATCHED) {
-        return
-      }
-
-      uni.showModal({
-        title: '确认标记',
-        content: `确定将「${this.selectedMovie.title}」标记为已看？`,
-        success: (res) => {
-          if (res.confirm) {
-            storage.markAsWatched(this.selectedMovie.id, {
-              title: this.selectedMovie.title,
-              poster: this.selectedMovie.poster,
-              year: this.selectedMovie.year
-            })
-            this.movieCurrentStatus = MOVIE_STATUS.WATCHED
-            this.userRating = 0
-            this.userReview = ''
-            showSuccessToast('已标记为已看')
-          }
-        }
+      // 只传递 movieId，详情页从 TMDB API 获取完整信息
+      uni.navigateTo({
+        url: `/pages/movie-detail/movie-detail?movieId=${movie.id}`
       })
     },
 
-    saveRating(value) {
-      storage.setMovieStatus(this.selectedMovie.id, this.movieCurrentStatus, {
-        rating: value
-      })
-    },
-
-    saveReview() {
-      storage.setMovieStatus(this.selectedMovie.id, this.movieCurrentStatus, {
-        review: this.userReview
-      })
-    },
-
-    getStatusTagType(status) {
-      const map = {
-        [MOVIE_STATUS.UNWATCHED]: 'default',
-        [MOVIE_STATUS.WANT_TO_WATCH]: 'warning',
-        [MOVIE_STATUS.PLANNED]: 'primary',
-        [MOVIE_STATUS.WATCHED]: 'success'
+    // 获取带状态的电影数据（用于 movie-card 显示状态标签）
+    getMovieWithStatus(movie) {
+      const statusData = storage.getMovieStatus(movie.id)
+      return {
+        ...movie,
+        status: statusData.status || MOVIE_STATUS.UNWATCHED
       }
-      return map[status] || 'default'
-    },
-
-    getStatusText(status) {
-      const map = {
-        [MOVIE_STATUS.UNWATCHED]: '未看',
-        [MOVIE_STATUS.WANT_TO_WATCH]: '想看',
-        [MOVIE_STATUS.PLANNED]: '待看',
-        [MOVIE_STATUS.WATCHED]: '已看'
-      }
-      return map[status] || '未看'
-    },
-
-    formatDate(date) {
-      const d = new Date(date)
-      const y = d.getFullYear()
-      const m = String(d.getMonth() + 1).padStart(2, '0')
-      const day = String(d.getDate()).padStart(2, '0')
-      return `${y}-${m}-${day}`
     }
   }
 }
 </script>
 
-<style>
+<style scoped>
 .movie-page {
   min-height: 100vh;
   background-color: #f5f5f5;
@@ -675,88 +428,9 @@ export default {
   padding: 40px 0;
 }
 
-/* 热门电影列表布局 */
+/* 电影列表布局 */
 .movie-list {
   padding: 12px;
-}
-
-.movie-item {
-  display: flex;
-  background: #fff;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s;
-}
-
-.movie-item:active {
-  transform: scale(0.98);
-}
-
-.movie-poster-h {
-  width: 100px;
-  height: 150px;
-  background-color: #f0f0f0;
-  flex-shrink: 0;
-}
-
-.movie-item-content {
-  flex: 1;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-width: 0;
-}
-
-.movie-item-title {
-  font-size: 16px;
-  color: #333;
-  font-weight: 600;
-  margin-bottom: 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.movie-item-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-  margin-bottom: 8px;
-}
-
-.movie-item-rating {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  color: #ff976a;
-  font-weight: 600;
-}
-
-.movie-item-genre {
-  color: #999;
-  font-size: 12px;
-}
-
-.movie-item-year {
-  color: #999;
-  font-size: 12px;
-}
-
-.movie-item-summary {
-  font-size: 13px;
-  color: #666;
-  line-height: 1.6;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 /* 找电影页面样式 */
@@ -931,146 +605,5 @@ export default {
   display: flex;
   justify-content: center;
   padding: 16px 0;
-}
-
-/* 电影详情弹窗样式 */
-.movie-detail-popup {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 0 16px 16px;
-}
-
-.detail-header {
-  display: flex;
-  padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
-  position: relative;
-}
-
-.detail-poster {
-  width: 100px;
-  height: 150px;
-  border-radius: 8px;
-  background-color: #f0f0f0;
-  flex-shrink: 0;
-}
-
-.detail-info {
-  flex: 1;
-  padding-left: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-
-.detail-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 8px;
-  line-height: 1.4;
-}
-
-.detail-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.detail-rating {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  color: #ff976a;
-  font-weight: 500;
-}
-
-.detail-year {
-  color: #999;
-  font-size: 13px;
-}
-
-.detail-genre {
-  color: #999;
-  font-size: 13px;
-}
-
-.close-icon {
-  position: absolute;
-  right: 0;
-  top: 16px;
-  color: #999;
-}
-
-.current-status {
-  display: flex;
-  align-items: center;
-  padding: 16px 0;
-  gap: 8px;
-}
-
-.status-label {
-  font-size: 14px;
-  color: #666;
-}
-
-.action-section {
-  display: flex;
-  gap: 10px;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.action-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.review-section {
-  padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.rating-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.rating-row .label {
-  font-size: 14px;
-  color: #666;
-}
-
-.rating-value {
-  font-size: 14px;
-  color: #ff976a;
-  font-weight: 500;
-}
-
-.summary-section {
-  padding: 16px 0;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.section-title {
-  font-size: 15px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 10px;
-  display: block;
-}
-
-.summary-text {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.8;
 }
 </style>

@@ -17,6 +17,13 @@
 			"style": {
 				"navigationBarTitleText": "我的"
 			}
+		},
+		{
+			"path": "pages/movie-detail/movie-detail",
+			"style": {
+				"navigationBarTitleText": "电影详情",
+				"enablePullDownRefresh": false
+			}
 		}
 	],
 	"globalStyle": {

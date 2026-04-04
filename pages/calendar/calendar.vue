@@ -87,28 +87,14 @@
           </view>
           <view class="movies-container">
             <view v-if="day.movies && day.movies.length > 0" class="movie-list">
-              <view
+              <movie-card
                 v-for="(movie, mIndex) in day.movies"
                 :key="mIndex"
-                class="movie-item"
-                :class="{ 'watched': movie.status === 'watched', 'planned': movie.status === 'planned' }"
-              >
-                <image
-                  v-if="movie.poster"
-                  :src="movie.poster"
-                  class="movie-poster"
-                  mode="aspectFill"
-                />
-                <view v-else class="movie-poster-placeholder">
-                  <van-icon name="film-o" size="20" />
-                </view>
-                <text class="movie-title">{{ movie.title || '电影' }}</text>
-                <!-- 评分显示 -->
-                <view v-if="movie.rating" class="movie-rating">
-                  <van-icon name="star" size="10" color="#ff9800" />
-                  <text>{{ movie.rating }}</text>
-                </view>
-              </view>
+                :movie="movie"
+                variant="vertical"
+                :show-status="true"
+                :clickable="false"
+              />
             </view>
             <view v-else class="no-movie">
               <van-icon name="todo-list-o" size="24" />
@@ -136,7 +122,7 @@
         <view class="popup-header">
           <text class="popup-title">{{ selectedDateStr }}</text>
           <view class="popup-actions">
-            <van-button type="primary" size="small" @click="showAddMovieDialog">添加电影</van-button>
+            <van-button v-if="!isPastDate" type="primary" size="small" @click="showAddMovieDialog">添加电影</van-button>
             <van-icon name="cross" size="20" @click="closePopup" />
           </view>
         </view>
@@ -144,57 +130,34 @@
         <scroll-view scroll-y class="movie-list-container">
           <view v-if="selectedDayMovies.length === 0" class="empty-state">
             <van-empty description="暂无电影安排">
-              <van-button type="primary" size="small" @click="showAddMovieDialog">添加电影</van-button>
+              <van-button v-if="!isPastDate" type="primary" size="small" @click="showAddMovieDialog">添加电影</van-button>
             </van-empty>
           </view>
 
           <view v-for="(movie, index) in selectedDayMovies" :key="index" class="movie-detail-item">
-            <view class="movie-info-row">
-              <image
-                v-if="movie.poster"
-                :src="movie.poster"
-                class="detail-poster"
-                mode="aspectFill"
-              />
-              <view v-else class="detail-poster-placeholder">
-                <van-icon name="film-o" size="30" />
-              </view>
-
-              <view class="movie-info">
-                <text class="detail-title">{{ movie.title }}</text>
-                <view class="status-tags">
-                  <van-tag v-if="movie.status === 'watched'" type="success" size="mini">已看</van-tag>
-                  <van-tag v-else type="primary" size="mini">待看</van-tag>
-                </view>
-              </view>
-
-              <view class="movie-actions">
-                <van-icon v-if="isPastDate && movie.status !== 'watched'" name="passed" size="20" color="#07c160" @click="markEventAsWatched(movie)" />
-                <van-icon name="delete-o" size="20" color="#ee0a24" @click="removeEvent(movie)" />
-              </view>
+            <movie-card
+              :movie="movie"
+              variant="compact"
+              :show-status="true"
+              @click="goToMovieDetail(movie)"
+            />
+            <view class="movie-detail-actions">
+              <van-button
+                v-if="(isPastDate || isToday) && movie.status !== 'watched'"
+                type="success"
+                size="small"
+                @click="markEventAsWatched(movie)"
+              >
+                标记已看
+              </van-button>
+              <van-button
+                type="danger"
+                size="small"
+                @click="removeEvent(movie)"
+              >
+                删除
+              </van-button>
             </view>
-
-            <!-- 评分区域（已看状态） -->
-            <view v-if="movie.status === 'watched'" class="rating-review-section">
-              <view class="rating-section">
-                <text class="section-label">我的评分：</text>
-                <van-rate
-                  v-model="movie.rating"
-                  size="18"
-                  allow-half
-                  @change="onRatingChange(movie)"
-                />
-              </view>
-              <van-field
-                v-model="movie.review"
-                type="textarea"
-                placeholder="写下你的观影感受..."
-                rows="2"
-                maxlength="200"
-                @blur="onReviewChange(movie)"
-              />
-            </view>
-
             <van-divider v-if="index < selectedDayMovies.length - 1" />
           </view>
         </scroll-view>
@@ -256,8 +219,12 @@
 import storage, { MOVIE_STATUS } from '@/utils/storage.js'
 import tmdbApi from '@/utils/tmdb.js'
 import { showToast, showSuccessToast } from 'vant'
+import MovieCard from '@/components/movie-card/movie-card.vue'
 
 export default {
+  components: {
+    MovieCard
+  },
   data() {
     return {
       viewMode: 'week',
@@ -271,6 +238,7 @@ export default {
       selectedDateKey: '',
       selectedDayMovies: [],
       isPastDate: false,
+      isToday: false,
       isFutureDate: false,
       scrollToTodayId: '',
       // 添加电影相关
@@ -317,15 +285,12 @@ export default {
       return total
     }
   },
-  mounted() {
+  onShow() {
+    storage.clearCache()
     this.generateCalendar()
     if (this.viewMode === 'week') {
       this.$nextTick(() => this.scrollToToday())
     }
-  },
-  onShow() {
-    storage.clearCache()
-    this.generateCalendar()
   },
   methods: {
     generateCalendar() {
@@ -344,7 +309,7 @@ export default {
       }
     },
 
-    generateMonthCalendar() {
+    async generateMonthCalendar() {
       const year = this.currentDate.getFullYear()
       const month = this.currentDate.getMonth()
       const firstDay = new Date(year, month, 1)
@@ -363,6 +328,9 @@ export default {
         const dateKey = this.formatDate(date)
         const events = storage.getEventsByDate(dateKey)
 
+        // 补充电影详细信息
+        const movies = await this.enrichMoviesWithDetails(events)
+
         const isPast = date < today
         const isFuture = date > today
 
@@ -377,7 +345,7 @@ export default {
           isToday: this.isSameDate(date, today),
           isPast,
           isFuture,
-          movies: events,
+          movies: movies,
           movieCount: events.length,
           watchedCount,
           plannedCount
@@ -387,7 +355,7 @@ export default {
       this.calendarDays = days
     },
 
-    generateWeekCalendar() {
+    async generateWeekCalendar() {
       const weekStart = this.getWeekStart(this.currentDate)
       const days = []
       const today = new Date()
@@ -399,6 +367,9 @@ export default {
 
         const dateKey = this.formatDate(date)
         const events = storage.getEventsByDate(dateKey)
+
+        // 补充电影详细信息
+        const movies = await this.enrichMoviesWithDetails(events)
 
         const isPast = date < today
         const isFuture = date > today
@@ -414,7 +385,7 @@ export default {
           isToday: this.isSameDate(date, today),
           isPast,
           isFuture,
-          movies: events,
+          movies: movies,  // 使用补充后的电影数据
           watchedCount,
           plannedCount
         })
@@ -500,6 +471,7 @@ export default {
       this.selectedDateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
       this.selectedDayMovies = [...day.movies]
       this.isPastDate = day.isPast
+      this.isToday = day.isToday
       this.isFutureDate = day.isFuture
       this.showMoviePopup = true
     },
@@ -578,38 +550,54 @@ export default {
       })
     },
 
-    onRatingChange(movie) {
-      storage.updateCalendarEvent(this.selectedDateKey, movie.id, {
-        rating: movie.rating
-      })
-      storage.setMovieStatus(movie.movieId, MOVIE_STATUS.WATCHED, {
-        rating: movie.rating
-      })
-      showSuccessToast(`评分：${movie.rating}星`)
-    },
-
-    onReviewChange(movie) {
-      storage.updateCalendarEvent(this.selectedDateKey, movie.id, {
-        review: movie.review
-      })
-      storage.setMovieStatus(movie.movieId, MOVIE_STATUS.WATCHED, {
-        review: movie.review
+    goToMovieDetail(movie) {
+      // 只传递 movieId，详情页从 TMDB API 获取完整信息
+      uni.navigateTo({
+        url: `/pages/movie-detail/movie-detail?movieId=${movie.movieId}`
       })
     },
 
-    markAsWatched(movie) {
-      movie.status = MOVIE_STATUS.WATCHED
-      movie.rating = 0
-      movie.review = ''
-      storage.updateCalendarEvent(this.selectedDateKey, movie.id, {
-        status: MOVIE_STATUS.WATCHED
-      })
-      storage.markAsWatched(movie.movieId, {
-        title: movie.title,
-        poster: movie.poster
-      })
-      this.generateCalendar()
-      showSuccessToast('已标记为已观看')
+    /**
+     * 补充电影详细信息
+     * 从 TMDB API 获取电影的基本信息（title, poster, rating, year, genre, summary）
+     */
+    async enrichMoviesWithDetails(events) {
+      if (!events || events.length === 0) return []
+
+      const enrichedMovies = []
+
+      for (const event of events) {
+        try {
+          const movieDetail = await tmdbApi.getMovieDetails(event.movieId)
+          enrichedMovies.push({
+            ...event,
+            id: movieDetail.id,
+            movieId: movieDetail.id,
+            title: movieDetail.title,
+            poster: movieDetail.poster,
+            rating: movieDetail.rating,
+            year: movieDetail.year,
+            genre: movieDetail.genre,
+            summary: movieDetail.summary
+          })
+        } catch (err) {
+          console.error('获取电影详情失败:', event.movieId, err)
+          // 如果获取失败，保留基本状态信息
+          enrichedMovies.push({
+            ...event,
+            id: event.movieId,
+            movieId: event.movieId,
+            title: '电影信息加载失败',
+            poster: '',
+            rating: '0',
+            year: '',
+            genre: '',
+            summary: ''
+          })
+        }
+      }
+
+      return enrichedMovies
     }
   }
 }
@@ -871,183 +859,6 @@ export default {
   border-radius: 2px;
 }
 
-.movie-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 70px;
-  flex-shrink: 0;
-}
-
-.movie-poster {
-  width: 48px;
-  height: 64px;
-  border-radius: 4px;
-  background-color: #ddd;
-  flex-shrink: 0;
-}
-
-.movie-poster-placeholder {
-  width: 48px;
-  height: 64px;
-  border-radius: 4px;
-  background-color: #667eea;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.movie-title {
-  font-size: 11px;
-  color: #666;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: 100%;
-  line-height: 1.2;
-}
-
-.movie-rating {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-top: 2px;
-}
-
-.movie-rating text {
-  font-size: 9px;
-  color: #ff9800;
-  font-weight: 600;
-}
-
-/* 电影详情弹窗样式 */
-.movie-detail-popup {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.popup-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.popup-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-}
-
-.movie-list-container {
-  flex: 1;
-  overflow-x: hidden;
-}
-
-.movie-detail-item {
-  margin-bottom: 20px;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.movie-info-row {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 15px;
-  max-width: 100%;
-}
-
-.detail-poster {
-  width: 80px;
-  height: 120px;
-  border-radius: 8px;
-  background-color: #ddd;
-  flex-shrink: 0;
-}
-
-.detail-poster-placeholder {
-  width: 80px;
-  height: 120px;
-  border-radius: 8px;
-  background-color: #667eea;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.movie-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0; /* 允许缩小 */
-  overflow: hidden; /* 隐藏溢出 */
-}
-
-.detail-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.status-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  max-width: 100%;
-}
-
-.rating-review-section {
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  padding: 15px;
-}
-
-.section-label {
-  font-size: 14px;
-  color: #666;
-  font-weight: 500;
-  display: block;
-  margin-bottom: 8px;
-}
-
-.rating-section {
-  margin-bottom: 15px;
-}
-
-.rating-display {
-  display: inline-flex;
-  align-items: center;
-}
-
-.no-rating-text {
-  font-size: 13px;
-  color: #999;
-}
-
-.review-section :deep(.van-cell) {
-  padding: 0;
-  background-color: transparent;
-}
-
-.review-section :deep(.van-field__control) {
-  font-size: 14px;
-}
-
-.action-buttons {
-  margin-top: 15px;
-}
-
 .no-movie {
   display: flex;
   flex-direction: column;
@@ -1056,6 +867,65 @@ export default {
   color: #ccc;
   gap: 5px;
   flex: 1;
+}
+
+/* 电影详情弹窗样式 */
+.movie-detail-popup {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.popup-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.movie-list-container {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.movie-detail-item {
+  margin-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.movie-detail-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
 }
 
 /* 底部统计 */
