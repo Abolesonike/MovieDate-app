@@ -36,7 +36,7 @@
 
       <button
         :class="['action-btn', movieCurrentStatus === 'planned' ? 'btn-primary' : 'btn-default']"
-        @click="showCalendarPicker = true"
+        @click="openCalendarPicker"
       >
         <text class="btn-icon">📅</text>
         {{ movieCurrentStatus === 'planned' ? '已添加日历' : '添加日历' }}
@@ -88,16 +88,16 @@
     <view v-if="showCalendarPicker" class="calendar-mask" @click="showCalendarPicker = false">
       <view class="calendar-popup" @click.stop>
         <view class="calendar-header">
-          <text class="calendar-title">选择日期</text>
+          <text class="calendar-title">{{ calendarPickerMode === 'watched' ? '选择观看日期' : '选择日期' }}</text>
           <text class="calendar-close" @click="showCalendarPicker = false">✕</text>
         </view>
-        <picker mode="date" :value="selectedDate" :start="minDateStr" @change="onDateChange">
+        <picker mode="date" :value="selectedDate" :start="calendarPickerMode === 'planned' ? minDateStr : undefined" :end="calendarPickerMode === 'watched' ? maxDateStr : undefined" @change="onDateChange">
           <view class="date-picker">
             <text class="date-text">{{ selectedDate || '请选择日期' }}</text>
             <text class="picker-arrow">›</text>
           </view>
         </picker>
-        <button class="confirm-btn" @click="onCalendarConfirm">确定</button>
+         <button class="confirm-btn" @click="onPickerConfirm">确定</button>
       </view>
     </view>
   </view>
@@ -123,8 +123,11 @@ export default {
       userRating: 0,
       userReview: '',
       showCalendarPicker: false,
+      calendarPickerMode: 'planned', // 'planned' 或 'watched'
       selectedDate: '',
-      minDateStr: ''
+      minDateStr: '',
+      maxDateStr: '',
+      watchedDateStr: ''
     }
   },
   computed: {
@@ -187,8 +190,10 @@ export default {
     loadMovieStatus(movieId) {
       const statusData = storage.getMovieStatus(movieId)
       this.movieCurrentStatus = statusData.status
-      this.userRating = statusData.rating || 0
-      this.userReview = statusData.review || ''
+      // 从 watched 时间线中读取评分和评价
+      const watchedData = statusData.timeline?.watched || {}
+      this.userRating = watchedData.rating || 0
+      this.userReview = watchedData.review || ''
     },
 
     toggleWantToWatch() {
@@ -198,11 +203,7 @@ export default {
         this.movieCurrentStatus = MOVIE_STATUS.UNWATCHED
         uni.showToast({ title: '已取消', icon: 'success' })
       } else {
-        storage.markAsWant(movieId, {
-          title: this.movie.title,
-          poster: this.movie.poster,
-          year: this.movie.year
-        })
+        storage.markAsWant(movieId)
         this.movieCurrentStatus = MOVIE_STATUS.WANT_TO_WATCH
         uni.showToast({ title: '已添加想看', icon: 'success' })
       }
@@ -210,6 +211,14 @@ export default {
 
     onDateChange(e) {
       this.selectedDate = e.detail.value
+    },
+
+    onPickerConfirm() {
+      if (this.calendarPickerMode === 'watched') {
+        this.onWatchedDateConfirm()
+      } else {
+        this.onCalendarConfirm()
+      }
     },
 
     onCalendarConfirm() {
@@ -236,41 +245,64 @@ export default {
       this.showCalendarPicker = false
     },
 
+    openCalendarPicker() {
+      this.calendarPickerMode = 'planned'
+      const today = new Date()
+      this.minDateStr = this.formatDate(today)
+      this.selectedDate = this.minDateStr
+      this.showCalendarPicker = true
+    },
+
     markAsWatched() {
       if (this.movieCurrentStatus === MOVIE_STATUS.WATCHED) {
         return
       }
 
-      uni.showModal({
-        title: '确认标记',
-        content: `确定将「${this.movie.title}」标记为已看？`,
-        success: (res) => {
-          if (res.confirm) {
-            storage.markAsWatched(this.movie.id, {
-              title: this.movie.title,
-              poster: this.movie.poster,
-              year: this.movie.year
-            })
-            this.movieCurrentStatus = MOVIE_STATUS.WATCHED
-            this.userRating = 0
-            this.userReview = ''
-            uni.showToast({ title: '已标记为已看', icon: 'success' })
-          }
-        }
+      // 打开日期选择器，让用户选择观看日期
+      this.calendarPickerMode = 'watched'
+      // 对于标记已看，默认选中今天，但允许选择过去日期（补录）
+      const today = new Date()
+      this.watchedDateStr = this.formatDate(today)
+      this.selectedDate = this.watchedDateStr
+      // 标记已看时不限制最小日期，但限制最大日期为今天（不能选择未来）
+      this.minDateStr = ''
+      this.maxDateStr = this.watchedDateStr
+      this.showCalendarPicker = true
+    },
+
+    onWatchedDateConfirm() {
+      if (!this.selectedDate) {
+        uni.showToast({ title: '请选择观看日期', icon: 'none' })
+        return
+      }
+
+      const result = storage.markAsWatched(this.movie.id, {
+        rating: this.userRating || undefined,
+        review: this.userReview || undefined,
+        date: this.selectedDate
       })
+
+      if (result.success) {
+        this.movieCurrentStatus = MOVIE_STATUS.WATCHED
+        uni.showToast({ title: result.message, icon: 'success' })
+      } else {
+        uni.showToast({ title: '标记失败', icon: 'none' })
+      }
+
+      this.showCalendarPicker = false
     },
 
     setRating(value) {
       this.userRating = value
-      storage.setMovieStatus(this.movie.id, this.movieCurrentStatus, {
-        rating: value
-      })
+      if (this.movieCurrentStatus === MOVIE_STATUS.WATCHED) {
+        storage.updateWatchedReview(this.movie.id, { rating: value })
+      }
     },
 
     saveReview() {
-      storage.setMovieStatus(this.movie.id, this.movieCurrentStatus, {
-        review: this.userReview
-      })
+      if (this.movieCurrentStatus === MOVIE_STATUS.WATCHED) {
+        storage.updateWatchedReview(this.movie.id, { review: this.userReview })
+      }
     },
 
     getStatusTagType(status) {

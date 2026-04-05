@@ -541,19 +541,25 @@ export default {
       }
     },
 
-    selectMovieToAdd(movie) {
+    async selectMovieToAdd(movie) {
       const result = storage.addCalendarEvent(this.selectedDateKey, {
-        movieId: movie.id,
-        title: movie.title,
-        poster: movie.poster,
-        rating: movie.rating
+        movieId: movie.id
       })
 
       if (result.success) {
         uni.showToast({ title: '添加成功', icon: 'success' })
         this.showAddMoviePopup = false
-        this.generateCalendar()
-        this.selectedDayMovies = storage.getEventsByDate(this.selectedDateKey)
+        
+        // 获取当天的事件列表（包含新添加的电影）
+        const events = storage.getEventsByDate(this.selectedDateKey)
+        
+        // 补充电影详细信息
+        this.selectedDayMovies = await this.enrichMoviesWithDetails(events)
+        
+        // 重新生成日历数据（用于更新月视图/周视图的标记）
+        await this.generateCalendar()
+        
+        // 重新显示电影详情弹窗
         this.showMoviePopup = true
       } else {
         uni.showToast({ title: result.message, icon: 'none' })
@@ -564,29 +570,10 @@ export default {
       storage.updateCalendarEvent(this.selectedDateKey, event.id, {
         status: MOVIE_STATUS.WATCHED
       })
-      storage.markAsWatched(event.movieId, {
-        title: event.title,
-        poster: event.poster
-      })
-
+      storage.markAsWatched(event.movieId)
       this.selectedDayMovies = storage.getEventsByDate(this.selectedDateKey)
       this.generateCalendar()
       uni.showToast({ title: '已标记为已看', icon: 'success' })
-    },
-
-    removeEvent(event) {
-      uni.showModal({
-        title: '确认移除',
-        content: `确定移除「${event.title}」？`,
-        success: (res) => {
-          if (res.confirm) {
-            storage.removeCalendarEvent(this.selectedDateKey, event.id)
-            this.selectedDayMovies = storage.getEventsByDate(this.selectedDateKey)
-            this.generateCalendar()
-            uni.showToast({ title: '已移除', icon: 'success' })
-          }
-        }
-      })
     },
 
     goToMovieDetail(movie) {

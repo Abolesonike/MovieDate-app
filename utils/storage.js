@@ -61,15 +61,30 @@ class StorageManager {
    * 设置电影状态
    * @param {number} movieId
    * @param {string} status - 'want' | 'planned' | 'watched'
-   * @param {Object} extra - 额外信息 { rating, review, watchDate, title, poster, year }
+   * @param {Object} extra - 额外信息 { rating, review, date, calendarEventId }
    */
   setMovieStatus(movieId, status, extra = {}) {
     const all = this.getAllMovieStatus()
-    all[movieId] = {
-      status,
-      updatedAt: Date.now(),
+    const now = Date.now()
+    const existing = all[movieId] || {}
+
+    // 构建时间线数据
+    const timeline = existing.timeline || {}
+    const dateStr = extra.date || this._formatDate(new Date())
+
+    // 记录当前状态的时间点（保留历史）
+    timeline[status] = {
+      date: dateStr,
+      timestamp: now,
       ...extra
     }
+
+    all[movieId] = {
+      status,
+      timeline,
+      updatedAt: now
+    }
+
     this._saveMovieStatus(all)
     return all[movieId]
   }
@@ -87,49 +102,77 @@ class StorageManager {
   /**
    * 标记为想看
    * @param {number} movieId
-   * @param {Object} movieInfo - { title, poster, year }
    */
-  markAsWant(movieId, movieInfo = {}) {
-    return this.setMovieStatus(movieId, MOVIE_STATUS.WANT_TO_WATCH, {
-      addedAt: Date.now(),
-      ...movieInfo
-    })
+  markAsWant(movieId) {
+    return this.setMovieStatus(movieId, MOVIE_STATUS.WANT_TO_WATCH)
   }
 
   /**
    * 标记为已看
    * @param {number} movieId
-   * @param {Object} movieInfo - { title, poster, year, rating, review }
+   * @param {Object} data - { rating, review, date }
+   * @returns {Object} { success, movie?, event?, message? }
    */
-  markAsWatched(movieId, movieInfo = {}) {
-    return this.setMovieStatus(movieId, MOVIE_STATUS.WATCHED, {
-      watchedAt: Date.now(),
-      ...movieInfo
-    })
+  markAsWatched(movieId, data = {}) {
+    const dateStr = data.date || this._formatDate(new Date())
+
+    // 先添加到日历（如果该日期已有此电影，addCalendarEvent 会返回失败，但不影响标记已看）
+    let calendarEvent = null
+    const existingEvents = this.getEventsByDate(dateStr)
+    const exists = existingEvents.find(e => e.movieId === movieId)
+
+    if (!exists) {
+      const result = this.addCalendarEvent(dateStr, { movieId })
+      if (result.success) {
+        calendarEvent = result.event
+      }
+    } else {
+      calendarEvent = exists
+    }
+
+    // 更新日历事件状态为 watched
+    if (calendarEvent) {
+      this.updateCalendarEvent(dateStr, calendarEvent.id, { status: MOVIE_STATUS.WATCHED })
+    }
+
+    // 构建时间线数据
+    const extra = { date: dateStr }
+    if (data.rating !== undefined) extra.rating = data.rating
+    if (data.review !== undefined) extra.review = data.review
+    if (calendarEvent) extra.calendarEventId = calendarEvent.id
+
+    const movie = this.setMovieStatus(movieId, MOVIE_STATUS.WATCHED, extra)
+
+    return {
+      success: true,
+      movie,
+      event: calendarEvent,
+      message: `已标记为已看并添加到 ${dateStr}`
+    }
   }
 
   /**
    * 获取想看列表
-   * @returns {Array} [{ movieId, status, addedAt, ... }]
+   * @returns {Array} [{ movieId, status, timeline, ... }]
    */
   getWantList() {
     const all = this.getAllMovieStatus()
     return Object.entries(all)
       .filter(([_, data]) => data.status === MOVIE_STATUS.WANT_TO_WATCH)
       .map(([id, data]) => ({ movieId: parseInt(id), ...data }))
-      .sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0))
+      .sort((a, b) => (b.timeline?.want?.timestamp || 0) - (a.timeline?.want?.timestamp || 0))
   }
 
   /**
    * 获取已看列表
-   * @returns {Array} [{ movieId, status, watchedAt, rating, ... }]
+   * @returns {Array} [{ movieId, status, timeline, ... }]
    */
   getWatchedList() {
     const all = this.getAllMovieStatus()
     return Object.entries(all)
       .filter(([_, data]) => data.status === MOVIE_STATUS.WATCHED)
       .map(([id, data]) => ({ movieId: parseInt(id), ...data }))
-      .sort((a, b) => (b.watchedAt || 0) - (a.watchedAt || 0))
+      .sort((a, b) => (b.timeline?.watched?.timestamp || 0) - (a.timeline?.watched?.timestamp || 0))
   }
 
   /**
@@ -141,6 +184,75 @@ class StorageManager {
     return Object.entries(all)
       .filter(([_, data]) => data.status === MOVIE_STATUS.PLANNED)
       .map(([id, data]) => ({ movieId: parseInt(id), ...data }))
+      .sort((a, b) => (b.timeline?.planned?.timestamp || 0) - (a.timeline?.planned?.timestamp || 0))
+  }
+
+  /**
+   * 获取电影完整时间线
+   * @param {number} movieId
+   * @returns {Object} { want, planned, watched } 按时间顺序排列
+   */
+  getMovieTimeline(movieId) {
+    const statusData = this.getMovieStatus(movieId)
+    return statusData.timeline || {}
+  }
+
+  /**
+   * 更新已看电影的评分和评价
+   * @param {number} movieId
+   * @param {Object} data - { rating, review }
+   */
+  updateWatchedReview(movieId, data) {
+    const all = this.getAllMovieStatus()
+    const movie = all[movieId]
+
+    if (!movie || movie.status !== MOVIE_STATUS.WATCHED) {
+      return null
+    }
+
+    // 更新 watched 时间线中的评分和评价
+    if (!movie.timeline) movie.timeline = {}
+    if (!movie.timeline.watched) movie.timeline.watched = {}
+
+    if (data.rating !== undefined) {
+      movie.timeline.watched.rating = data.rating
+    }
+    if (data.review !== undefined) {
+      movie.timeline.watched.review = data.review
+    }
+
+    movie.updatedAt = Date.now()
+    this._saveMovieStatus(all)
+    return movie
+  }
+
+  /**
+   * 获取电影时间线历史（格式化）
+   * @param {number} movieId
+   * @returns {Array} [{ status, date, timestamp, ... }]
+   */
+  getMovieTimelineHistory(movieId) {
+    const timeline = this.getMovieTimeline(movieId)
+    const history = []
+
+    const statusOrder = ['want', 'planned', 'watched']
+    const statusNames = {
+      want: '想看',
+      planned: '计划观看',
+      watched: '已观看'
+    }
+
+    statusOrder.forEach(status => {
+      if (timeline[status]) {
+        history.push({
+          status,
+          statusName: statusNames[status],
+          ...timeline[status]
+        })
+      }
+    })
+
+    return history.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
   }
 
   _saveMovieStatus(data) {
@@ -213,9 +325,10 @@ class StorageManager {
     all[dateStr].push(event)
     this._saveCalendarEvents(all)
 
-    // 同步更新电影状态
+    // 同步更新电影状态和planned时间线
     this.setMovieStatus(movieEvent.movieId, MOVIE_STATUS.PLANNED, {
-      plannedDate: dateStr
+      date: dateStr,
+      calendarEventId: event.id
     })
 
     return { success: true, event }
