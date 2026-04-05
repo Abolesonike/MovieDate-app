@@ -91,10 +91,29 @@ class StorageManager {
 
   /**
    * 移除电影状态（重置为未看）
+   * 同时清理关联的日历事件
    * @param {number} movieId
    */
   removeMovieStatus(movieId) {
     const all = this.getAllMovieStatus()
+    const movieData = all[movieId]
+
+    // 清理关联的日历事件
+    if (movieData?.timeline) {
+      // 清理 planned 时间线关联的日历事件
+      if (movieData.timeline.planned?.calendarEventId) {
+        const plannedDate = movieData.timeline.planned.date
+        const eventId = movieData.timeline.planned.calendarEventId
+        this.removeCalendarEvent(plannedDate, eventId)
+      }
+      // 清理 watched 时间线关联的日历事件
+      if (movieData.timeline.watched?.calendarEventId) {
+        const watchedDate = movieData.timeline.watched.date
+        const eventId = movieData.timeline.watched.calendarEventId
+        this.removeCalendarEvent(watchedDate, eventId)
+      }
+    }
+
     delete all[movieId]
     this._saveMovieStatus(all)
   }

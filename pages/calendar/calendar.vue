@@ -65,7 +65,7 @@
       <scroll-view
         scroll-y
         class="week-content"
-        :scroll-into-view="scrollToTodayId"
+        :scroll-top="scrollTopValue"
         scroll-with-animation
       >
         <view
@@ -235,7 +235,7 @@ export default {
       isPastDate: false,
       isToday: false,
       isFutureDate: false,
-      scrollToTodayId: '',
+      scrollTopValue: 0,
       // 添加电影相关
       showAddMoviePopup: false,
       searchKeyword: '',
@@ -468,39 +468,22 @@ export default {
     },
 
     scrollToToday() {
-      // 先清空滚动目标
-      this.scrollToTodayId = ''
-
       this.$nextTick(() => {
         // 查找今天的索引
         const todayIndex = this.currentWeekDays.findIndex(day => day.isToday)
+        let targetIndex = todayIndex
 
-        if (todayIndex !== -1) {
-          // 如果本周包含今天，滚动到今天
-          this.scrollToTodayId = 'day-row-' + todayIndex
-          console.log('滚动到今天，索引:', todayIndex)
-        } else {
+        if (todayIndex === -1) {
           // 如果本周不包含今天，滚动到第一个有电影的日期或第一个日期
           const firstDayWithMovies = this.currentWeekDays.findIndex(day => day.movies && day.movies.length > 0)
-          if (firstDayWithMovies !== -1) {
-            this.scrollToTodayId = 'day-row-' + firstDayWithMovies
-            console.log('本周无今天，滚动到第一个有电影的日期，索引:', firstDayWithMovies)
-          } else {
-            // 都没有电影，滚动到第一天
-            this.scrollToTodayId = 'day-row-0'
-            console.log('本周无今天且无电影，滚动到第一天')
-          }
+          targetIndex = firstDayWithMovies !== -1 ? firstDayWithMovies : 0
         }
 
-        // 如果设置了滚动目标，延迟执行确保元素已渲染
-        if (this.scrollToTodayId) {
-          setTimeout(() => {
-            // 双重保险，确保滚动生效
-            this.$nextTick(() => {
-              console.log('实际滚动到:', this.scrollToTodayId)
-            })
-          }, 100)
-        }
+        // 使用 scroll-top 实现滚动，更可靠
+        // 每个 day-row 大约高度 100px + 12px padding = 约 112px
+        const rowHeight = 112
+        this.scrollTopValue = targetIndex * rowHeight
+        console.log('滚动到索引:', targetIndex, 'scrollTop:', this.scrollTopValue)
       })
     },
 
@@ -566,14 +549,48 @@ export default {
       }
     },
 
-    markEventAsWatched(event) {
+    async markEventAsWatched(event) {
       storage.updateCalendarEvent(this.selectedDateKey, event.id, {
         status: MOVIE_STATUS.WATCHED
       })
       storage.markAsWatched(event.movieId)
-      this.selectedDayMovies = storage.getEventsByDate(this.selectedDateKey)
+      // 重新获取事件并补充电影详情
+      const events = storage.getEventsByDate(this.selectedDateKey)
+      this.selectedDayMovies = await this.enrichMoviesWithDetails(events)
       this.generateCalendar()
       uni.showToast({ title: '已标记为已看', icon: 'success' })
+    },
+
+    async removeEvent(event) {
+      uni.showModal({
+        title: '确认删除',
+        content: `确定从 ${this.selectedDateStr} 删除这部电影？`,
+        success: async (res) => {
+          if (res.confirm) {
+            const all = storage.getAllMovieStatus()
+            const movieData = all[event.movieId]
+            const eventId = movieData.timeline.planned.calendarEventId
+            // 1. 从日历事件中删除
+            storage.removeCalendarEvent(this.selectedDateKey, eventId)
+
+            // 2. 如果电影状态是 planned 且关联此事件，重置电影状态为未看
+            const movieStatus = storage.getMovieStatus(event.movieId)
+            if (movieStatus.status === MOVIE_STATUS.PLANNED) {
+              const plannedTimeline = movieStatus.timeline?.planned
+              if (plannedTimeline?.calendarEventId === event.id) {
+                storage.removeMovieStatus(event.movieId)
+              }
+            }
+
+            // 3. 刷新日历显示并重新补充电影详情
+            const events = storage.getEventsByDate(this.selectedDateKey)
+            this.selectedDayMovies = await this.enrichMoviesWithDetails(events)
+            this.generateCalendar()
+
+            uni.showToast({ title: '已删除', icon: 'success' })
+          }
+        }
+      })
     },
 
     goToMovieDetail(movie) {
@@ -920,7 +937,7 @@ export default {
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  z-index: 100;
   display: flex;
   align-items: flex-end;
 }
