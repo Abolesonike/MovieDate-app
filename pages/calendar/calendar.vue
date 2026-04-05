@@ -40,8 +40,8 @@
           v-for="(day, index) in calendarDays"
           :key="index"
           class="calendar-day"
-          :class="{ 
-            'other-month': !day.isCurrentMonth, 
+          :class="{
+            'other-month': !day.isCurrentMonth,
             'today': day.isToday,
             'watched': day.isPast && day.watchedCount > 0,
             'planned': day.isFuture && day.plannedCount > 0
@@ -62,8 +62,8 @@
 
     <!-- 周视图 -->
     <view v-else class="week-view">
-      <scroll-view 
-        scroll-y 
+      <scroll-view
+        scroll-y
         class="week-content"
         :scroll-into-view="scrollToTodayId"
         scroll-with-animation
@@ -73,7 +73,7 @@
           :key="index"
           :id="'day-row-' + index"
           class="week-day-row"
-          :class="{ 
+          :class="{
             'is-today': day.isToday,
             'watched': day.isPast && day.watchedCount > 0,
             'planned': day.isFuture && day.plannedCount > 0
@@ -83,6 +83,7 @@
           <view class="day-info">
             <text class="weekday-name">{{ day.weekday }}</text>
             <text class="day-number">{{ day.day }}日</text>
+            <text v-if="day.isToday" class="today-badge">今天</text>
           </view>
           <view class="movies-container">
             <view v-if="day.movies && day.movies.length > 0" class="movie-list">
@@ -299,7 +300,10 @@ export default {
       this.viewMode = mode
       this.generateCalendar()
       if (mode === 'week') {
-        this.$nextTick(() => this.scrollToToday())
+        // 延长等待时间，确保 DOM 已更新
+        setTimeout(() => {
+          this.scrollToToday()
+        }, 300)
       }
     },
 
@@ -355,6 +359,9 @@ export default {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
+      // 先清空现有数据，避免状态不一致
+      this.currentWeekDays = []
+
       for (let i = 0; i < 7; i++) {
         const date = new Date(weekStart)
         date.setDate(weekStart.getDate() + i)
@@ -386,6 +393,14 @@ export default {
       }
 
       this.currentWeekDays = days
+
+      // 生成完成后，如果是周视图则自动滚动到合适位置
+      if (this.viewMode === 'week') {
+        // 增加延迟，确保数据已完全渲染
+        setTimeout(() => {
+          this.scrollToToday()
+        }, 200)
+      }
     },
 
     getWeekStart(date) {
@@ -453,10 +468,40 @@ export default {
     },
 
     scrollToToday() {
-      const todayIndex = this.currentWeekDays.findIndex(day => day.isToday)
-      if (todayIndex !== -1) {
-        this.scrollToTodayId = 'day-row-' + todayIndex
-      }
+      // 先清空滚动目标
+      this.scrollToTodayId = ''
+
+      this.$nextTick(() => {
+        // 查找今天的索引
+        const todayIndex = this.currentWeekDays.findIndex(day => day.isToday)
+
+        if (todayIndex !== -1) {
+          // 如果本周包含今天，滚动到今天
+          this.scrollToTodayId = 'day-row-' + todayIndex
+          console.log('滚动到今天，索引:', todayIndex)
+        } else {
+          // 如果本周不包含今天，滚动到第一个有电影的日期或第一个日期
+          const firstDayWithMovies = this.currentWeekDays.findIndex(day => day.movies && day.movies.length > 0)
+          if (firstDayWithMovies !== -1) {
+            this.scrollToTodayId = 'day-row-' + firstDayWithMovies
+            console.log('本周无今天，滚动到第一个有电影的日期，索引:', firstDayWithMovies)
+          } else {
+            // 都没有电影，滚动到第一天
+            this.scrollToTodayId = 'day-row-0'
+            console.log('本周无今天且无电影，滚动到第一天')
+          }
+        }
+
+        // 如果设置了滚动目标，延迟执行确保元素已渲染
+        if (this.scrollToTodayId) {
+          setTimeout(() => {
+            // 双重保险，确保滚动生效
+            this.$nextTick(() => {
+              console.log('实际滚动到:', this.scrollToTodayId)
+            })
+          }, 100)
+        }
+      })
     },
 
     selectDay(day) {
@@ -604,6 +649,12 @@ export default {
   padding-bottom: 60px;
   overflow: hidden;
   position: relative;
+  /* 确保 padding 包含在高度内，避免溢出 */
+  box-sizing: border-box;
+  width: 100%;
+  /* 禁用下拉刷新和弹性滚动 */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
 }
 
 /* 头部样式 */
@@ -774,6 +825,10 @@ export default {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  /* 添加平滑滚动 */
+  scroll-behavior: smooth;
+  /* 确保 flex 正常工作 */
+  position: relative;
 }
 
 .week-day-row {
@@ -787,6 +842,13 @@ export default {
   border-bottom: 1px solid #e0e0e0;
 }
 
+/* 今天的特殊样式 */
+.week-day-row.is-today {
+  background: linear-gradient(135deg, #e6f0ff 0%, #f0f4ff 100%);
+  border-left: 4px solid #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
 .week-day-row:active {
   background-color: #f0f0f0;
 }
@@ -798,6 +860,7 @@ export default {
   align-items: center;
   justify-content: center;
   margin-right: 12px;
+  gap: 4px;
 }
 
 .weekday-name {
@@ -810,6 +873,16 @@ export default {
   font-size: 18px;
   font-weight: bold;
   color: #333;
+}
+
+.today-badge {
+  font-size: 10px;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 500;
+  margin-top: 2px;
 }
 
 .movies-container {

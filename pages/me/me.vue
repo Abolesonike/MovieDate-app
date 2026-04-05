@@ -49,11 +49,56 @@
       </view>
 
       <view class="api-key-content">
+        <!-- 代理地址配置 -->
+        <view class="proxy-config">
+          <view class="config-label">
+            <text class="label-text">API 代理地址</text>
+            <text class="label-tip">(国内用户建议配置)</text>
+          </view>
+          <view class="input-wrapper">
+            <input
+              :value="apiProxyInput"
+              type="text"
+              placeholder="例如: https://api.tmdb.org/3"
+              @input="onApiProxyInput"
+              @blur="onInputBlur"
+            />
+          </view>
+          <view class="proxy-actions">
+            <button
+              class="save-proxy-btn small-btn"
+              native-type="button"
+              :disabled="isValidating"
+              @click="saveApiProxy"
+            >
+              {{ isValidating ? '验证中...' : '保存代理' }}
+            </button>
+            <button
+              v-if="hasCustomProxy"
+              class="clear-proxy-btn small-btn"
+              native-type="button"
+              @click="clearApiProxy"
+            >
+              清除代理
+            </button>
+          </view>
+          <view class="proxy-status">
+            <text class="status-text" :class="hasCustomProxy ? 'text-success' : 'text-default'">
+              {{ hasCustomProxy ? '✓ 已配置自定义代理' : '使用默认地址 (国内可能无法访问)' }}
+            </text>
+          </view>
+        </view>
+
+        <!-- 分隔线 -->
+        <view class="divider"></view>
+
         <!-- API Key 输入框 -->
+        <view class="config-label">
+          <text class="label-text">API Key</text>
+        </view>
         <view class="input-wrapper">
           <input
             :value="apiKeyInput"
-            class="api-input"
             type="text"
             placeholder="请输入 TMDB API Key"
             @input="onApiKeyInput"
@@ -88,6 +133,16 @@
             {{ hasApiKey ? '已配置' : '未配置' }}
           </view>
         </view>
+
+        <!-- 测试按钮 -->
+        <button
+          v-if="debugMode"
+          class="test-btn"
+          @click="testTmdbConnection"
+          :disabled="!hasApiKey || isValidating"
+        >
+          测试连接
+        </button>
       </view>
     </view>
 
@@ -187,6 +242,50 @@
       </view>
     </view>
 
+    <!-- 国内网络配置指南 -->
+    <view class="help-section">
+      <view class="section-header">
+        <text class="section-icon">🌐</text>
+        <text class="section-title">国内网络无法访问?</text>
+      </view>
+
+      <view class="help-content">
+        <view class="help-steps">
+          <view class="step-item">
+            <text class="step-number">💡</text>
+            <text class="step-text"><strong>方案1:</strong> 配置代理地址 (推荐)</text>
+          </view>
+          <view class="step-item" style="margin-left: 28px;">
+            <text class="step-text">• 使用公共代理: https://api.tmdb.org/3</text>
+          </view>
+          <view class="step-item" style="margin-left: 28px;">
+            <text class="step-text">• 或自建 Cloudflare Workers 代理</text>
+          </view>
+          <view class="step-item">
+            <text class="step-number">💡</text>
+            <text class="step-text"><strong>方案2:</strong> 使用科学上网工具</text>
+          </view>
+          <view class="step-item" style="margin-left: 28px;">
+            <text class="step-text">• 开启全局代理模式</text>
+          </view>
+          <view class="step-item">
+            <text class="step-number">💡</text>
+            <text class="step-text"><strong>方案3:</strong> 使用镜像站点</text>
+          </view>
+          <view class="step-item" style="margin-left: 28px;">
+            <text class="step-text">• 搜索 "TMDB API 国内镜像" 获取可用地址</text>
+          </view>
+        </view>
+
+        <view class="proxy-tips">
+          <text class="tip-title">⚠️ 注意事项:</text>
+          <text class="tip-text">• 代理地址必须以 http:// 或 https:// 开头</text>
+          <text class="tip-text">• 代理地址末尾会自动添加 /3 版本号</text>
+          <text class="tip-text">• 保存后会自动测试连接是否成功</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 调试信息 -->
     <view class="debug-section" v-if="debugMode">
       <view class="section-header">
@@ -244,7 +343,9 @@ export default {
   data() {
     return {
       apiKeyInput: '',
+      apiProxyInput: '',
       hasApiKey: false,
+      hasCustomProxy: false,
       isValidating: false,
       isLoading: false,
       storageReady: false,
@@ -338,12 +439,19 @@ export default {
           // 继续但不保证数据持久化
         }
 
-        // 加载 API Key 和统计数据 - 即使存储有问题也尝试加载
+        // 加载 API Key、代理配置和统计数据 - 即使存储有问题也尝试加载
         this.updateDebugInfo('加载 API Key...', 'info')
         try {
           this.loadApiKey()
         } catch (error) {
           console.error('加载 API Key 失败:', error)
+        }
+
+        this.updateDebugInfo('加载代理配置...', 'info')
+        try {
+          this.loadApiProxy()
+        } catch (error) {
+          console.error('加载代理配置失败:', error)
         }
 
         this.updateDebugInfo('加载数据统计...', 'info')
@@ -485,6 +593,9 @@ export default {
         // 检查存储状态
         const savedKey = tmdbApi.getApiKey()
         this.updateDebugInfo(`存储值: ${savedKey ? '已保存' : '空'}`, 'info')
+        // 输出 TMDB 调试信息
+        const debugInfo = tmdbApi.getDebugInfo()
+        this.updateDebugInfo(`TMDB调试信息: ${JSON.stringify(debugInfo, null, 2)}`, 'info')
       } else {
         this.updateDebugInfo('调试模式已关闭', 'info')
       }
@@ -510,6 +621,25 @@ export default {
       
       console.log('提取的值:', value)
       this.apiKeyInput = value
+    },
+
+    // API 代理地址输入处理
+    onApiProxyInput(event) {
+      let value = ''
+      
+      // 确保正确处理输入事件，兼容不同平台
+      if (typeof event === 'string') {
+        value = event
+      } else if (event && event.detail && typeof event.detail.value !== 'undefined') {
+        value = event.detail.value
+      } else if (event && event.target && typeof event.target.value !== 'undefined') {
+        value = event.target.value
+      } else {
+        console.warn('无法从事件中获取值, event:', event)
+        return
+      }
+      
+      this.apiProxyInput = value
     },
 
     // 输入框失焦处理
@@ -544,6 +674,31 @@ export default {
           title: '读取设置失败',
           icon: 'none'
         })
+      }
+    },
+
+    // 加载代理配置
+    loadApiProxy() {
+      if (!this.storageReady) {
+        console.warn('存储未就绪，跳过加载代理配置')
+        return
+      }
+
+      try {
+        const savedProxy = tmdbApi.getApiProxy()
+        if (savedProxy) {
+          console.log('成功加载代理地址:', savedProxy)
+          this.apiProxyInput = savedProxy
+          this.hasCustomProxy = true
+        } else {
+          console.log('未配置自定义代理')
+          this.apiProxyInput = ''
+          this.hasCustomProxy = false
+        }
+      } catch (error) {
+        console.error('加载代理配置失败:', error)
+        this.apiProxyInput = ''
+        this.hasCustomProxy = false
       }
     },
 
@@ -611,12 +766,90 @@ export default {
         } else {
           // 如果验证失败，清除无效的 key
           tmdbApi.clearApiKey()
-          uni.showToast({ title: 'API Key 无效', icon: 'error' })
+          uni.showToast({ 
+            title: 'API Key 无效或网络不可达\n请检查代理配置', 
+            icon: 'none',
+            duration: 3000
+          })
         }
       } catch (error) {
         console.error('保存 API Key 失败:', error)
         uni.showToast({
           title: error.message || '保存失败，请重试',
+          icon: 'none',
+          duration: 3000
+        })
+      } finally {
+        this.isValidating = false
+      }
+    },
+
+    // 保存 API 代理地址
+    async saveApiProxy() {
+      if (!this.storageReady) {
+        uni.showToast({
+          title: '存储未就绪，请重试',
+          icon: 'none'
+        })
+        return
+      }
+
+      const proxy = this.apiProxyInput.trim()
+      if (!proxy) {
+        uni.showToast({ title: '请输入代理地址', icon: 'none' })
+        return
+      }
+
+      // 验证 URL 格式
+      if (!proxy.startsWith('http://') && !proxy.startsWith('https://')) {
+        uni.showToast({ 
+          title: '代理地址必须以 http:// 或 https:// 开头', 
+          icon: 'none',
+          duration: 2500
+        })
+        return
+      }
+
+      this.isValidating = true
+
+      try {
+        // 保存代理地址
+        const saveResult = tmdbApi.setApiProxy(proxy)
+        if (!saveResult) {
+          throw new Error('保存失败')
+        }
+
+        this.hasCustomProxy = true
+        uni.showToast({ title: '代理已保存', icon: 'success' })
+
+        // 如果有 API Key,自动测试连接
+        if (this.hasApiKey) {
+          uni.showLoading({ title: '测试连接...' })
+          try {
+            const isValid = await tmdbApi.validateApiKey(this.apiKeyInput)
+            uni.hideLoading()
+            if (isValid) {
+              uni.showToast({ title: '连接成功!', icon: 'success' })
+            } else {
+              uni.showToast({ 
+                title: '代理可能不可用\n请检查地址是否正确', 
+                icon: 'none',
+                duration: 3000
+              })
+            }
+          } catch (err) {
+            uni.hideLoading()
+            console.error('测试连接失败:', err)
+            uni.showToast({ 
+              title: '连接测试失败', 
+              icon: 'none' 
+            })
+          }
+        }
+      } catch (error) {
+        console.error('保存代理失败:', error)
+        uni.showToast({
+          title: error.message || '保存失败',
           icon: 'none'
         })
       } finally {
@@ -634,6 +867,22 @@ export default {
             tmdbApi.clearApiKey()
             this.apiKeyInput = ''
             this.hasApiKey = false
+            uni.showToast({ title: '已清除', icon: 'success' })
+          }
+        }
+      })
+    },
+
+    // 清除 API 代理
+    clearApiProxy() {
+      uni.showModal({
+        title: '确认清除',
+        content: '确定要清除代理配置吗？将恢复使用默认地址。',
+        success: (res) => {
+          if (res.confirm) {
+            tmdbApi.clearApiProxy()
+            this.apiProxyInput = ''
+            this.hasCustomProxy = false
             uni.showToast({ title: '已清除', icon: 'success' })
           }
         }
@@ -695,6 +944,38 @@ export default {
           }
         }
       })
+    },
+
+    // 测试 TMDB 连接
+    async testTmdbConnection() {
+      if (!this.hasApiKey) {
+        uni.showToast({ title: '请先输入 API Key', icon: 'none' })
+        return
+      }
+
+      this.isValidating = true
+      this.updateDebugInfo('开始测试 TMDB 连接...', 'info')
+
+      try {
+        // 测试获取配置
+        const config = await tmdbApi.request('/configuration')
+        this.updateDebugInfo('配置测试成功', 'success')
+
+        // 尝试获取热门电影
+        const popularMovies = await tmdbApi.getPopularMovies(1)
+        this.updateDebugInfo(`热门电影测试成功: 获取到 ${popularMovies.totalResults} 部电影`, 'success')
+
+        // 尝试搜索电影
+        const searchResult = await tmdbApi.searchMovies('test')
+        this.updateDebugInfo(`搜索测试成功: 搜索到 ${searchResult.totalResults} 个结果`, 'success')
+
+        uni.showToast({ title: '连接测试成功', icon: 'success' })
+      } catch (error) {
+        this.updateDebugInfo(`连接测试失败: ${error.message}`, 'error')
+        uni.showToast({ title: `连接测试失败: ${error.message}`, icon: 'error' })
+      } finally {
+        this.isValidating = false
+      }
     },
 
     // 打开 TMDB 官网
@@ -835,29 +1116,87 @@ export default {
   padding: 16px;
 }
 
+/* 代理配置区域 */
+.proxy-config {
+  margin-bottom: 8px;
+}
+
+.config-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.label-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.label-tip {
+  font-size: 12px;
+  color: #999;
+}
+
+.proxy-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.small-btn {
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.save-proxy-btn {
+  flex: 1;
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  color: #fff;
+  border: none;
+}
+
+.clear-proxy-btn {
+  padding: 8px 12px;
+  font-size: 13px;
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+}
+
+.proxy-status {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #f5f5f5;
+  border-radius: 6px;
+}
+
+.status-text {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.text-success {
+  color: #52c41a;
+}
+
+.text-default {
+  color: #999;
+}
+
+.divider {
+  height: 1px;
+  background: #e8e8e8;
+  margin: 16px 0;
+}
+
 .input-wrapper {
   margin-bottom: 16px;
   position: relative;
   z-index: 2;
-}
-
-.api-input {
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 14px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  outline: none;
-  box-sizing: border-box;
-  -webkit-appearance: none;
-  appearance: none;
-  position: relative;
-  z-index: 1;
-}
-
-.api-input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
 }
 
 .action-buttons {
@@ -911,6 +1250,21 @@ export default {
   background: #fff7e6;
   color: #fa8c16;
   border: 1px solid #ffd591;
+}
+
+.test-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  background: #52c41a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.test-btn:disabled {
+  opacity: 0.6;
 }
 
 /* 数据管理 */
@@ -1045,6 +1399,31 @@ export default {
   color: #667eea;
   border: 1px solid #667eea;
   border-radius: 8px;
+}
+
+/* 代理配置提示 */
+.proxy-tips {
+  margin-top: 16px;
+  padding: 12px;
+  background: #fff7e6;
+  border-left: 3px solid #fa8c16;
+  border-radius: 4px;
+}
+
+.tip-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #d46b08;
+  margin-bottom: 8px;
+}
+
+.tip-text {
+  display: block;
+  font-size: 12px;
+  color: #873800;
+  line-height: 1.8;
+  margin-bottom: 2px;
 }
 
 /* 调试信息 */

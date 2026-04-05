@@ -3,7 +3,9 @@
 		{
 			"path": "pages/calendar/calendar",
 			"style": {
-				"navigationBarTitleText": "日历"
+				"navigationBarTitleText": "日历",
+				"enablePullDownRefresh": false,
+				"disableScroll": true
 			}
 		},
 		{
