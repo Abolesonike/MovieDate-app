@@ -26,6 +26,27 @@
 				"navigationBarTitleText": "电影详情",
 				"enablePullDownRefresh": false
 			}
+		},
+		{
+			"path": "pages/list-want/list-want",
+			"style": {
+				"navigationBarTitleText": "想看",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/list-watched/list-watched",
+			"style": {
+				"navigationBarTitleText": "已看",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/list-planned/list-planned",
+			"style": {
+				"navigationBarTitleText": "待看",
+				"enablePullDownRefresh": true
+			}
 		}
 	],
 	"globalStyle": {

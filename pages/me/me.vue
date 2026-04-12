@@ -9,9 +9,9 @@
     <!-- 主内容 -->
     <view v-else>
     <!-- 页面标题 -->
-    <view class="page-header">
+    <!-- <view class="page-header">
       <text class="page-title">设置</text>
-    </view>
+    </view> -->
 
     <!-- 数据统计 -->
     <view class="stats-section">
@@ -21,15 +21,15 @@
       </view>
       <view class="stats-content">
         <view class="stats-grid">
-          <view class="stat-item">
+          <view class="stat-item" @click="goToList('want')">
             <text class="stat-value">{{ stats.wantCount }}</text>
             <text class="stat-label">想看</text>
           </view>
-          <view class="stat-item">
+          <view class="stat-item" @click="goToList('watched')">
             <text class="stat-value">{{ stats.watchedCount }}</text>
             <text class="stat-label">已看</text>
           </view>
-          <view class="stat-item">
+          <view class="stat-item" @click="goToList('planned')">
             <text class="stat-value">{{ stats.plannedCount }}</text>
             <text class="stat-label">待看</text>
           </view>
@@ -986,6 +986,19 @@ export default {
           uni.showToast({ title: '链接已复制', icon: 'success' })
         }
       })
+    },
+
+    // 跳转到列表页
+    goToList(type) {
+      const pathMap = {
+        want: '/pages/list-want/list-want',
+        watched: '/pages/list-watched/list-watched',
+        planned: '/pages/list-planned/list-planned'
+      }
+      const path = pathMap[type]
+      if (path) {
+        uni.navigateTo({ url: path })
+      }
     }
   }
 }
@@ -1057,6 +1070,13 @@ export default {
   flex-direction: column;
   align-items: center;
   padding: 12px 0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.stat-item:active {
+  background: #f5f5f5;
+  border-radius: 8px;
 }
 
 .stat-value {
