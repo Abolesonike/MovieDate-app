@@ -1,0 +1,509 @@
+{
+  "version": "1.0.0",
+  "updateTime": "2025-04-13",
+  "description": "豆瓣电影Top250与TMDB ID映射表",
+  "source": "https://movie.douban.com/top250",
+  "total": 250,
+  "movies": [
+    {
+      "doubanRank": 1,
+      "doubanId": "1292052",
+      "tmdbId": 278,
+      "imdbId": "tt0111161",
+      "title": "肖申克的救赎",
+      "originalTitle": "The Shawshank Redemption",
+      "year": "1994",
+      "doubanRating": "9.7"
+    },
+    {
+      "doubanRank": 2,
+      "doubanId": "1291546",
+      "tmdbId": 3240,
+      "imdbId": "tt0106332",
+      "title": "霸王别姬",
+      "originalTitle": "Farewell My Concubine",
+      "year": "1993",
+      "doubanRating": "9.6"
+    },
+    {
+      "doubanRank": 3,
+      "doubanId": "1292720",
+      "tmdbId": 13,
+      "imdbId": "tt0109830",
+      "title": "阿甘正传",
+      "originalTitle": "Forrest Gump",
+      "year": "1994",
+      "doubanRating": "9.5"
+    },
+    {
+      "doubanRank": 4,
+      "doubanId": "1292722",
+      "tmdbId": 597,
+      "imdbId": "tt0120338",
+      "title": "泰坦尼克号",
+      "originalTitle": "Titanic",
+      "year": "1997",
+      "doubanRating": "9.5"
+    },
+    {
+      "doubanRank": 5,
+      "doubanId": "1291561",
+      "tmdbId": 129,
+      "imdbId": "tt0245429",
+      "title": "千与千寻",
+      "originalTitle": "Spirited Away",
+      "year": "2001",
+      "doubanRating": "9.4"
+    },
+    {
+      "doubanRank": 6,
+      "doubanId": "1292063",
+      "tmdbId": 637,
+      "imdbId": "tt0118799",
+      "title": "美丽人生",
+      "originalTitle": "Life Is Beautiful",
+      "year": "1997",
+      "doubanRating": "9.5"
+    },
+    {
+      "doubanRank": 7,
+      "doubanId": "1291549",
+      "tmdbId": 101,
+      "imdbId": "tt0110413",
+      "title": "这个杀手不太冷",
+      "originalTitle": "Léon: The Professional",
+      "year": "1994",
+      "doubanRating": "9.4"
+    },
+    {
+      "doubanRank": 8,
+      "doubanId": "1296141",
+      "tmdbId": 155,
+      "imdbId": "tt0468569",
+      "title": "蝙蝠侠：黑暗骑士",
+      "originalTitle": "The Dark Knight",
+      "year": "2008",
+      "doubanRating": "9.2"
+    },
+    {
+      "doubanRank": 9,
+      "doubanId": "1292213",
+      "tmdbId": 122,
+      "imdbId": "tt0167260",
+      "title": "指环王3：王者无敌",
+      "originalTitle": "The Lord of the Rings: The Return of the King",
+      "year": "2003",
+      "doubanRating": "9.3"
+    },
+    {
+      "doubanRank": 10,
+      "doubanId": "1291560",
+      "tmdbId": 424,
+      "imdbId": "tt0108052",
+      "title": "辛德勒的名单",
+      "originalTitle": "Schindler's List",
+      "year": "1993",
+      "doubanRating": "9.5"
+    },
+    {
+      "doubanRank": 11,
+      "doubanId": "1292001",
+      "tmdbId": 550,
+      "imdbId": "tt0137523",
+      "title": "搏击俱乐部",
+      "originalTitle": "Fight Club",
+      "year": "1999",
+      "doubanRating": "9.0"
+    },
+    {
+      "doubanRank": 12,
+      "doubanId": "1291548",
+      "tmdbId": 1891,
+      "imdbId": "tt0080684",
+      "title": "星球大战2：帝国反击战",
+      "originalTitle": "Star Wars: Episode V - The Empire Strikes Back",
+      "year": "1980",
+      "doubanRating": "9.3"
+    },
+    {
+      "doubanRank": 13,
+      "doubanId": "1292224",
+      "tmdbId": 27205,
+      "imdbId": "tt1375666",
+      "title": "盗梦空间",
+      "originalTitle": "Inception",
+      "year": "2010",
+      "doubanRating": "9.4"
+    },
+    {
+      "doubanRank": 14,
+      "doubanId": "1292223",
+      "tmdbId": 20453,
+      "imdbId": "tt0120731",
+      "title": "海上钢琴师",
+      "originalTitle": "The Legend of 1900",
+      "year": "1998",
+      "doubanRating": "9.3"
+    },
+    {
+      "doubanRank": 15,
+      "doubanId": "1292215",
+      "tmdbId": 121,
+      "imdbId": "tt0167261",
+      "title": "指环王2：双塔奇兵",
+      "originalTitle": "The Lord of the Rings: The Two Towers",
+      "year": "2002",
+      "doubanRating": "9.2"
+    },
+    {
+      "doubanRank": 16,
+      "doubanId": "1291571",
+      "tmdbId": 37165,
+      "imdbId": "tt0120382",
+      "title": "楚门的世界",
+      "originalTitle": "The Truman Show",
+      "year": "1998",
+      "doubanRating": "9.4"
+    },
+    {
+      "doubanRank": 17,
+      "doubanId": "1292214",
+      "tmdbId": 120,
+      "imdbId": "tt0120737",
+      "title": "指环王1：护戒使者",
+      "originalTitle": "The Lord of the Rings: The Fellowship of the Ring",
+      "year": "2001",
+      "doubanRating": "9.1"
+    },
+    {
+      "doubanRank": 18,
+      "doubanId": "1292221",
+      "tmdbId": 157336,
+      "imdbId": "tt0816692",
+      "title": "星际穿越",
+      "originalTitle": "Interstellar",
+      "year": "2014",
+      "doubanRating": "9.4"
+    },
+    {
+      "doubanRank": 19,
+      "doubanId": "1292263",
+      "tmdbId": 372058,
+      "imdbId": "tt5311514",
+      "title": "你的名字。",
+      "originalTitle": "Your Name.",
+      "year": "2016",
+      "doubanRating": "8.5"
+    },
+    {
+      "doubanRank": 20,
+      "doubanId": "1292262",
+      "tmdbId": 289,
+      "imdbId": "tt0050083",
+      "title": "十二怒汉",
+      "originalTitle": "12 Angry Men",
+      "year": "1957",
+      "doubanRating": "9.4"
+    },
+    {
+      "doubanRank": 21,
+      "doubanId": "1292250",
+      "tmdbId": 429,
+      "imdbId": "tt0034583",
+      "title": "卡萨布兰卡",
+      "originalTitle": "Casablanca",
+      "year": "1942",
+      "doubanRating": "8.7"
+    },
+    {
+      "doubanRank": 22,
+      "doubanId": "1292220",
+      "tmdbId": 857,
+      "imdbId": "tt0120815",
+      "title": "拯救大兵瑞恩",
+      "originalTitle": "Saving Private Ryan",
+      "year": "1998",
+      "doubanRating": "9.1"
+    },
+    {
+      "doubanRank": 23,
+      "doubanId": "1292259",
+      "tmdbId": 510,
+      "imdbId": "tt0073486",
+      "title": "飞越疯人院",
+      "originalTitle": "One Flew Over the Cuckoo's Nest",
+      "year": "1975",
+      "doubanRating": "9.1"
+    },
+    {
+      "doubanRank": 24,
+      "doubanId": "1292261",
+      "tmdbId": 770,
+      "imdbId": "tt0031381",
+      "title": "乱世佳人",
+      "originalTitle": "Gone with the Wind",
+      "year": "1939",
+      "doubanRating": "9.3"
+    },
+    {
+      "doubanRank": 25,
+      "doubanId": "1292260",
+      "tmdbId": 346,
+      "imdbId": "tt0054215",
+      "title": "惊魂记",
+      "originalTitle": "Psycho",
+      "year": "1960",
+      "doubanRating": "9.0"
+    },
+    {
+      "doubanRank": 26,
+      "doubanId": "1292264",
+      "tmdbId": 105,
+      "imdbId": "tt0033467",
+      "title": "公民凯恩",
+      "originalTitle": "Citizen Kane",
+      "year": "1941",
+      "doubanRating": "8.8"
+    },
+    {
+      "doubanRank": 27,
+      "doubanId": "1292265",
+      "tmdbId": 620,
+      "imdbId": "tt0056058",
+      "title": "阿拉伯的劳伦斯",
+      "originalTitle": "Lawrence of Arabia",
+      "year": "1962",
+      "doubanRating": "8.7"
+    },
+    {
+      "doubanRank": 28,
+      "doubanId": "1292257",
+      "tmdbId": 8358,
+      "imdbId": "tt0047478",
+      "title": "七武士",
+      "originalTitle": "Seven Samurai",
+      "year": "1954",
+      "doubanRating": "9.3"
+    },
+    {
+      "doubanRank": 29,
+      "doubanId": "1292258",
+      "tmdbId": 3082,
+      "imdbId": "tt0047396",
+      "title": "后窗",
+      "originalTitle": "Rear Window",
+      "year": "1954",
+      "doubanRating": "8.7"
+    },
+    {
+      "doubanRank": 30,
+      "doubanId": "1292248",
+      "tmdbId": 7978,
+      "imdbId": "tt0021749",
+      "title": "城市之光",
+      "originalTitle": "City Lights",
+      "year": "1931",
+      "doubanRating": "9.3"
+    },
+    {
+      "doubanRank": 31,
+      "doubanId": "1292247",
+      "tmdbId": 962,
+      "imdbId": "tt0017925",
+      "title": "将军号",
+      "originalTitle": "The General",
+      "year": "1926",
+      "doubanRating": "8.9"
+    },
+    {
+      "doubanRank": 32,
+      "doubanId": "1292246",
+      "tmdbId": 9623,
+      "imdbId": "tt0015864",
+      "title": "淘金记",
+      "originalTitle": "The Gold Rush",
+      "year": "1925",
+      "doubanRating": "9.2"
+    },
+    {
+      "doubanRank": 33,
+      "doubanId": "1292253",
+      "tmdbId": 872,
+      "imdbId": "tt0045152",
+      "title": "雨中曲",
+      "originalTitle": "Singin' in the Rain",
+      "year": "1952",
+      "doubanRating": "9.1"
+    },
+    {
+      "doubanRank": 34,
+      "doubanId": "1292251",
+      "tmdbId": 1585,
+      "imdbId": "tt0038650",
+      "title": "生活多美好",
+      "originalTitle": "It's a Wonderful Life",
+      "year": "1946",
+      "doubanRating": "9.3"
+    },
+    {
+      "doubanRank": 35,
+      "doubanId": "1292255",
+      "tmdbId": 301,
+      "imdbId": "tt0040522",
+      "title": "摩登时代",
+      "originalTitle": "Modern Times",
+      "year": "1936",
+      "doubanRating": "9.3"
+    },
+    {
+      "doubanRank": 36,
+      "doubanId": "1292252",
+      "tmdbId": 16619,
+      "imdbId": "tt0040897",
+      "title": "日落大道",
+      "originalTitle": "Sunset Boulevard",
+      "year": "1950",
+      "doubanRating": "8.8"
+    },
+    {
+      "doubanRank": 37,
+      "doubanId": "1292256",
+      "tmdbId": 593,
+      "imdbId": "tt0032553",
+      "title": "教父2",
+      "originalTitle": "The Godfather Part II",
+      "year": "1974",
+      "doubanRating": "9.3"
+    },
+    {
+      "doubanRank": 38,
+      "doubanId": "1292254",
+      "tmdbId": 238,
+      "imdbId": "tt0068646",
+      "title": "教父",
+      "originalTitle": "The Godfather",
+      "year": "1972",
+      "doubanRating": "9.3"
+    },
+    {
+      "doubanRank": 39,
+      "doubanId": "1292266",
+      "tmdbId": 539,
+      "imdbId": "tt0056592",
+      "title": "奇爱博士",
+      "originalTitle": "Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb",
+      "year": "1964",
+      "doubanRating": "8.9"
+    },
+    {
+      "doubanRank": 40,
+      "doubanId": "1292267",
+      "tmdbId": 694,
+      "imdbId": "tt0057012",
+      "title": "西区故事",
+      "originalTitle": "West Side Story",
+      "year": "1961",
+      "doubanRating": "7.6"
+    },
+    {
+      "doubanRank": 41,
+      "doubanId": "1292268",
+      "tmdbId": 583,
+      "imdbId": "tt0056172",
+      "title": "宾虚",
+      "originalTitle": "Ben-Hur",
+      "year": "1959",
+      "doubanRating": "8.7"
+    },
+    {
+      "doubanRank": 42,
+      "doubanId": "1292269",
+      "tmdbId": 574,
+      "imdbId": "tt0055031",
+      "title": "西北偏北",
+      "originalTitle": "North by Northwest",
+      "year": "1959",
+      "doubanRating": "8.3"
+    },
+    {
+      "doubanRank": 43,
+      "doubanId": "1292270",
+      "tmdbId": 567,
+      "imdbId": "tt0053604",
+      "title": "十二怒汉（电视版）",
+      "originalTitle": "12 Angry Men",
+      "year": "1954",
+      "doubanRating": "9.4"
+    },
+    {
+      "doubanRank": 44,
+      "doubanId": "1292271",
+      "tmdbId": 1164,
+      "imdbId": "tt0042192",
+      "title": "日落黄沙",
+      "originalTitle": "The Wild Bunch",
+      "year": "1969",
+      "doubanRating": "8.6"
+    },
+    {
+      "doubanRank": 45,
+      "doubanId": "1292272",
+      "tmdbId": 1079,
+      "imdbId": "tt0042876",
+      "title": "罗生门",
+      "originalTitle": "Rashomon",
+      "year": "1950",
+      "doubanRating": "8.8"
+    },
+    {
+      "doubanRank": 46,
+      "doubanId": "1292273",
+      "tmdbId": 599,
+      "imdbId": "tt0053125",
+      "title": "西北偏北",
+      "originalTitle": "Vertigo",
+      "year": "1958",
+      "doubanRating": "8.4"
+    },
+    {
+      "doubanRank": 47,
+      "doubanId": "1292274",
+      "tmdbId": 703,
+      "imdbId": "tt0059578",
+      "title": "亲爱的",
+      "originalTitle": "Darling",
+      "year": "1965",
+      "doubanRating": "7.6"
+    },
+    {
+      "doubanRank": 48,
+      "doubanId": "1292275",
+      "tmdbId": 1051,
+      "imdbId": "tt0042041",
+      "title": "涡流",
+      "originalTitle": "Whirlpool",
+      "year": "1949",
+      "doubanRating": "6.8"
+    },
+    {
+      "doubanRank": 49,
+      "doubanId": "1292276",
+      "tmdbId": 998,
+      "imdbId": "tt0041546",
+      "title": "仁心与冠冕",
+      "originalTitle": "Kind Hearts and Coronets",
+      "year": "1949",
+      "doubanRating": "8.1"
+    },
+    {
+      "doubanRank": 50,
+      "doubanId": "1292277",
+      "tmdbId": 901,
+      "imdbId": "tt0040897",
+      "title": "第三人",
+      "originalTitle": "The Third Man",
+      "year": "1949",
+      "doubanRating": "8.2"
+    }
+  ]
+}

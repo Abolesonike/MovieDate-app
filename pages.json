@@ -47,6 +47,20 @@
 				"navigationBarTitleText": "待看",
 				"enablePullDownRefresh": true
 			}
+		},
+		{
+			"path": "pages/douban-top250/douban-top250",
+			"style": {
+				"navigationBarTitleText": "豆瓣Top250",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/poster-wall/poster-wall",
+			"style": {
+				"navigationBarTitleText": "海报墙",
+				"enablePullDownRefresh": false
+			}
 		}
 	],
 	"globalStyle": {
@@ -72,6 +86,12 @@
 				"text": "电影",
 				"iconPath": "static/icons/dianying-b.svg",
 				"selectedIconPath": "static/icons/dianying.svg"
+			},
+			{
+				"pagePath": "pages/poster-wall/poster-wall",
+				"text": "海报墙",
+				"iconPath": "static/icons/haibao-b.svg",
+				"selectedIconPath": "static/icons/haibao.svg"
 			},
 			{
 				"pagePath": "pages/me/me",
