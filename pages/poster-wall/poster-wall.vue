@@ -9,8 +9,8 @@
     <!-- 海报墙分类列表 -->
     <view class="wall-list">
       <!-- 豆瓣Top250 -->
-      <!-- <view class="wall-card douban" disabled @click="goToDoubanTop250"> -->
-      <view class="wall-card douban disabled">
+      <view class="wall-card douban" disabled @click="goToDoubanTop250">
+      <!-- <view class="wall-card douban disabled"> -->
         <view class="wall-bg">
           <view class="wall-gradient"></view>
         </view>

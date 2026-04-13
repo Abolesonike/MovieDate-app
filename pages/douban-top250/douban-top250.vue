@@ -1,98 +1,70 @@
 <template>
   <view class="container">
-    <!-- 统计信息 -->
-    <view class="stats-header">
-      <view class="stats-card">
-        <text class="stats-title">豆瓣Top250观影进度</text>
-        <view class="stats-numbers">
-          <text class="stats-watched">{{ stats.watchedCount }}</text>
-          <text class="stats-separator">/</text>
-          <text class="stats-total">{{ stats.total }}</text>
-        </view>
-        <view class="progress-bar">
-          <view class="progress-fill" :style="{ width: stats.percentage + '%' }"></view>
-        </view>
-        <text class="stats-percentage">已完成 {{ stats.percentage }}%</text>
-      </view>
-    </view>
-
-    <!-- 标签切换 -->
-    <view class="tab-bar">
-      <view
-        class="tab-item"
-        :class="{ active: currentTab === 'watched' }"
-        @click="switchTab('watched')"
-      >
-        <text>已看({{ watchedMovies.length }})</text>
-      </view>
-      <view
-        class="tab-item"
-        :class="{ active: currentTab === 'unwatched' }"
-        @click="switchTab('unwatched')"
-      >
-        <text>未看({{ unwatchedMovies.length }})</text>
-      </view>
-      <view
-        class="tab-item"
-        :class="{ active: currentTab === 'all' }"
-        @click="switchTab('all')"
-      >
-        <text>全部</text>
+    <!-- 顶部标题区 -->
+    <view class="header">
+      <view class="header-card">
+        <text class="header-title">豆瓣 Top250 观影海报墙</text>
+        <text class="header-subtitle">已看 {{ stats.watchedCount }} / {{ stats.total }}</text>
       </view>
     </view>
 
     <!-- 海报墙 -->
-    <scroll-view class="poster-wall" scroll-y @scrolltolower="loadMore">
-      <view class="poster-grid">
-        <view
-          v-for="movie in displayMovies"
-          :key="movie.tmdbId"
-          class="poster-item"
-          :class="{ unwatched: !movie.isWatched }"
-          @click="goToMovieDetail(movie)"
-        >
-          <!-- 排名标签 -->
-          <view class="rank-badge" :class="{ top10: movie.doubanRank <= 10 }">
-            <text>{{ movie.doubanRank }}</text>
-          </view>
+    <scroll-view class="wall-scroll" scroll-y>
+      <view v-if="watchedMovies.length === 0 && !loading" class="empty-wall">
+        <text class="empty-icon">🎬</text>
+        <text class="empty-title">还没有看过任何电影</text>
+        <text class="empty-subtitle">去标记一些已看电影，打造你的专属海报墙</text>
+      </view>
 
-          <!-- 海报图片 -->
+      <view v-else class="wall-grid">
+        <view
+          v-for="movie in watchedMovies"
+          :key="movie.tmdbId"
+          class="wall-item"
+        >
           <image
-            class="poster-image"
+            class="wall-poster"
             :src="movie.poster || '/static/default-poster.png'"
             mode="aspectFill"
             lazy-load
           />
-
-          <!-- 未看遮罩 -->
-          <view v-if="!movie.isWatched" class="unwatched-mask">
-            <text class="lock-icon">🔒</text>
-          </view>
-
-          <!-- 电影信息 -->
-          <view class="movie-info">
-            <text class="movie-title">{{ movie.title }}</text>
-            <view class="movie-meta">
-              <text class="movie-year">{{ movie.year }}</text>
-              <text class="movie-rating">⭐ {{ movie.doubanRating }}</text>
-            </view>
-          </view>
+          <text class="wall-title">{{ movie.title }}</text>
         </view>
       </view>
 
-      <!-- 加载状态 -->
-      <view v-if="loading" class="loading">
-        <text>加载中...</text>
-      </view>
-
-      <!-- 空状态 -->
-      <view v-if="displayMovies.length === 0 && !loading" class="empty-state">
-        <text class="empty-text">暂无数据</text>
-        <text v-if="currentTab === 'watched'" class="empty-hint">
-          快去标记你看过的电影吧
-        </text>
+      <view v-if="loading" class="loading-tip">
+        <text>正在加载海报...</text>
       </view>
     </scroll-view>
+
+    <!-- 导出按钮 -->
+    <view v-if="watchedMovies.length > 0" class="fab" @click="onExport">
+      <text class="fab-icon">📷</text>
+      <text class="fab-text">导出图片</text>
+    </view>
+
+    <!-- 隐藏 canvas -->
+    <canvas canvas-id="shareCanvas" class="share-canvas"></canvas>
+
+    <!-- 预览弹窗 -->
+    <view v-if="previewImage" class="preview-mask" @click="closePreview">
+      <view class="preview-content" @click.stop>
+        <image
+          class="preview-img"
+          :src="previewImage"
+          mode="widthFix"
+          show-menu-by-longpress
+        />
+        <view class="preview-actions">
+          <view class="preview-btn primary" @click="saveImage">
+            <text>保存到相册</text>
+          </view>
+          <view class="preview-btn" @click="closePreview">
+            <text>关闭</text>
+          </view>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -100,35 +72,18 @@
 import doubanMapping from '@/utils/doubanMapping.js'
 import tmdbApi from '@/utils/tmdb.js'
 import storage from '@/utils/storage.js'
+import { generatePosterWallImage } from '@/utils/posterShare.js'
 
 export default {
   data() {
     return {
-      currentTab: 'watched',
       watchedMovies: [],
-      unwatchedMovies: [],
-      allMovies: [],
       loading: false,
       stats: {
         total: 250,
-        watchedCount: 0,
-        unwatchedCount: 250,
-        percentage: 0
-      }
-    }
-  },
-
-  computed: {
-    displayMovies() {
-      switch (this.currentTab) {
-        case 'watched':
-          return this.watchedMovies
-        case 'unwatched':
-          return this.unwatchedMovies
-        case 'all':
-        default:
-          return this.allMovies
-      }
+        watchedCount: 0
+      },
+      previewImage: ''
     }
   },
 
@@ -139,7 +94,6 @@ export default {
   methods: {
     async loadData() {
       this.loading = true
-
       try {
         // 1. 初始化映射数据
         await doubanMapping.init()
@@ -151,20 +105,15 @@ export default {
           .map(([id]) => parseInt(id))
 
         // 3. 获取观影统计
-        this.stats = doubanMapping.getWatchStats(watchedIds)
+        const stats = doubanMapping.getWatchStats(watchedIds)
+        this.stats = {
+          total: stats.total,
+          watchedCount: stats.watchedCount
+        }
 
         // 4. 获取已看电影详情（带豆瓣排名信息）
         const watchedTop250 = doubanMapping.getWatchedTop250(watchedIds)
-        this.watchedMovies = await this.fetchMovieDetails(watchedTop250, true)
-
-        // 5. 获取未看电影列表
-        const unwatchedTop250 = doubanMapping.getUnwatchedTop250(watchedIds)
-        this.unwatchedMovies = await this.fetchMovieDetails(unwatchedTop250.slice(0, 20), false)
-
-        // 6. 合并全部列表
-        this.allMovies = [...this.watchedMovies, ...this.unwatchedMovies]
-          .sort((a, b) => a.doubanRank - b.doubanRank)
-
+        this.watchedMovies = await this.fetchMovieDetails(watchedTop250)
       } catch (error) {
         console.error('[DoubanTop250] 加载数据失败:', error)
         uni.showToast({
@@ -176,63 +125,73 @@ export default {
       }
     },
 
-    /**
-     * 获取电影详情
-     */
-    async fetchMovieDetails(doubanMovies, isWatched) {
+    async fetchMovieDetails(doubanMovies) {
       if (!doubanMovies || doubanMovies.length === 0) return []
 
       const movies = []
-
       for (const doubanMovie of doubanMovies) {
         try {
-          // 从TMDB获取电影详情
           const tmdbDetail = await tmdbApi.getMovieDetails(doubanMovie.tmdbId)
-
           if (tmdbDetail) {
             movies.push({
               ...doubanMovie,
-              poster: tmdbDetail.poster,
-              isWatched,
-              tmdbRating: tmdbDetail.rating
+              poster: tmdbDetail.poster
             })
           }
         } catch (error) {
           console.error(`[DoubanTop250] 获取电影详情失败: ${doubanMovie.title}`, error)
-          // 即使获取失败也显示豆瓣基本信息
           movies.push({
             ...doubanMovie,
-            poster: '',
-            isWatched
+            poster: ''
           })
         }
       }
-
       return movies
     },
 
-    switchTab(tab) {
-      this.currentTab = tab
-    },
-
-    goToMovieDetail(movie) {
-      if (!movie.isWatched) {
-        uni.showToast({
-          title: '标记为已看后可查看详情',
-          icon: 'none'
+    async onExport() {
+      if (this.watchedMovies.length === 0) return
+      uni.showLoading({ title: '生成中...', mask: true })
+      try {
+        const path = await generatePosterWallImage({
+          title: '豆瓣 Top250 观影海报墙',
+          subtitle: `已看 ${this.stats.watchedCount} / ${this.stats.total}`,
+          movies: this.watchedMovies.map(m => ({
+            poster: m.poster,
+            title: m.title
+          })),
+          canvasId: 'shareCanvas',
+          componentThis: this
         })
-        return
+        this.previewImage = path
+      } catch (error) {
+        console.error('生成分享图失败:', error)
+        uni.showToast({ title: '生成失败', icon: 'none' })
+      } finally {
+        uni.hideLoading()
       }
-
-      uni.navigateTo({
-        url: `/pages/movie-detail/movie-detail?id=${movie.tmdbId}`
-      })
     },
 
-    loadMore() {
-      // 分页加载更多未看电影
-      if (this.currentTab === 'unwatched') {
-        // TODO: 实现分页加载
+    closePreview() {
+      this.previewImage = ''
+    },
+
+    async saveImage() {
+      try {
+        await uni.saveImageToPhotosAlbum({ filePath: this.previewImage })
+        uni.showToast({ title: '已保存到相册', icon: 'success' })
+      } catch (e) {
+        if (e.errMsg && e.errMsg.includes('auth deny')) {
+          uni.showModal({
+            title: '需要授权',
+            content: '请允许保存图片到相册',
+            success: (res) => {
+              if (res.confirm) uni.openSetting()
+            }
+          })
+        } else {
+          uni.showToast({ title: '保存失败', icon: 'none' })
+        }
       }
     }
   }
@@ -242,232 +201,196 @@ export default {
 <style lang="scss" scoped>
 .container {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 统计头部 */
-.stats-header {
+/* 顶部标题区 */
+.header {
   padding: 30rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.stats-card {
-  background: rgba(255, 255, 255, 0.95);
+.header-card {
+  background: #fff;
   border-radius: 20rpx;
   padding: 40rpx;
   text-align: center;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
 }
 
-.stats-title {
-  font-size: 28rpx;
-  color: #666;
-  margin-bottom: 20rpx;
+.header-title {
   display: block;
-}
-
-.stats-numbers {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  margin-bottom: 20rpx;
-}
-
-.stats-watched {
-  font-size: 72rpx;
-  font-weight: bold;
-  color: #667eea;
-}
-
-.stats-separator {
-  font-size: 48rpx;
-  color: #999;
-  margin: 0 10rpx;
-}
-
-.stats-total {
-  font-size: 48rpx;
-  color: #666;
-}
-
-.progress-bar {
-  height: 16rpx;
-  background: #e0e0e0;
-  border-radius: 8rpx;
-  overflow: hidden;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1a1a1a;
   margin-bottom: 16rpx;
 }
 
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-  border-radius: 8rpx;
-  transition: width 0.5s ease;
-}
-
-.stats-percentage {
-  font-size: 24rpx;
-  color: #999;
-}
-
-/* 标签栏 */
-.tab-bar {
-  display: flex;
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
-}
-
-.tab-item {
-  flex: 1;
-  text-align: center;
-  padding: 30rpx 0;
-  font-size: 28rpx;
+.header-subtitle {
+  display: block;
+  font-size: 26rpx;
   color: #666;
-  position: relative;
-
-  &.active {
-    color: #667eea;
-    font-weight: bold;
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60rpx;
-      height: 4rpx;
-      background: #667eea;
-      border-radius: 2rpx;
-    }
-  }
 }
 
 /* 海报墙 */
-.poster-wall {
-  height: calc(100vh - 400rpx);
-  padding: 20rpx;
+.wall-scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 0 20rpx 20rpx;
 }
 
-.poster-grid {
+.wall-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 20rpx;
+  gap: 12rpx;
 }
 
-.poster-item {
-  width: calc(33.333% - 14rpx);
-  background: #fff;
-  border-radius: 12rpx;
-  overflow: hidden;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
-  position: relative;
-
-  &.unwatched {
-    opacity: 0.7;
-  }
-}
-
-.rank-badge {
-  position: absolute;
-  top: 10rpx;
-  left: 10rpx;
-  width: 48rpx;
-  height: 48rpx;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 50%;
+.wall-item {
+  width: calc(20% - 10rpx);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  z-index: 2;
-
-  text {
-    color: #fff;
-    font-size: 24rpx;
-    font-weight: bold;
-  }
-
-  &.top10 {
-    background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
-  }
 }
 
-.poster-image {
+.wall-poster {
   width: 100%;
-  height: 280rpx;
-  background: #f0f0f0;
+  height: 180rpx;
+  border-radius: 8rpx;
+  background: #e0e0e0;
 }
 
-.unwatched-mask {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 80rpx;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.lock-icon {
-  font-size: 48rpx;
-}
-
-.movie-info {
-  padding: 16rpx;
-}
-
-.movie-title {
-  font-size: 26rpx;
+.wall-title {
+  margin-top: 8rpx;
+  font-size: 20rpx;
   color: #333;
-  font-weight: 500;
-  display: block;
+  text-align: center;
+  width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 8rpx;
-}
-
-.movie-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.movie-year {
-  font-size: 22rpx;
-  color: #999;
-}
-
-.movie-rating {
-  font-size: 22rpx;
-  color: #ff9800;
-  font-weight: bold;
-}
-
-/* 加载状态 */
-.loading {
-  text-align: center;
-  padding: 40rpx;
-  color: #999;
-  font-size: 28rpx;
 }
 
 /* 空状态 */
-.empty-state {
-  text-align: center;
-  padding: 100rpx 40rpx;
+.empty-wall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 40rpx;
 }
 
-.empty-text {
+.empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 30rpx;
+}
+
+.empty-title {
   font-size: 32rpx;
-  color: #999;
-  display: block;
-  margin-bottom: 20rpx;
+  color: #666;
+  margin-bottom: 16rpx;
 }
 
-.empty-hint {
+.empty-subtitle {
   font-size: 26rpx;
-  color: #bbb;
+  color: #999;
+  text-align: center;
+}
+
+.loading-tip {
+  text-align: center;
+  padding: 40rpx 0;
+  color: #999;
+  font-size: 26rpx;
+}
+
+/* 导出按钮 */
+.fab {
+  position: fixed;
+  right: 30rpx;
+  bottom: 60rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 60rpx;
+  padding: 20rpx 34rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 8rpx 30rpx rgba(102, 126, 234, 0.35);
+  z-index: 100;
+}
+
+.fab-icon {
+  font-size: 32rpx;
+  margin-right: 10rpx;
+}
+
+.fab-text {
+  font-size: 28rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* 隐藏 canvas */
+.share-canvas {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 750px;
+  height: 15000px;
+  pointer-events: none;
+}
+
+/* 预览弹窗 */
+.preview-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 40rpx;
+}
+
+.preview-content {
+  width: 100%;
+  max-width: 640rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  padding: 20rpx;
+}
+
+.preview-img {
+  width: 100%;
+  border-radius: 12rpx;
+  display: block;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.preview-btn {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx 0;
+  border-radius: 12rpx;
+  background: #f0f0f0;
+
+  text {
+    font-size: 28rpx;
+    color: #666;
+  }
+
+  &.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+    text {
+      color: #fff;
+      font-weight: 600;
+    }
+  }
 }
 </style>

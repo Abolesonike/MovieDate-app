@@ -1,30 +1,10 @@
 <template>
   <view class="container">
-    <!-- 头部统计 -->
+    <!-- 顶部标题区 -->
     <view class="header">
-      <view class="header-bg"></view>
-      <view class="header-glow"></view>
-      <view class="header-content">
-        <text class="badge">TMDB TOP 250</text>
-        <view class="stats-row">
-          <view class="stat-block">
-            <text class="stat-num">{{ stats.watchedCount }}</text>
-            <text class="stat-label">已看</text>
-          </view>
-          <view class="stat-divider"></view>
-          <view class="stat-block">
-            <text class="stat-num">{{ stats.total }}</text>
-            <text class="stat-label">总计</text>
-          </view>
-          <view class="stat-divider"></view>
-          <view class="stat-block">
-            <text class="stat-num">{{ stats.percentage }}%</text>
-            <text class="stat-label">完成度</text>
-          </view>
-        </view>
-        <view class="progress-track">
-          <view class="progress-fill" :style="{ width: stats.percentage + '%' }"></view>
-        </view>
+      <view class="header-card">
+        <text class="header-title">TMDB Top250 观影海报墙</text>
+        <text class="header-subtitle">已看 {{ stats.watchedCount }} / {{ stats.total }}</text>
       </view>
     </view>
 
@@ -37,14 +17,19 @@
       </view>
 
       <view v-else class="wall-grid">
-        <image
+        <view
           v-for="movie in watchedMovies"
           :key="movie.id"
-          class="wall-poster"
-          :src="movie.poster || '/static/default-poster.png'"
-          mode="aspectFill"
-          lazy-load
-        />
+          class="wall-item"
+        >
+          <image
+            class="wall-poster"
+            :src="movie.poster || '/static/default-poster.png'"
+            mode="aspectFill"
+            lazy-load
+          />
+          <text class="wall-title">{{ movie.title }}</text>
+        </view>
       </view>
 
       <view v-if="loading" class="loading-tip">
@@ -55,7 +40,7 @@
     <!-- 导出按钮 -->
     <view v-if="watchedMovies.length > 0" class="fab" @click="onExport">
       <text class="fab-icon">📷</text>
-      <text class="fab-text">生成分享图</text>
+      <text class="fab-text">导出图片</text>
     </view>
 
     <!-- 隐藏 canvas -->
@@ -95,8 +80,7 @@ export default {
       loading: false,
       stats: {
         total: 250,
-        watchedCount: 0,
-        percentage: 0
+        watchedCount: 0
       },
       previewImage: ''
     }
@@ -149,14 +133,8 @@ export default {
     },
 
     updateStats() {
-      const watchedCount = this.watchedMovies.length
-      const total = 250
-      this.stats = {
-        total,
-        watchedCount,
-        percentage: Math.min(100, Math.floor((watchedCount / total) * 100))
-      }
-      uni.setStorageSync('tmdb_top250_watched_count', watchedCount)
+      this.stats.watchedCount = this.watchedMovies.length
+      uni.setStorageSync('tmdb_top250_watched_count', this.stats.watchedCount)
     },
 
     async onExport() {
@@ -164,14 +142,14 @@ export default {
       uni.showLoading({ title: '生成中...', mask: true })
       try {
         const path = await generatePosterWallImage({
-          title: 'TMDB TOP 250',
-          subtitle: 'MY WATCHED COLLECTION',
-          watchedCount: this.stats.watchedCount,
-          total: this.stats.total,
-          percentage: this.stats.percentage,
-          posters: this.watchedMovies.map(m => m.poster),
-          themeColor: '#f39c12',
-          themeColorEnd: '#e67e22'
+          title: 'TMDB Top250 观影海报墙',
+          subtitle: `已看 ${this.stats.watchedCount} / ${this.stats.total}`,
+          movies: this.watchedMovies.map(m => ({
+            poster: m.poster,
+            title: m.title
+          })),
+          canvasId: 'shareCanvas',
+          componentThis: this
         })
         this.previewImage = path
       } catch (error) {
@@ -211,124 +189,77 @@ export default {
 <style lang="scss" scoped>
 .container {
   min-height: 100vh;
-  background: #0b0c0f;
+  background: #f8f9fa;
   display: flex;
   flex-direction: column;
 }
 
-/* 头部 */
+/* 顶部标题区 */
 .header {
-  position: relative;
-  padding: 60rpx 40rpx 50rpx;
-  overflow: hidden;
+  padding: 30rpx;
 }
 
-.header-bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, #f39c12 0%, #e67e22 60%, #d35400 100%);
-}
-
-.header-glow {
-  position: absolute;
-  top: -100rpx;
-  right: -100rpx;
-  width: 400rpx;
-  height: 400rpx;
-  background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%);
-}
-
-.header-content {
-  position: relative;
-  z-index: 1;
-}
-
-.badge {
-  display: inline-block;
-  font-size: 22rpx;
-  color: rgba(255,255,255,0.9);
-  letter-spacing: 4rpx;
-  border: 1rpx solid rgba(255,255,255,0.35);
-  padding: 8rpx 20rpx;
-  border-radius: 30rpx;
-  margin-bottom: 30rpx;
-}
-
-.stats-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 30rpx;
-}
-
-.stat-block {
-  flex: 1;
-  text-align: center;
-}
-
-.stat-num {
-  display: block;
-  font-size: 64rpx;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1;
-  margin-bottom: 10rpx;
-}
-
-.stat-label {
-  display: block;
-  font-size: 24rpx;
-  color: rgba(255,255,255,0.75);
-}
-
-.stat-divider {
-  width: 1rpx;
-  height: 60rpx;
-  background: rgba(255,255,255,0.25);
-}
-
-.progress-track {
-  height: 14rpx;
-  background: rgba(0,0,0,0.25);
-  border-radius: 8rpx;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
+.header-card {
   background: #fff;
-  border-radius: 8rpx;
-  transition: width 0.8s ease;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  text-align: center;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
 }
 
-/* 海报墙滚动区 */
+.header-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 16rpx;
+}
+
+.header-subtitle {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* 海报墙 */
 .wall-scroll {
   flex: 1;
   min-height: 0;
+  padding: 0 20rpx 20rpx;
 }
 
 .wall-grid {
   display: flex;
   flex-wrap: wrap;
-  padding: 16rpx;
+  gap: 12rpx;
+}
+
+.wall-item {
+  width: calc(20% - 10rpx);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .wall-poster {
-  width: calc(25% - 12rpx);
-  margin: 6rpx;
-  height: 240rpx;
-  border-radius: 10rpx;
-  background: #1a1c23;
-  opacity: 0;
-  animation: fadeIn 0.6s ease forwards;
+  width: 100%;
+  height: 180rpx;
+  border-radius: 8rpx;
+  background: #e0e0e0;
 }
 
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
+.wall-title {
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: #333;
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* 空状态 */
 .empty-wall {
   display: flex;
   flex-direction: column;
@@ -344,20 +275,20 @@ export default {
 
 .empty-title {
   font-size: 32rpx;
-  color: #ccc;
+  color: #666;
   margin-bottom: 16rpx;
 }
 
 .empty-subtitle {
   font-size: 26rpx;
-  color: #777;
+  color: #999;
   text-align: center;
 }
 
 .loading-tip {
   text-align: center;
   padding: 40rpx 0;
-  color: #666;
+  color: #999;
   font-size: 26rpx;
 }
 
@@ -366,12 +297,12 @@ export default {
   position: fixed;
   right: 30rpx;
   bottom: 60rpx;
-  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 60rpx;
   padding: 20rpx 34rpx;
   display: flex;
   align-items: center;
-  box-shadow: 0 8rpx 30rpx rgba(243, 156, 18, 0.35);
+  box-shadow: 0 8rpx 30rpx rgba(102, 126, 234, 0.35);
   z-index: 100;
 }
 
@@ -392,7 +323,7 @@ export default {
   left: -9999px;
   top: 0;
   width: 750px;
-  height: 6000px;
+  height: 15000px;
   pointer-events: none;
 }
 
@@ -411,7 +342,7 @@ export default {
 .preview-content {
   width: 100%;
   max-width: 640rpx;
-  background: #1a1c23;
+  background: #fff;
   border-radius: 20rpx;
   overflow: hidden;
   padding: 20rpx;
@@ -434,15 +365,15 @@ export default {
   text-align: center;
   padding: 24rpx 0;
   border-radius: 12rpx;
-  background: #2a2d36;
+  background: #f0f0f0;
 
   text {
     font-size: 28rpx;
-    color: #ddd;
+    color: #666;
   }
 
   &.primary {
-    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 
     text {
       color: #fff;
