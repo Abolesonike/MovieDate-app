@@ -99,6 +99,7 @@
 <script>
 import doubanMapping from '@/utils/doubanMapping.js'
 import tmdbApi from '@/utils/tmdb.js'
+import storage from '@/utils/storage.js'
 
 export default {
   data() {
@@ -144,7 +145,7 @@ export default {
         await doubanMapping.init()
 
         // 2. 获取用户已看电影列表
-        const movieStatus = uni.getStorageSync('movie_status') || {}
+        const movieStatus = storage.getAllMovieStatus()
         const watchedIds = Object.entries(movieStatus)
           .filter(([id, data]) => data.status === 'watched')
           .map(([id]) => parseInt(id))

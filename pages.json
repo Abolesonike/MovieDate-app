@@ -56,6 +56,13 @@
 			}
 		},
 		{
+			"path": "pages/tmdb-top250/tmdb-top250",
+			"style": {
+				"navigationBarTitleText": "TMDB Top250",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
 			"path": "pages/poster-wall/poster-wall",
 			"style": {
 				"navigationBarTitleText": "海报墙",

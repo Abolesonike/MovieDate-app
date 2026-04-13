@@ -1,15 +1,16 @@
 <template>
   <view class="container">
     <!-- 页面标题 -->
-    <view class="page-header">
+    <!-- <view class="page-header">
       <text class="page-title">海报墙</text>
       <text class="page-subtitle">探索经典电影收藏</text>
-    </view>
+    </view> -->
 
     <!-- 海报墙分类列表 -->
     <view class="wall-list">
       <!-- 豆瓣Top250 -->
-      <view class="wall-card douban" @click="goToDoubanTop250">
+      <!-- <view class="wall-card douban" disabled @click="goToDoubanTop250"> -->
+      <view class="wall-card douban disabled">
         <view class="wall-bg">
           <view class="wall-gradient"></view>
         </view>
@@ -25,22 +26,29 @@
               </view>
             </view>
           </view>
-          <text class="wall-arrow">›</text>
+          <!-- <text class="wall-arrow">›</text> -->
+          <view class="coming-soon">敬请期待</view>
         </view>
       </view>
 
-      <!-- 预留：IMDb Top250 -->
-      <view class="wall-card imdb disabled">
+      <!-- TMDB Top250 -->
+      <view class="wall-card tmdb" @click="goToTmdbTop250">
         <view class="wall-bg">
           <view class="wall-gradient"></view>
         </view>
         <view class="wall-content">
           <view class="wall-icon">🎬</view>
           <view class="wall-info">
-            <text class="wall-title">IMDb Top250</text>
-            <text class="wall-desc">即将上线</text>
+            <text class="wall-title">TMDB Top250</text>
+            <text class="wall-desc">全球评分最高的250部电影</text>
+            <view class="wall-progress">
+              <text class="progress-text">已看 {{ tmdbWatchedCount }}/250</text>
+              <view class="progress-bar">
+                <view class="progress-fill" :style="{ width: (tmdbWatchedCount / 250 * 100) + '%' }"></view>
+              </view>
+            </view>
           </view>
-          <view class="coming-soon">敬请期待</view>
+          <text class="wall-arrow">›</text>
         </view>
       </view>
 
@@ -79,23 +87,26 @@
 
 <script>
 import doubanMapping from '@/utils/doubanMapping.js'
+import storage from '@/utils/storage.js'
 
 export default {
   data() {
     return {
-      doubanWatchedCount: 0
+      doubanWatchedCount: 0,
+      tmdbWatchedCount: 0
     }
   },
 
   onShow() {
     this.loadDoubanStats()
+    this.loadTmdbStats()
   },
 
   methods: {
     async loadDoubanStats() {
       try {
         await doubanMapping.init()
-        const movieStatus = uni.getStorageSync('movie_status') || {}
+        const movieStatus = storage.getAllMovieStatus()
         const watchedIds = Object.entries(movieStatus)
           .filter(([id, data]) => data.status === 'watched')
           .map(([id]) => parseInt(id))
@@ -107,9 +118,20 @@ export default {
       }
     },
 
+    loadTmdbStats() {
+      const count = uni.getStorageSync('tmdb_top250_watched_count')
+      this.tmdbWatchedCount = count || 0
+    },
+
     goToDoubanTop250() {
       uni.navigateTo({
         url: '/pages/douban-top250/douban-top250'
+      })
+    },
+
+    goToTmdbTop250() {
+      uni.navigateTo({
+        url: '/pages/tmdb-top250/tmdb-top250'
       })
     }
   }
@@ -174,8 +196,8 @@ export default {
   }
 }
 
-/* IMDb卡片 - 金色主题 */
-.wall-card.imdb {
+/* TMDB卡片 - 金色主题 */
+.wall-card.tmdb {
   .wall-bg {
     background: linear-gradient(135deg, #f39c12 0%, #d68910 100%);
   }
