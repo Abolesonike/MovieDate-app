@@ -10,7 +10,6 @@
     <view class="wall-list">
       <!-- 豆瓣Top250 -->
       <view class="wall-card douban" disabled @click="goToDoubanTop250">
-      <!-- <view class="wall-card douban disabled"> -->
         <view class="wall-bg">
           <view class="wall-gradient"></view>
         </view>
@@ -26,8 +25,7 @@
               </view>
             </view>
           </view>
-          <!-- <text class="wall-arrow">›</text> -->
-          <view class="coming-soon">敬请期待</view>
+          <text class="wall-arrow">›</text>
         </view>
       </view>
 

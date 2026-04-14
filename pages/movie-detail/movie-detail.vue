@@ -84,6 +84,72 @@
       <text class="summary-text">{{ movie.summary || '暂无简介' }}</text>
     </view>
 
+    <!-- 演职人员 -->
+    <view class="credits-section" v-if="hasCredits">
+      <text class="section-title">演职人员</text>
+
+      <!-- 导演 -->
+      <view v-if="credits.directors.length" class="credit-group">
+        <text class="credit-label">导演</text>
+        <scroll-view scroll-x class="credit-scroll">
+          <view
+            v-for="p in credits.directors"
+            :key="p.id"
+            class="credit-item"
+            @click="goToPerson(p.id)"
+          >
+            <image
+              class="credit-avatar"
+              :src="p.profile || '/static/default-avatar.png'"
+              mode="aspectFill"
+            />
+            <text class="credit-name">{{ p.name }}</text>
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- 主演 -->
+      <view v-if="credits.cast.length" class="credit-group">
+        <text class="credit-label">主演</text>
+        <scroll-view scroll-x class="credit-scroll">
+          <view
+            v-for="p in credits.cast"
+            :key="p.id"
+            class="credit-item"
+            @click="goToPerson(p.id)"
+          >
+            <image
+              class="credit-avatar"
+              :src="p.profile || '/static/default-avatar.png'"
+              mode="aspectFill"
+            />
+            <text class="credit-name">{{ p.name }}</text>
+            <text class="credit-role">{{ p.role }}</text>
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- 编剧 -->
+      <view v-if="credits.writers.length" class="credit-group">
+        <text class="credit-label">编剧</text>
+        <scroll-view scroll-x class="credit-scroll">
+          <view
+            v-for="p in credits.writers"
+            :key="p.id"
+            class="credit-item"
+            @click="goToPerson(p.id)"
+          >
+            <image
+              class="credit-avatar"
+              :src="p.profile || '/static/default-avatar.png'"
+              mode="aspectFill"
+            />
+            <text class="credit-name">{{ p.name }}</text>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+
     <!-- 日历选择器 -->
     <view v-if="showCalendarPicker" class="calendar-mask" @click="showCalendarPicker = false">
       <view class="calendar-popup" @click.stop>
@@ -119,6 +185,11 @@ export default {
         genre: '',
         summary: ''
       },
+      credits: {
+        cast: [],
+        directors: [],
+        writers: []
+      },
       movieCurrentStatus: MOVIE_STATUS.UNWATCHED,
       userRating: 0,
       userReview: '',
@@ -133,6 +204,11 @@ export default {
   computed: {
     minCalendarDate() {
       return new Date()
+    },
+    hasCredits() {
+      return this.credits.cast.length > 0 ||
+        this.credits.directors.length > 0 ||
+        this.credits.writers.length > 0
     }
   },
   onLoad(options) {
@@ -171,7 +247,10 @@ export default {
   methods: {
     async loadMovieDetail(movieId) {
       try {
-        const result = await tmdbApi.getMovieDetails(movieId)
+        const [result, credits] = await Promise.all([
+          tmdbApi.getMovieDetails(movieId),
+          tmdbApi.getMovieCredits(movieId)
+        ])
         this.movie = {
           id: result.id,
           title: result.title,
@@ -181,6 +260,7 @@ export default {
           genre: result.genre,
           summary: result.summary
         }
+        this.credits = credits
       } catch (err) {
         uni.showToast({ title: '加载电影详情失败', icon: 'none' })
         console.error(err)
@@ -323,6 +403,12 @@ export default {
         [MOVIE_STATUS.WATCHED]: '已看'
       }
       return map[status] || '未看'
+    },
+
+    goToPerson(personId) {
+      uni.navigateTo({
+        url: `/pages/person-detail/person-detail?personId=${personId}`
+      })
     },
 
     formatDate(date) {
@@ -580,6 +666,72 @@ export default {
   font-size: 14px;
   color: #666;
   line-height: 1.8;
+}
+
+/* 演职人员 */
+.credits-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.credit-group {
+  margin-bottom: 16px;
+}
+
+.credit-group:last-child {
+  margin-bottom: 0;
+}
+
+.credit-label {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.credit-scroll {
+  white-space: nowrap;
+}
+
+.credit-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  width: 72px;
+  margin-right: 12px;
+  vertical-align: top;
+}
+
+.credit-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  margin-bottom: 6px;
+}
+
+.credit-name {
+  font-size: 13px;
+  color: #333;
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.credit-role {
+  font-size: 11px;
+  color: #999;
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
 }
 
 /* 日历选择器 */

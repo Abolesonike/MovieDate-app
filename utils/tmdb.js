@@ -488,6 +488,75 @@ class TMDBApi {
     })
   }
 
+  /**
+   * 获取电影演职人员
+   * @param {number} movieId - 电影 ID
+   * @returns {Promise<object>}
+   */
+  async getMovieCredits(movieId) {
+    const data = await this.request(`/movie/${movieId}/credits`)
+    return {
+      cast: (data.cast || []).slice(0, 12).map(p => ({
+        id: p.id,
+        name: p.name,
+        role: p.character,
+        profile: p.profile_path ? `${this.IMAGE_BASE_URL}${p.profile_path}` : ''
+      })),
+      directors: (data.crew || []).filter(p => p.job === 'Director').map(p => ({
+        id: p.id,
+        name: p.name,
+        role: '导演',
+        profile: p.profile_path ? `${this.IMAGE_BASE_URL}${p.profile_path}` : ''
+      })),
+      writers: (data.crew || []).filter(p => ['Writer', 'Screenplay', 'Story'].includes(p.job)).map(p => ({
+        id: p.id,
+        name: p.name,
+        role: p.job === 'Screenplay' ? '编剧' : (p.job === 'Story' ? '故事' : '编剧'),
+        profile: p.profile_path ? `${this.IMAGE_BASE_URL}${p.profile_path}` : ''
+      }))
+    }
+  }
+
+  /**
+   * 获取电影人详情
+   * @param {number} personId - 电影人 ID
+   * @returns {Promise<object>}
+   */
+  async getPersonDetails(personId) {
+    const data = await this.request(`/person/${personId}`)
+    return {
+      id: data.id,
+      name: data.name,
+      biography: data.biography || '暂无简介',
+      birthday: data.birthday || '',
+      placeOfBirth: data.place_of_birth || '',
+      department: data.known_for_department || '',
+      profile: data.profile_path ? `${this.IMAGE_BASE_URL}${data.profile_path}` : ''
+    }
+  }
+
+  /**
+   * 获取电影人作品
+   * @param {number} personId - 电影人 ID
+   * @returns {Promise<object>}
+   */
+  async getPersonMovieCredits(personId) {
+    const data = await this.request(`/person/${personId}/movie_credits`)
+    const transformAndSort = (list) => {
+      const map = new Map()
+      list.forEach(m => {
+        if (!map.has(m.id)) map.set(m.id, m)
+      })
+      return Array.from(map.values())
+        .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+        .map(m => this.transformMovie(m))
+    }
+    return {
+      cast: transformAndSort(data.cast || []),
+      crew: transformAndSort(data.crew || [])
+    }
+  }
+
   // ========== 数据转换 ==========
 
   /**
