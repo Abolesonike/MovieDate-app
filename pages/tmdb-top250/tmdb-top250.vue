@@ -3,7 +3,7 @@
     <!-- 顶部标题区 -->
     <view class="header">
       <view class="header-card">
-        <text class="header-title">TMDB Top250 观影海报墙</text>
+        <text class="header-title">TMDB Top250</text>
         <text class="header-subtitle">已看 {{ stats.watchedCount }} / {{ stats.total }}</text>
       </view>
     </view>
