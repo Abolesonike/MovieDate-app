@@ -50,6 +50,27 @@
         </view>
       </view>
 
+      <!-- 时间轴海报 -->
+      <view class="wall-card timeline" @click="goToTimelinePoster">
+        <view class="wall-bg">
+          <view class="wall-gradient"></view>
+        </view>
+        <view class="wall-content">
+          <view class="wall-icon">📅</view>
+          <view class="wall-info">
+            <text class="wall-title">时间轴海报</text>
+            <text class="wall-desc">按时间回顾你的观影历程</text>
+            <view class="wall-progress">
+              <text class="progress-text">已看 {{ totalWatchedCount }} 部电影</text>
+              <view class="progress-bar">
+                <view class="progress-fill" :style="{ width: '100%' }"></view>
+              </view>
+            </view>
+          </view>
+          <text class="wall-arrow">›</text>
+        </view>
+      </view>
+
       <!-- 预留：奥斯卡最佳影片 -->
       <view class="wall-card oscar disabled">
         <view class="wall-bg">
@@ -91,13 +112,15 @@ export default {
   data() {
     return {
       doubanWatchedCount: 0,
-      tmdbWatchedCount: 0
+      tmdbWatchedCount: 0,
+      totalWatchedCount: 0
     }
   },
 
   onShow() {
     this.loadDoubanStats()
     this.loadTmdbStats()
+    this.loadTotalStats()
   },
 
   methods: {
@@ -130,6 +153,24 @@ export default {
     goToTmdbTop250() {
       uni.navigateTo({
         url: '/pages/tmdb-top250/tmdb-top250'
+      })
+    },
+
+    loadTotalStats() {
+      try {
+        const movieStatus = storage.getAllMovieStatus()
+        const watchedCount = Object.entries(movieStatus)
+          .filter(([id, data]) => data.status === 'watched').length
+        this.totalWatchedCount = watchedCount
+      } catch (error) {
+        console.error('[PosterWall] 加载总统计失败:', error)
+        this.totalWatchedCount = 0
+      }
+    },
+
+    goToTimelinePoster() {
+      uni.navigateTo({
+        url: '/pages/timeline-poster/timeline-poster'
       })
     }
   }
@@ -212,6 +253,13 @@ export default {
 .wall-card.afi {
   .wall-bg {
     background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  }
+}
+
+/* 时间轴卡片 - 紫色主题 */
+.wall-card.timeline {
+  .wall-bg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
 }
 

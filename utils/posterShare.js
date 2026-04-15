@@ -160,3 +160,197 @@ export function generatePosterWallImage({
     }
   })
 }
+
+/**
+ * 生成时间轴海报分享图片
+ * @param {Object} options
+ * @param {string} options.title - 主标题
+ * @param {string} options.subtitle - 副标题/时间范围
+ * @param {Array} options.groupedMovies - 按年月分组的电影数据 [{ year, months: [{ month, movies: [] }] }]
+ * @param {string} options.canvasId - canvas 标识，默认 'timelineCanvas'
+ * @param {Object} options.componentThis - 页面/组件实例 this
+ * @returns {Promise<string>} 生成的临时图片路径
+ */
+export function generateTimelinePosterImage({
+  title,
+  subtitle,
+  groupedMovies,
+  canvasId = 'timelineCanvas',
+  componentThis = null
+}) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ctx = uni.createCanvasContext(canvasId, componentThis)
+
+      // 画布布局参数
+      const CANVAS_WIDTH = 750
+      const TIMELINE_X = 40
+      const CONTENT_X = 70
+      const CONTENT_WIDTH = CANVAS_WIDTH - CONTENT_X - 40
+      const HEADER_H = 120
+      const FOOTER_H = 60
+      const YEAR_H = 70
+      const MONTH_H = 50
+      const POSTER_W = 90
+      const POSTER_H = 135
+      const POSTER_GAP = 10
+      const POSTERS_PER_ROW = Math.floor(CONTENT_WIDTH / (POSTER_W + POSTER_GAP))
+
+      // 预计算高度
+      let totalHeight = HEADER_H
+      groupedMovies.forEach(yearGroup => {
+        totalHeight += YEAR_H
+        yearGroup.months.forEach(monthGroup => {
+          totalHeight += MONTH_H
+          const rows = Math.ceil(monthGroup.movies.length / POSTERS_PER_ROW)
+          totalHeight += rows * (POSTER_H + POSTER_GAP)
+          totalHeight += 20 // 月份底部留白
+        })
+      })
+      totalHeight += FOOTER_H
+
+      // 1. 绘制背景
+      ctx.setFillStyle('#ffffff')
+      ctx.fillRect(0, 0, CANVAS_WIDTH, totalHeight)
+
+      // 2. 绘制标题
+      ctx.setFillStyle('#1a1a1a')
+      ctx.setFontSize(28)
+      ctx.setTextAlign('center')
+      ctx.fillText(title, CANVAS_WIDTH / 2, 55)
+
+      // 3. 绘制副标题
+      ctx.setFillStyle('#666666')
+      ctx.setFontSize(18)
+      ctx.fillText(subtitle, CANVAS_WIDTH / 2, 95)
+
+      // 4. 收集所有海报 URL
+      const posterUrls = []
+      groupedMovies.forEach(yg => {
+        yg.months.forEach(mg => {
+          mg.movies.forEach(m => {
+            if (m.poster) posterUrls.push(m.poster)
+          })
+        })
+      })
+      const loadedImages = await loadImagesWithLimit(posterUrls, 5)
+      const imageMap = {}
+      posterUrls.forEach((url, idx) => {
+        imageMap[url] = loadedImages[idx]
+      })
+
+      // 5. 绘制时间轴内容
+      let y = HEADER_H
+
+      groupedMovies.forEach((yearGroup, yearIndex) => {
+        // 年份之间的连线
+        if (yearIndex > 0) {
+          ctx.setStrokeStyle('#e0e0e0')
+          ctx.setLineWidth(2)
+          ctx.beginPath()
+          ctx.moveTo(TIMELINE_X, y - YEAR_H + 20)
+          ctx.lineTo(TIMELINE_X, y + 20)
+          ctx.stroke()
+        }
+
+        // 年份圆点
+        ctx.setFillStyle('#999999')
+        ctx.beginPath()
+        ctx.arc(TIMELINE_X, y + 20, 8, 0, Math.PI * 2)
+        ctx.fill()
+
+        // 年份标题
+        ctx.setFillStyle('#1a1a1a')
+        ctx.setFontSize(28)
+        ctx.setTextAlign('left')
+        ctx.fillText(`${yearGroup.year}年`, CONTENT_X, y + 26)
+        y += YEAR_H
+
+        yearGroup.months.forEach((monthGroup, monthIndex) => {
+          // 月份连线
+          ctx.setStrokeStyle('#e0e0e0')
+          ctx.setLineWidth(2)
+          ctx.beginPath()
+          ctx.moveTo(TIMELINE_X, y - MONTH_H + 16)
+          ctx.lineTo(TIMELINE_X, y + 16)
+          ctx.stroke()
+
+          // 月份圆点
+          ctx.setFillStyle('#bbbbbb')
+          ctx.beginPath()
+          ctx.arc(TIMELINE_X, y + 16, 5, 0, Math.PI * 2)
+          ctx.fill()
+
+          // 月份标题
+          ctx.setFillStyle('#333333')
+          ctx.setFontSize(22)
+          ctx.fillText(`${monthGroup.month}月`, CONTENT_X, y + 22)
+
+          // 看过数量
+          ctx.setFillStyle('#999999')
+          ctx.setFontSize(18)
+          ctx.fillText(`看过 ${monthGroup.movies.length}部`, CONTENT_X + 70, y + 22)
+          y += MONTH_H
+
+          // 月度海报网格
+          monthGroup.movies.forEach((movie, mIndex) => {
+            const col = mIndex % POSTERS_PER_ROW
+            const row = Math.floor(mIndex / POSTERS_PER_ROW)
+            const px = CONTENT_X + col * (POSTER_W + POSTER_GAP)
+            const py = y + row * (POSTER_H + POSTER_GAP)
+
+            const imgInfo = imageMap[movie.poster]
+            if (imgInfo && imgInfo.success) {
+              ctx.drawImage(imgInfo.path, px, py, POSTER_W, POSTER_H)
+            } else {
+              ctx.setFillStyle('#e0e0e0')
+              ctx.fillRect(px, py, POSTER_W, POSTER_H)
+              if (movie.title) {
+                ctx.setFillStyle('#999999')
+                ctx.setFontSize(16)
+                ctx.setTextAlign('center')
+                ctx.fillText(movie.title[0], px + POSTER_W / 2, py + POSTER_H / 2 + 6)
+              }
+            }
+          })
+
+          const posterRows = Math.ceil(monthGroup.movies.length / POSTERS_PER_ROW)
+          y += posterRows * (POSTER_H + POSTER_GAP) + 20
+        })
+      })
+
+      // 绘制最后的时间线延伸
+      ctx.setStrokeStyle('#e0e0e0')
+      ctx.setLineWidth(2)
+      ctx.beginPath()
+      ctx.moveTo(TIMELINE_X, y - 20)
+      ctx.lineTo(TIMELINE_X, y)
+      ctx.stroke()
+
+      // 6. 绘制底部
+      ctx.setFillStyle('#bbbbbb')
+      ctx.setFontSize(14)
+      ctx.setTextAlign('center')
+      ctx.fillText('Generated by MovieDate', CANVAS_WIDTH / 2, totalHeight - 25)
+
+      // 7. 导出为 JPG
+      ctx.draw(false, () => {
+        setTimeout(() => {
+          uni.canvasToTempFilePath({
+            x: 0,
+            y: 0,
+            width: CANVAS_WIDTH,
+            height: totalHeight,
+            canvasId,
+            fileType: 'jpg',
+            quality: 0.92,
+            success: (res) => resolve(res.tempFilePath),
+            fail: (err) => reject(err)
+          }, componentThis)
+        }, 400)
+      })
+    } catch (error) {
+      reject(error)
+    }
+  })
+}

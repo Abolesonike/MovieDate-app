@@ -75,6 +75,13 @@
 				"navigationBarTitleText": "海报墙",
 				"enablePullDownRefresh": false
 			}
+		},
+		{
+			"path": "pages/timeline-poster/timeline-poster",
+			"style": {
+				"navigationBarTitleText": "时间轴海报",
+				"enablePullDownRefresh": false
+			}
 		}
 	],
 	"globalStyle": {
