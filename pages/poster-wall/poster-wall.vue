@@ -71,6 +71,27 @@
         </view>
       </view>
 
+      <!-- 个人 TOP10 -->
+      <view class="wall-card personal-top10" @click="goToPersonalTop10">
+        <view class="wall-bg">
+          <view class="wall-gradient"></view>
+        </view>
+        <view class="wall-content">
+          <view class="wall-icon">🏆</view>
+          <view class="wall-info">
+            <text class="wall-title">个人TOP10</text>
+            <text class="wall-desc">精选你的年度最佳电影</text>
+            <view class="wall-progress">
+              <text class="progress-text">已选 {{ personalTop10Count }}/10</text>
+              <view class="progress-bar">
+                <view class="progress-fill" :style="{ width: (personalTop10Count / 10 * 100) + '%' }"></view>
+              </view>
+            </view>
+          </view>
+          <text class="wall-arrow">›</text>
+        </view>
+      </view>
+
       <!-- 预留：奥斯卡最佳影片 -->
       <view class="wall-card oscar disabled">
         <view class="wall-bg">
@@ -113,7 +134,8 @@ export default {
     return {
       doubanWatchedCount: 0,
       tmdbWatchedCount: 0,
-      totalWatchedCount: 0
+      totalWatchedCount: 0,
+      personalTop10Count: 0
     }
   },
 
@@ -121,6 +143,7 @@ export default {
     this.loadDoubanStats()
     this.loadTmdbStats()
     this.loadTotalStats()
+    this.loadPersonalTop10Stats()
   },
 
   methods: {
@@ -171,6 +194,21 @@ export default {
     goToTimelinePoster() {
       uni.navigateTo({
         url: '/pages/timeline-poster/timeline-poster'
+      })
+    },
+
+    loadPersonalTop10Stats() {
+      try {
+        this.personalTop10Count = storage.getPersonalTop10().length
+      } catch (error) {
+        console.error('[PosterWall] 加载个人Top10统计失败:', error)
+        this.personalTop10Count = 0
+      }
+    },
+
+    goToPersonalTop10() {
+      uni.navigateTo({
+        url: '/pages/personal-top10/personal-top10'
       })
     }
   }
@@ -260,6 +298,13 @@ export default {
 .wall-card.timeline {
   .wall-bg {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+}
+
+/* 个人TOP10卡片 - 玫红/珊瑚主题 */
+.wall-card.personal-top10 {
+  .wall-bg {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
   }
 }
 

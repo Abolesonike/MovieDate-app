@@ -82,6 +82,21 @@
 				"navigationBarTitleText": "时间轴海报",
 				"enablePullDownRefresh": false
 			}
+		},
+		{
+			"path": "pages/personal-top10/personal-top10",
+			"style": {
+				"navigationBarTitleText": "个人 TOP10",
+				"enablePullDownRefresh": false,
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/personal-top10-search/personal-top10-search",
+			"style": {
+				"navigationBarTitleText": "搜索电影",
+				"enablePullDownRefresh": false
+			}
 		}
 	],
 	"globalStyle": {

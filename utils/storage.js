@@ -8,7 +8,8 @@ const STORAGE_KEYS = {
   MOVIE_STATUS: 'movie_status',      // 电影状态数据
   CALENDAR_EVENTS: 'calendar_events', // 日历事件数据
   USER_SETTINGS: 'user_settings',    // 用户设置
-  SYNC_CONFIG: 'sync_config'         // 云同步配置
+  SYNC_CONFIG: 'sync_config',        // 云同步配置
+  PERSONAL_TOP10: 'personal_top10'   // 个人Top10
 }
 
 // 电影状态枚举
@@ -451,7 +452,8 @@ class StorageManager {
       exportedAt: new Date().toISOString(),
       data: {
         movieStatus: this.getAllMovieStatus(),
-        calendarEvents: this.getAllCalendarEvents()
+        calendarEvents: this.getAllCalendarEvents(),
+        personalTop10: this.getPersonalTop10()
       }
     }
   }
@@ -521,18 +523,21 @@ class StorageManager {
       // 合并数据（以导入数据为准）
       const movieStatus = data.data.movieStatus || {}
       const calendarEvents = data.data.calendarEvents || {}
+      const personalTop10 = data.data.personalTop10 || []
 
       const mergedStatus = { ...this.getAllMovieStatus(), ...movieStatus }
       const mergedEvents = { ...this.getAllCalendarEvents(), ...calendarEvents }
 
       this._saveMovieStatus(mergedStatus)
       this._saveCalendarEvents(mergedEvents)
+      this._savePersonalTop10(personalTop10)
 
       return {
         success: true,
         imported: {
           movieCount: Object.keys(movieStatus).length,
-          eventDates: Object.keys(calendarEvents).length
+          eventDates: Object.keys(calendarEvents).length,
+          top10Count: personalTop10.length
         }
       }
     } catch (err) {
@@ -683,6 +688,94 @@ class StorageManager {
 
     console.log('[CloudSync] syncFromCloud called with config:', config.provider)
     return { success: true, message: '云同步接口已预留' }
+  }
+
+  // ==================== 个人Top10管理 ====================
+
+  /**
+   * 获取个人Top10列表
+   * @returns {Array} [{ movieId, order, addedAt }]
+   */
+  getPersonalTop10() {
+    try {
+      const data = uni.getStorageSync(STORAGE_KEYS.PERSONAL_TOP10)
+      const list = data ? JSON.parse(data) : []
+      return list.sort((a, b) => a.order - b.order)
+    } catch (e) {
+      console.error('读取个人Top10失败:', e)
+      return []
+    }
+  }
+
+  /**
+   * 添加电影到个人Top10
+   * @param {number} movieId
+   * @returns {Object} { success, message }
+   */
+  addToPersonalTop10(movieId) {
+    const list = this.getPersonalTop10()
+    if (list.find(item => item.movieId === movieId)) {
+      return { success: false, message: '该电影已在Top10中' }
+    }
+    if (list.length >= 10) {
+      return { success: false, message: '个人Top10最多10部电影' }
+    }
+    list.push({
+      movieId,
+      order: list.length,
+      addedAt: Date.now()
+    })
+    this._savePersonalTop10(list)
+    return { success: true, message: '添加成功' }
+  }
+
+  /**
+   * 从个人Top10中移除
+   * @param {number} movieId
+   * @returns {Object} { success, message }
+   */
+  removeFromPersonalTop10(movieId) {
+    let list = this.getPersonalTop10()
+    const originalLength = list.length
+    list = list.filter(item => item.movieId !== movieId)
+    if (list.length === originalLength) {
+      return { success: false, message: '该电影不在Top10中' }
+    }
+    // 重新排序
+    list.forEach((item, index) => {
+      item.order = index
+    })
+    this._savePersonalTop10(list)
+    return { success: true, message: '移除成功' }
+  }
+
+  /**
+   * 更新个人Top10顺序
+   * @param {Array} orderedMovieIds - [movieId, movieId, ...]
+   * @returns {Object} { success, message }
+   */
+  updatePersonalTop10Order(orderedMovieIds) {
+    const list = orderedMovieIds.map((movieId, index) => ({
+      movieId,
+      order: index,
+      addedAt: Date.now()
+    }))
+    this._savePersonalTop10(list)
+    return { success: true, message: '排序已更新' }
+  }
+
+  /**
+   * 判断电影是否在个人Top10中
+   * @param {number} movieId
+   * @returns {boolean}
+   */
+  isInPersonalTop10(movieId) {
+    const list = this.getPersonalTop10()
+    return list.some(item => item.movieId === movieId)
+  }
+
+  _savePersonalTop10(data) {
+    uni.setStorageSync(STORAGE_KEYS.PERSONAL_TOP10, JSON.stringify(data))
   }
 
   // ==================== 统计功能 ====================
