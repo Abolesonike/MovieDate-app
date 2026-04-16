@@ -6,9 +6,8 @@
         <text class="nav-back-icon"><</text>
       </view>
       <text class="nav-title">个人 TOP10</text>
-      <view class="nav-action" @click="onAdd">
-        <text v-if="top10List.length < 10" class="nav-add-icon">+</text>
-        <text v-else class="nav-add-icon disabled">+</text>
+      <view class="nav-action">
+        <!-- 移除原来的添加按钮 -->
       </view>
     </view>
 
@@ -18,7 +17,7 @@
       <view v-if="top10List.length === 0 && !loading" class="empty-state">
         <text class="empty-icon">🏆</text>
         <text class="empty-title">还没有个人 TOP10</text>
-        <text class="empty-subtitle">点击右上角 + 搜索添加电影吧</text>
+        <text class="empty-subtitle">点击下方添加按钮搜索添加电影</text>
       </view>
 
       <!-- Top10 列表 -->
@@ -27,6 +26,9 @@
           v-for="(movie, index) in top10List"
           :key="movie.id"
           class="top10-item"
+          @touchstart="onTouchStart($event, index)"
+          @touchmove="onTouchMove"
+          @touchend="onTouchEnd"
         >
           <view class="rank-badge" :class="getRankClass(index + 1)">
             <text class="rank-text">{{ getRankLabel(index + 1) }}</text>
@@ -43,22 +45,14 @@
             <text class="item-meta">{{ movie.year }} · {{ movie.rating }}</text>
           </view>
 
+          <view class="drag-handle">
+            <view class="drag-line"></view>
+            <view class="drag-line"></view>
+            <view class="drag-line"></view>
+          </view>
+
           <view class="item-actions">
-            <view
-              v-if="index > 0"
-              class="action-btn"
-              @click="moveUp(index)"
-            >
-              <text class="action-icon">↑</text>
-            </view>
-            <view
-              v-if="index < top10List.length - 1"
-              class="action-btn"
-              @click="moveDown(index)"
-            >
-              <text class="action-icon">↓</text>
-            </view>
-            <view class="action-btn delete" @click="removeMovie(movie.id)">
+            <view class="action-btn delete" @click.stop="removeMovie(movie.id)">
               <text class="action-icon delete">×</text>
             </view>
           </view>
@@ -68,13 +62,22 @@
       <view class="content-footer"></view>
     </scroll-view>
 
-    <!-- 底部生成按钮 -->
-    <view class="bottom-bar">
-      <view
-        :class="['generate-btn', top10List.length === 0 ? 'disabled' : '']"
+    <!-- 浮动操作按钮 -->
+    <view class="fab-container">
+      <view 
+        :class="['fab-btn', 'fab-btn-left', top10List.length >= 10 ? 'disabled' : '']"
+        @click="onAdd"
+      >
+        <text class="fab-icon">+</text>
+        <text v-if="top10List.length >= 10" class="fab-label">已达上限</text>
+      </view>
+      
+      <view 
+        :class="['fab-btn', 'fab-btn-right', top10List.length === 0 ? 'disabled' : '']"
         @click="onGenerate"
       >
-        <text class="generate-text">生成海报</text>
+        <!-- <text class="fab-icon">🎨</text> -->
+        <text class="fab-label">海报</text>
       </view>
     </view>
 
@@ -113,7 +116,14 @@ export default {
     return {
       loading: false,
       top10List: [],
-      previewImage: ''
+      previewImage: '',
+      dragState: {
+        isDragging: false,
+        currentIndex: -1,
+        startY: 0,
+        currentY: 0,
+        offset: 0
+      }
     }
   },
 
@@ -125,7 +135,7 @@ export default {
     // 从搜索页返回后刷新
     this.loadTop10()
   },
-
+  
   methods: {
     goBack() {
       uni.navigateBack()
@@ -183,24 +193,65 @@ export default {
       return rank
     },
 
-    moveUp(index) {
-      if (index <= 0) return
-      const list = [...this.top10List]
-      const temp = list[index]
-      list[index] = list[index - 1]
-      list[index - 1] = temp
-      this.top10List = list
+    onTouchStart(e, index) {
+      // 记录触摸开始位置和当前索引
+      this.dragState.startY = e.touches[0].pageY
+      this.dragState.currentIndex = index
+      this.dragState.isDragging = true
+      
+      // 为当前拖拽元素添加样式
+      const item = e.currentTarget
+      item.classList.add('dragging')
+    },
+
+    onTouchMove(e) {
+      if (!this.dragState.isDragging) return
+      
+      // 计算移动距离
+      const currentY = e.touches[0].pageY
+      const diff = currentY - this.dragState.startY
+      
+      // 获取当前元素的高度，用于计算应该移动到哪个位置
+      const rect = e.currentTarget.getBoundingClientRect()
+      const itemHeight = rect.height
+      
+      // 计算应该移动到的目标索引
+      const targetIndex = Math.max(
+        0, 
+        Math.min(
+          this.top10List.length - 1, 
+          Math.round((this.dragState.currentIndex * itemHeight + diff) / itemHeight)
+        )
+      )
+      
+      // 如果目标索引和当前索引不同，则执行交换
+      if (targetIndex !== this.dragState.currentIndex) {
+        this.swapItems(this.dragState.currentIndex, targetIndex)
+        this.dragState.currentIndex = targetIndex
+      }
+    },
+
+    onTouchEnd() {
+      if (!this.dragState.isDragging) return
+      
+      // 重置拖拽状态
+      this.dragState.isDragging = false
+      
+      // 移除拖拽样式
+      const items = document.querySelectorAll('.top10-item')
+      items.forEach(item => item.classList.remove('dragging'))
+      
+      // 保存新顺序
       this.saveOrder()
     },
 
-    moveDown(index) {
-      if (index >= this.top10List.length - 1) return
+    swapItems(fromIndex, toIndex) {
+      // 交换数组中的元素
       const list = [...this.top10List]
-      const temp = list[index]
-      list[index] = list[index + 1]
-      list[index + 1] = temp
+      const temp = list[fromIndex]
+      list[fromIndex] = list[toIndex]
+      list[toIndex] = temp
       this.top10List = list
-      this.saveOrder()
     },
 
     saveOrder() {
@@ -278,6 +329,7 @@ export default {
   display: flex;
   flex-direction: column;
   padding-top: var(--status-bar-height);
+  padding-bottom: 160rpx; // 为浮动按钮留出空间
 }
 
 /* 自定义导航栏 */
@@ -371,6 +423,14 @@ export default {
   padding: 20rpx;
   margin-bottom: 16rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s;
+  position: relative;
+  
+  &.dragging {
+    z-index: 1000;
+    background: #f0f8ff;
+    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
+  }
 }
 
 .rank-badge {
@@ -438,6 +498,23 @@ export default {
   color: #999;
 }
 
+.drag-handle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 10rpx;
+  padding: 10rpx;
+  cursor: move;
+}
+
+.drag-line {
+  width: 6rpx;
+  height: 6rpx;
+  background-color: #ccc;
+  border-radius: 3rpx;
+  margin: 3rpx 0;
+}
+
 .item-actions {
   display: flex;
   align-items: center;
@@ -472,30 +549,53 @@ export default {
   height: 40rpx;
 }
 
-/* 底部生成按钮 */
-.bottom-bar {
-  padding: 20rpx 40rpx 40rpx;
-  background: #fff;
-  border-top: 1rpx solid #eee;
+/* 新增：浮动操作按钮容器 */
+.fab-container {
+  position: fixed;
+  bottom: 40rpx;
+  left: 40rpx;
+  right: 40rpx;
+  display: flex;
+  justify-content: space-between;
+  z-index: 100;
 }
 
-.generate-btn {
+.fab-btn {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
-  border-radius: 44rpx;
-  padding: 26rpx 0;
-  text-align: center;
-  box-shadow: 0 8rpx 30rpx rgba(255, 107, 107, 0.35);
-
-  &.disabled {
-    background: #ddd;
-    box-shadow: none;
-  }
-}
-
-.generate-text {
-  font-size: 32rpx;
   color: #fff;
   font-weight: 600;
+  box-shadow: 0 8rpx 24rpx rgba(255, 107, 107, 0.4);
+  transition: all 0.3s ease;
+  
+  .fab-icon {
+    font-size: 40rpx;
+    line-height: 1;
+  }
+  
+  .fab-label {
+    font-size: 20rpx;
+    margin-top: 4rpx;
+  }
+  
+  &.disabled {
+    background: #ccc;
+    box-shadow: none;
+    
+    .fab-icon {
+      opacity: 0.6;
+    }
+  }
+  
+  &.fab-btn-left {
+    background: linear-gradient(135deg, #42b983 0%, #3498db 100%);
+  }
 }
 
 /* 隐藏 canvas */
