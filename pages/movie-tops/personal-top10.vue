@@ -167,7 +167,7 @@ export default {
         return
       }
       uni.navigateTo({
-        url: '/pages/personal-top10-search/personal-top10-search'
+        url: '/pages/movie-tops/personal-top10-search'
       })
     },
 

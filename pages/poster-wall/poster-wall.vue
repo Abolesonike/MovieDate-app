@@ -169,13 +169,13 @@ export default {
 
     goToDoubanTop250() {
       uni.navigateTo({
-        url: '/pages/douban-top250/douban-top250'
+        url: '/pages/movie-tops/douban-top250'
       })
     },
 
     goToTmdbTop250() {
       uni.navigateTo({
-        url: '/pages/tmdb-top250/tmdb-top250'
+        url: '/pages/movie-tops/tmdb-top250'
       })
     },
 
@@ -208,7 +208,7 @@ export default {
 
     goToPersonalTop10() {
       uni.navigateTo({
-        url: '/pages/personal-top10/personal-top10'
+        url: '/pages/movie-tops/personal-top10'
       })
     }
   }

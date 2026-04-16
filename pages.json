@@ -56,14 +56,14 @@
 			}
 		},
 		{
-			"path": "pages/douban-top250/douban-top250",
+			"path": "pages/movie-tops/douban-top250",
 			"style": {
 				"navigationBarTitleText": "豆瓣Top250",
 				"enablePullDownRefresh": true
 			}
 		},
 		{
-			"path": "pages/tmdb-top250/tmdb-top250",
+			"path": "pages/movie-tops/tmdb-top250",
 			"style": {
 				"navigationBarTitleText": "TMDB Top250",
 				"enablePullDownRefresh": true
@@ -84,7 +84,7 @@
 			}
 		},
 		{
-			"path": "pages/personal-top10/personal-top10",
+			"path": "pages/movie-tops/personal-top10",
 			"style": {
 				"navigationBarTitleText": "个人 TOP10",
 				"enablePullDownRefresh": false,
@@ -92,7 +92,7 @@
 			}
 		},
 		{
-			"path": "pages/personal-top10-search/personal-top10-search",
+			"path": "pages/movie-tops/personal-top10-search",
 			"style": {
 				"navigationBarTitleText": "搜索电影",
 				"enablePullDownRefresh": false
