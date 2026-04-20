@@ -1,13 +1,13 @@
 <template>
   <view class="container">
     <!-- 搜索栏 -->
-    <view v-if="activeTab === 'search'" class="search-bar">
+    <view v-if="activeTab === 'search' || activeTab === 'personSearch'" class="search-bar">
       <view class="search-wrapper">
         <text class="search-icon">🔍</text>
         <input
           v-model="searchValue"
           class="search-input"
-          placeholder="搜索电影名称"
+          :placeholder="activeTab === 'personSearch' ? '搜索演员/导演名称' : '搜索电影名称'"
           confirm-type="search"
           @confirm="onSearch"
         />
@@ -32,9 +32,9 @@
     <!-- 电影列表 -->
     <scroll-view class="result-scroll" scroll-y @scrolltolower="loadMore">
       <!-- 搜索 Tab 初始提示 -->
-      <view v-if="activeTab === 'search' && !hasSearched" class="search-tip">
-        <text class="tip-icon">🎬</text>
-        <text class="tip-text">输入电影名称开始搜索</text>
+      <view v-if="(activeTab === 'search' || activeTab === 'personSearch') && !hasSearched" class="search-tip">
+        <text class="tip-icon">{{ activeTab === 'personSearch' ? '👤' : '🎬' }}</text>
+        <text class="tip-text">{{ activeTab === 'personSearch' ? '输入影人名称开始搜索' : '输入电影名称开始搜索' }}</text>
       </view>
 
       <!-- 加载中 -->
@@ -43,12 +43,46 @@
       </view>
 
       <!-- 空结果 -->
-      <view v-else-if="movies.length === 0" class="empty-state">
+      <view v-else-if="isEmptyList" class="empty-state">
         <text class="empty-icon">😕</text>
         <text class="empty-text">
-          {{ activeTab === 'search' ? '未找到相关电影' : `暂无${getTabLabel(activeTab)}的电影` }}
+          {{ activeTab === 'search' ? '未找到相关电影' : (activeTab === 'personSearch' ? '未找到相关影人' : `暂无${getTabLabel(activeTab)}的电影`) }}
         </text>
-        <text v-if="activeTab !== 'search'" class="empty-subtext">去发现好电影吧</text>
+        <text v-if="activeTab !== 'search' && activeTab !== 'personSearch'" class="empty-subtext">去发现好电影吧</text>
+      </view>
+
+      <!-- 影人列表 -->
+      <view v-else-if="activeTab === 'personSearch'" class="movie-list">
+        <view
+          v-for="person in persons"
+          :key="person.id"
+          class="movie-item"
+        >
+          <image
+            :src="person.profile || '/static/default-poster.png'"
+            class="movie-poster person-poster"
+            mode="aspectFill"
+          />
+          <view class="movie-info">
+            <text class="movie-title">{{ person.name }}</text>
+            <text class="movie-meta">{{ person.knownFor || '影人' }}</text>
+            <text v-if="person.knownForMovies.length > 0" class="movie-rating">代表作: {{ person.knownForMovies.join(' / ') }}</text>
+          </view>
+          <view class="select-btn" @click="onSelect(person)">
+            <text class="select-btn-text">选择</text>
+          </view>
+        </view>
+
+        <!-- 加载更多 -->
+        <view v-if="loadingMore" class="load-more-tip">
+          <text>加载中...</text>
+        </view>
+        <view v-else-if="hasMore" class="load-more-tip">
+          <text>上拉加载更多</text>
+        </view>
+        <view v-else-if="persons.length > 0" class="load-more-tip">
+          <text>没有更多了</text>
+        </view>
       </view>
 
       <!-- 电影列表 -->
@@ -103,7 +137,8 @@ const TAB_CONFIG = {
   search: { label: '搜索', icon: '🔍' },
   want: { label: '想看', icon: '💭' },
   watched: { label: '已看', icon: '👁' },
-  planned: { label: '待看', icon: '📅' }
+  planned: { label: '待看', icon: '📅' },
+  personSearch: { label: '影人', icon: '👤' }
 }
 
 export default {
@@ -115,6 +150,7 @@ export default {
       pageTitle: '选择电影',
       maxCount: 0,
       dateKey: '',
+      pickType: 'movie',
 
       // 搜索
       searchValue: '',
@@ -123,6 +159,7 @@ export default {
       // Tab 与列表
       activeTab: '',
       movies: [],
+      persons: [],
       loading: false,
       loadingMore: false,
       page: 1,
@@ -134,12 +171,22 @@ export default {
     }
   },
 
+  computed: {
+    isEmptyList() {
+      if (this.activeTab === 'personSearch') {
+        return this.persons.length === 0
+      }
+      return this.movies.length === 0
+    }
+  },
+
   onLoad(options) {
     // 解析参数
     this.source = options.source || ''
     this.pageTitle = options.title || '选择电影'
     this.maxCount = parseInt(options.maxCount) || 0
     this.dateKey = options.dateKey || ''
+    this.pickType = options.pickType || 'movie'
 
     // 解析 tabs
     const tabKeys = (options.tabs || 'search').split(',').map(t => t.trim()).filter(Boolean)
@@ -159,7 +206,7 @@ export default {
     if (this.tabsList.length > 0) {
       this.activeTab = this.tabsList[0].key
       // 非搜索 Tab 直接加载数据
-      if (this.activeTab !== 'search') {
+      if (this.activeTab !== 'search' && this.activeTab !== 'personSearch') {
         this.loadTabData(this.activeTab)
       }
     }
@@ -181,10 +228,11 @@ export default {
       if (this.activeTab === tabKey) return
       this.activeTab = tabKey
       this.movies = []
+      this.persons = []
       this.hasMore = false
       this.page = 1
 
-      if (tabKey === 'search') {
+      if (tabKey === 'search' || tabKey === 'personSearch') {
         this.hasSearched = false
         this.searchValue = ''
       } else {
@@ -196,6 +244,7 @@ export default {
       this.searchValue = ''
       this.hasSearched = false
       this.movies = []
+      this.persons = []
       this.page = 1
       this.hasMore = false
     },
@@ -248,29 +297,46 @@ export default {
       this.hasSearched = true
 
       try {
-        const result = await tmdbApi.searchMovies(query, 1)
-        this.movies = result.movies || []
-        this.page = result.page || 1
-        this.hasMore = result.page < result.totalPages
+        if (this.activeTab === 'personSearch' || this.pickType === 'person') {
+          const result = await tmdbApi.searchPerson(query, 1)
+          this.persons = result.persons || []
+          this.page = result.page || 1
+          this.hasMore = result.page < result.totalPages
+        } else {
+          const result = await tmdbApi.searchMovies(query, 1)
+          this.movies = result.movies || []
+          this.page = result.page || 1
+          this.hasMore = result.page < result.totalPages
+        }
       } catch (error) {
         console.error('[MoviePicker] 搜索失败:', error)
         uni.showToast({ title: '搜索失败', icon: 'none' })
         this.movies = []
+        this.persons = []
       } finally {
         this.loading = false
       }
     },
 
     async loadMore() {
-      if (this.loadingMore || !this.hasMore || this.activeTab !== 'search') return
+      if (this.loadingMore || !this.hasMore) return
+      if (this.activeTab !== 'search' && this.activeTab !== 'personSearch') return
 
       this.loadingMore = true
       try {
         const nextPage = this.page + 1
-        const result = await tmdbApi.searchMovies(this.searchValue.trim(), nextPage)
-        this.movies = [...this.movies, ...(result.movies || [])]
-        this.page = result.page || nextPage
-        this.hasMore = result.page < result.totalPages
+        const query = this.searchValue.trim()
+        if (this.activeTab === 'personSearch') {
+          const result = await tmdbApi.searchPerson(query, nextPage)
+          this.persons = [...this.persons, ...(result.persons || [])]
+          this.page = result.page || nextPage
+          this.hasMore = result.page < result.totalPages
+        } else {
+          const result = await tmdbApi.searchMovies(query, nextPage)
+          this.movies = [...this.movies, ...(result.movies || [])]
+          this.page = result.page || nextPage
+          this.hasMore = result.page < result.totalPages
+        }
       } catch (error) {
         console.error('[MoviePicker] 加载更多失败:', error)
       } finally {
@@ -286,8 +352,34 @@ export default {
       return this.excludedIds.has(movieId)
     },
 
-    onSelect(movie) {
-      if (this.isExcluded(movie.id) || this.isSelected(movie.id)) return
+    onSelect(item) {
+      const isPerson = this.activeTab === 'personSearch' || this.pickType === 'person'
+      const itemId = item.id
+
+      if (!isPerson && (this.isExcluded(itemId) || this.isSelected(itemId))) return
+
+      // favorite-grid 场景：通过事件返回数据
+      if (this.source === 'favorite-grid') {
+        const pickedData = isPerson
+          ? {
+              type: 'person',
+              id: item.id,
+              name: item.name,
+              profile: item.profile,
+              knownFor: item.knownFor
+            }
+          : {
+              type: 'movie',
+              id: item.id,
+              title: item.title,
+              poster: item.poster,
+              year: item.year,
+              rating: item.rating
+            }
+        uni.$emit('favoriteGridPicked', pickedData)
+        uni.navigateBack()
+        return
+      }
 
       let result = null
       let successMsg = ''
@@ -297,10 +389,10 @@ export default {
           uni.showToast({ title: '缺少日期参数', icon: 'none' })
           return
         }
-        result = storage.addCalendarEvent(this.dateKey, { movieId: movie.id })
+        result = storage.addCalendarEvent(this.dateKey, { movieId: itemId })
         successMsg = '已添加到日历'
       } else if (this.source === 'personal-top10') {
-        result = storage.addToPersonalTop10(movie.id)
+        result = storage.addToPersonalTop10(itemId)
         successMsg = '添加成功'
       } else {
         uni.showToast({ title: '未知来源', icon: 'none' })
@@ -308,7 +400,7 @@ export default {
       }
 
       if (result && result.success) {
-        this.selectedIds.add(movie.id)
+        this.selectedIds.add(itemId)
         // 触发响应式更新
         this.selectedIds = new Set(this.selectedIds)
         uni.showToast({ title: successMsg, icon: 'success' })
@@ -490,6 +582,10 @@ export default {
   border-radius: 10rpx;
   background: #e0e0e0;
   flex-shrink: 0;
+}
+
+.person-poster {
+  border-radius: 50%;
 }
 
 .movie-info {

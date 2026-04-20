@@ -9,7 +9,8 @@ const STORAGE_KEYS = {
   CALENDAR_EVENTS: 'calendar_events', // 日历事件数据
   USER_SETTINGS: 'user_settings',    // 用户设置
   SYNC_CONFIG: 'sync_config',        // 云同步配置
-  PERSONAL_TOP10: 'personal_top10'   // 个人Top10
+  PERSONAL_TOP10: 'personal_top10',  // 个人Top10
+  FAVORITE_GRID: 'favorite_grid'      // 个人喜好海报墙
 }
 
 // 电影状态枚举
@@ -776,6 +777,185 @@ class StorageManager {
 
   _savePersonalTop10(data) {
     uni.setStorageSync(STORAGE_KEYS.PERSONAL_TOP10, JSON.stringify(data))
+  }
+
+  // ==================== 个人喜好海报墙管理 ====================
+
+  /**
+   * 获取个人喜好海报墙数据
+   * @returns {Object} { version, title, items }
+   */
+  getFavoriteGrid() {
+    try {
+      const data = uni.getStorageSync(STORAGE_KEYS.FAVORITE_GRID)
+      if (data) {
+        const parsed = JSON.parse(data)
+        return {
+          version: parsed.version || 1,
+          title: parsed.title || this._getDefaultFavoriteGridTitle(),
+          items: Array.isArray(parsed.items) ? parsed.items : []
+        }
+      }
+    } catch (e) {
+      console.error('读取个人喜好海报墙失败:', e)
+    }
+    return {
+      version: 1,
+      title: this._getDefaultFavoriteGridTitle(),
+      items: []
+    }
+  }
+
+  _getDefaultFavoriteGridTitle() {
+    return `${new Date().getFullYear()}年电影个人喜好表`
+  }
+
+  /**
+   * 保存个人喜好海报墙数据
+   * @param {Object} data
+   */
+  saveFavoriteGrid(data) {
+    uni.setStorageSync(STORAGE_KEYS.FAVORITE_GRID, JSON.stringify(data))
+  }
+
+  /**
+   * 添加或更新海报墙项
+   * @param {number} index - 网格位置 0-29
+   * @param {string} type - 'movie' | 'person'
+   * @param {number} id - movieId 或 personId
+   * @param {string} label - 标签文字
+   * @param {Object} meta - 元数据 { title, poster, year, department }
+   * @returns {Object} { success, message }
+   */
+  addFavoriteGridItem(index, type, id, label, meta = {}) {
+    const grid = this.getFavoriteGrid()
+    const existingIndex = grid.items.findIndex(item => item.index === index)
+
+    const item = {
+      index,
+      type,
+      id,
+      label: label || '',
+      title: meta.title || '',
+      poster: meta.poster || '',
+      year: meta.year || '',
+      department: meta.department || ''
+    }
+
+    if (existingIndex >= 0) {
+      grid.items[existingIndex] = item
+    } else {
+      if (grid.items.length >= 30) {
+        return { success: false, message: '最多只能添加30项' }
+      }
+      grid.items.push(item)
+    }
+
+    this.saveFavoriteGrid(grid)
+    return { success: true, message: '添加成功' }
+  }
+
+  /**
+   * 移除海报墙项
+   * @param {number} index - 网格位置
+   * @returns {Object} { success, message }
+   */
+  removeFavoriteGridItem(index) {
+    const grid = this.getFavoriteGrid()
+    const originalLength = grid.items.length
+    grid.items = grid.items.filter(item => item.index !== index)
+    if (grid.items.length === originalLength) {
+      return { success: false, message: '该项不存在' }
+    }
+    this.saveFavoriteGrid(grid)
+    return { success: true, message: '移除成功' }
+  }
+
+  /**
+   * 更新海报墙标题
+   * @param {string} title
+   */
+  updateFavoriteGridTitle(title) {
+    const grid = this.getFavoriteGrid()
+    grid.title = title || this._getDefaultFavoriteGridTitle()
+    this.saveFavoriteGrid(grid)
+  }
+
+  /**
+   * 更新海报墙项标签
+   * @param {number} index
+   * @param {string} label
+   */
+  updateFavoriteGridLabel(index, label) {
+    const grid = this.getFavoriteGrid()
+    const item = grid.items.find(i => i.index === index)
+    if (item) {
+      item.label = label
+      this.saveFavoriteGrid(grid)
+    }
+  }
+
+  /**
+   * 导出喜好海报墙模板
+   * @returns {Object}
+   */
+  exportFavoriteGridTemplate() {
+    const grid = this.getFavoriteGrid()
+    return {
+      version: 1,
+      type: 'favorite-grid-template',
+      exportedAt: new Date().toISOString(),
+      title: grid.title,
+      items: grid.items.map(item => ({
+        index: item.index,
+        type: item.type,
+        id: item.id,
+        label: item.label,
+        title: item.title,
+        poster: item.poster,
+        year: item.year,
+        department: item.department
+      }))
+    }
+  }
+
+  /**
+   * 导入喜好海报墙模板
+   * @param {string|Object} input
+   * @returns {Object} { success, imported?, error? }
+   */
+  importFavoriteGridTemplate(input) {
+    try {
+      const data = typeof input === 'string' ? JSON.parse(input) : input
+      if (!data.type || data.type !== 'favorite-grid-template') {
+        throw new Error('无效的模板格式')
+      }
+      if (!Array.isArray(data.items)) {
+        throw new Error('模板数据不完整')
+      }
+
+      const grid = {
+        version: 1,
+        title: data.title || this._getDefaultFavoriteGridTitle(),
+        items: data.items
+          .filter(item => item.index >= 0 && item.index < 30)
+          .map(item => ({
+            index: item.index,
+            type: item.type === 'person' ? 'person' : 'movie',
+            id: item.id,
+            label: item.label || '',
+            title: item.title || '',
+            poster: item.poster || '',
+            year: item.year || '',
+            department: item.department || ''
+          }))
+      }
+
+      this.saveFavoriteGrid(grid)
+      return { success: true, imported: { count: grid.items.length } }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
   }
 
   // ==================== 统计功能 ====================

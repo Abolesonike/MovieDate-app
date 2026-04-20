@@ -97,6 +97,14 @@
 				"navigationBarTitleText": "选择电影",
 				"enablePullDownRefresh": false
 			}
+		},
+		{
+			"path": "pages/favorite-grid/favorite-grid",
+			"style": {
+				"navigationBarTitleText": "个人喜好表",
+				"enablePullDownRefresh": false,
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"globalStyle": {

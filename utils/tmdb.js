@@ -536,6 +536,37 @@ class TMDBApi {
   }
 
   /**
+   * 搜索影人
+   * @param {string} query - 搜索关键词
+   * @param {number} page - 页码
+   * @returns {Promise<object>}
+   */
+  async searchPerson(query, page = 1) {
+    const trimmedQuery = query && query.trim()
+    if (!trimmedQuery) {
+      return { persons: [], page: 1, totalPages: 0, totalResults: 0 }
+    }
+
+    const data = await this.request('/search/person', { query: trimmedQuery, page })
+    return {
+      persons: data.results.map(p => ({
+        id: p.id,
+        name: p.name,
+        profile: p.profile_path ? `${this.IMAGE_BASE_URL}${p.profile_path}` : '',
+        knownFor: p.known_for_department || '',
+        knownForMovies: (p.known_for || [])
+          .filter(k => k.media_type === 'movie')
+          .map(k => k.title || k.name)
+          .filter(Boolean)
+          .slice(0, 3)
+      })),
+      page: data.page,
+      totalPages: data.total_pages,
+      totalResults: data.total_results
+    }
+  }
+
+  /**
    * 获取电影人作品
    * @param {number} personId - 电影人 ID
    * @returns {Promise<object>}

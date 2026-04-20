@@ -92,6 +92,27 @@
         </view>
       </view>
 
+      <!-- 个人喜好表 -->
+      <view class="wall-card favorite-grid" @click="goToFavoriteGrid">
+        <view class="wall-bg">
+          <view class="wall-gradient"></view>
+        </view>
+        <view class="wall-content">
+          <view class="wall-icon">🎨</view>
+          <view class="wall-info">
+            <text class="wall-title">个人喜好表</text>
+            <text class="wall-desc">自定义你的电影偏好矩阵</text>
+            <view class="wall-progress">
+              <text class="progress-text">已填 {{ favoriteGridCount }}/30</text>
+              <view class="progress-bar">
+                <view class="progress-fill" :style="{ width: (favoriteGridCount / 30 * 100) + '%' }"></view>
+              </view>
+            </view>
+          </view>
+          <text class="wall-arrow">›</text>
+        </view>
+      </view>
+
       <!-- 预留：奥斯卡最佳影片 -->
       <view class="wall-card oscar disabled">
         <view class="wall-bg">
@@ -135,7 +156,8 @@ export default {
       doubanWatchedCount: 0,
       tmdbWatchedCount: 0,
       totalWatchedCount: 0,
-      personalTop10Count: 0
+      personalTop10Count: 0,
+      favoriteGridCount: 0
     }
   },
 
@@ -144,6 +166,7 @@ export default {
     this.loadTmdbStats()
     this.loadTotalStats()
     this.loadPersonalTop10Stats()
+    this.loadFavoriteGridStats()
   },
 
   methods: {
@@ -209,6 +232,21 @@ export default {
     goToPersonalTop10() {
       uni.navigateTo({
         url: '/pages/movie-tops/personal-top10'
+      })
+    },
+
+    loadFavoriteGridStats() {
+      try {
+        this.favoriteGridCount = storage.getFavoriteGrid().items.length
+      } catch (error) {
+        console.error('[PosterWall] 加载个人喜好表统计失败:', error)
+        this.favoriteGridCount = 0
+      }
+    },
+
+    goToFavoriteGrid() {
+      uni.navigateTo({
+        url: '/pages/favorite-grid/favorite-grid'
       })
     }
   }
@@ -305,6 +343,13 @@ export default {
 .wall-card.personal-top10 {
   .wall-bg {
     background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+  }
+}
+
+/* 个人喜好表卡片 - 深蓝/紫主题 */
+.wall-card.favorite-grid {
+  .wall-bg {
+    background: linear-gradient(135deg, #2c3e50 0%, #1a1a2e 100%);
   }
 }
 
