@@ -176,8 +176,9 @@ export default {
         uni.showToast({ title: '个人Top10最多10部电影', icon: 'none' })
         return
       }
+      const excludeIds = this.top10List.map(m => m.id).join(',')
       uni.navigateTo({
-        url: '/pages/movie-tops/personal-top10-search'
+        url: `/pages/movie-picker/movie-picker?source=personal-top10&tabs=search,watched&maxCount=10&excludeIds=${excludeIds}`
       })
     },
 

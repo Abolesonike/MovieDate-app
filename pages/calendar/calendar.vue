@@ -158,56 +158,6 @@
       </view>
     </view>
 
-    <!-- 添加电影弹窗 -->
-    <view v-if="showAddMoviePopup" class="popup-mask" @click="showAddMoviePopup = false">
-      <view class="add-movie-popup" @click.stop>
-        <view class="popup-header">
-          <text class="popup-title">添加电影到 {{ selectedDateStr }}</text>
-          <text class="close-icon" @click="showAddMoviePopup = false">✕</text>
-        </view>
-
-        <view class="search-section">
-          <view class="search-box">
-            <input
-              v-model="searchKeyword"
-              class="search-input"
-              placeholder="搜索电影名称"
-              @confirm="onSearchMovie"
-            />
-            <text class="search-icon" @click="onSearchMovie">🔍</text>
-          </view>
-        </view>
-
-        <scroll-view scroll-y class="search-results">
-          <view v-if="searching" class="loading-center">
-            <text class="loading-text">搜索中...</text>
-          </view>
-
-          <view v-else-if="searchResults.length > 0" class="result-list">
-            <view
-              v-for="movie in searchResults"
-              :key="movie.id"
-              class="result-item"
-              @click="selectMovieToAdd(movie)"
-            >
-              <image :src="movie.poster" class="result-poster" mode="aspectFill" />
-              <view class="result-info">
-                <text class="result-title">{{ movie.title }}</text>
-                <view class="result-meta">
-                  <text class="result-rating">⭐ {{ movie.rating }}</text>
-                  <text class="result-year">{{ movie.year }}</text>
-                </view>
-              </view>
-              <text class="plus-icon">➕</text>
-            </view>
-          </view>
-
-          <view v-else class="empty-search">
-            <text class="empty-text">搜索电影添加到日历</text>
-          </view>
-        </scroll-view>
-      </view>
-    </view>
   </view>
 </template>
 
@@ -236,11 +186,7 @@ export default {
       isToday: false,
       isFutureDate: false,
       scrollTopValue: 0,
-      // 添加电影相关
-      showAddMoviePopup: false,
-      searchKeyword: '',
-      searchResults: [],
-      searching: false
+      scrollTopValue: 0
     }
   },
   computed: {
@@ -505,48 +451,9 @@ export default {
     // 添加电影相关方法
     showAddMovieDialog() {
       this.showMoviePopup = false
-      this.showAddMoviePopup = true
-      this.searchKeyword = ''
-      this.searchResults = []
-    },
-
-    async onSearchMovie() {
-      if (!this.searchKeyword.trim()) return
-
-      this.searching = true
-      try {
-        const result = await tmdbApi.searchMovies(this.searchKeyword)
-        this.searchResults = result.movies
-      } catch (err) {
-        uni.showToast({ title: err.message || '搜索失败', icon: 'none' })
-      } finally {
-        this.searching = false
-      }
-    },
-
-    async selectMovieToAdd(movie) {
-      const result = storage.addCalendarEvent(this.selectedDateKey, {
-        movieId: movie.id
+      uni.navigateTo({
+        url: `/pages/movie-picker/movie-picker?source=calendar&tabs=search,want&dateKey=${this.selectedDateKey}`
       })
-
-      if (result.success) {
-        uni.showToast({ title: '添加成功', icon: 'success' })
-        this.showAddMoviePopup = false
-        
-        // 获取当天的事件列表（包含新添加的电影）
-        const events = storage.getEventsByDate(this.selectedDateKey)
-        
-        // 补充电影详细信息
-        this.selectedDayMovies = await this.enrichMoviesWithDetails(events)
-        
-        // 重新生成日历数据（用于更新月视图/周视图的标记）
-        await this.generateCalendar()
-        
-        // 重新显示电影详情弹窗
-        this.showMoviePopup = true
-      } else {
-        uni.showToast({ title: result.message, icon: 'none' })
-      }
     },
 
     async markEventAsWatched(event) {

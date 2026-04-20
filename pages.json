@@ -92,9 +92,9 @@
 			}
 		},
 		{
-			"path": "pages/movie-tops/personal-top10-search",
+			"path": "pages/movie-picker/movie-picker",
 			"style": {
-				"navigationBarTitleText": "搜索电影",
+				"navigationBarTitleText": "选择电影",
 				"enablePullDownRefresh": false
 			}
 		}
