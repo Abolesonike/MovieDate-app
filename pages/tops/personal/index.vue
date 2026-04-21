@@ -178,7 +178,7 @@ export default {
       }
       const excludeIds = this.top10List.map(m => m.id).join(',')
       uni.navigateTo({
-        url: `/pages/movie-picker/movie-picker?source=personal-top10&tabs=search,watched&maxCount=10&excludeIds=${excludeIds}`
+        url: `/pages/movie/picker/index?source=personal-top10&tabs=search,watched&maxCount=10&excludeIds=${excludeIds}`
       })
     },
 

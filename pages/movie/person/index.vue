@@ -40,11 +40,10 @@
 
       <!-- 电影列表 -->
       <view v-if="activeMovies.length" class="works-list">
-        <movie-card
+        <movie-card-horizontal
           v-for="movie in activeMovies"
           :key="movie.id"
           :movie="movie"
-          variant="horizontal"
           :show-status="false"
           :show-summary="true"
           @click="goToMovie(movie.id)"
@@ -60,11 +59,11 @@
 
 <script>
 import tmdbApi from '@/utils/tmdb.js'
-import MovieCard from '@/components/movie-card/movie-card.vue'
+import MovieCardHorizontal from '@/components/movie-card/movie-card-horizontal.vue'
 
 export default {
   components: {
-    MovieCard
+    MovieCardHorizontal
   },
 
   data() {
@@ -136,7 +135,7 @@ export default {
 
     goToMovie(movieId) {
       uni.navigateTo({
-        url: `/pages/movie-detail/movie-detail?movieId=${movieId}`
+        url: `/pages/movie/detail/index?movieId=${movieId}`
       })
     }
   }

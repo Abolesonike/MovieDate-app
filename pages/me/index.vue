@@ -991,9 +991,9 @@ export default {
     // 跳转到列表页
     goToList(type) {
       const pathMap = {
-        want: '/pages/list-want/list-want',
-        watched: '/pages/list-watched/list-watched',
-        planned: '/pages/list-planned/list-planned'
+        want: '/pages/lists/want/index',
+        watched: '/pages/lists/watched/index',
+        planned: '/pages/lists/planned/index'
       }
       const path = pathMap[type]
       if (path) {

@@ -276,7 +276,16 @@ export default {
       this.userReview = watchedData.review || ''
     },
 
+    _checkMovieLoaded() {
+      if (!this.movie.id) {
+        uni.showToast({ title: '电影信息未加载完成', icon: 'none' })
+        return false
+      }
+      return true
+    },
+
     toggleWantToWatch() {
+      if (!this._checkMovieLoaded()) return
       const movieId = this.movie.id
       if (this.movieCurrentStatus === MOVIE_STATUS.WANT_TO_WATCH) {
         storage.removeMovieStatus(movieId)
@@ -302,6 +311,7 @@ export default {
     },
 
     onCalendarConfirm() {
+      if (!this._checkMovieLoaded()) return
       if (!this.selectedDate) {
         uni.showToast({ title: '请选择日期', icon: 'none' })
         return
@@ -351,6 +361,7 @@ export default {
     },
 
     onWatchedDateConfirm() {
+      if (!this._checkMovieLoaded()) return
       if (!this.selectedDate) {
         uni.showToast({ title: '请选择观看日期', icon: 'none' })
         return
@@ -373,6 +384,7 @@ export default {
     },
 
     setRating(value) {
+      if (!this._checkMovieLoaded()) return
       this.userRating = value
       if (this.movieCurrentStatus === MOVIE_STATUS.WATCHED) {
         storage.updateWatchedReview(this.movie.id, { rating: value })
@@ -380,6 +392,7 @@ export default {
     },
 
     saveReview() {
+      if (!this._checkMovieLoaded()) return
       if (this.movieCurrentStatus === MOVIE_STATUS.WATCHED) {
         storage.updateWatchedReview(this.movie.id, { review: this.userReview })
       }
@@ -407,7 +420,7 @@ export default {
 
     goToPerson(personId) {
       uni.navigateTo({
-        url: `/pages/person-detail/person-detail?personId=${personId}`
+        url: `/pages/movie/person/index?personId=${personId}`
       })
     },
 

@@ -29,6 +29,12 @@ class StorageManager {
     }
   }
 
+  _validateMovieId(movieId) {
+    if (!movieId || Number.isNaN(Number(movieId))) {
+      throw new Error(`无效的电影ID: ${movieId}`)
+    }
+  }
+
   // ==================== 电影状态管理 ====================
 
   /**
@@ -66,6 +72,7 @@ class StorageManager {
    * @param {Object} extra - 额外信息 { rating, review, date, calendarEventId }
    */
   setMovieStatus(movieId, status, extra = {}) {
+    this._validateMovieId(movieId)
     const all = this.getAllMovieStatus()
     const now = Date.now()
     const existing = all[movieId] || {}
@@ -97,6 +104,7 @@ class StorageManager {
    * @param {number} movieId
    */
   removeMovieStatus(movieId) {
+    this._validateMovieId(movieId)
     const all = this.getAllMovieStatus()
     const movieData = all[movieId]
 
@@ -125,6 +133,7 @@ class StorageManager {
    * @param {number} movieId
    */
   markAsWant(movieId) {
+    this._validateMovieId(movieId)
     return this.setMovieStatus(movieId, MOVIE_STATUS.WANT_TO_WATCH)
   }
 
@@ -135,6 +144,7 @@ class StorageManager {
    * @returns {Object} { success, movie?, event?, message? }
    */
   markAsWatched(movieId, data = {}) {
+    this._validateMovieId(movieId)
     const dateStr = data.date || this._formatDate(new Date())
 
     // 先添加到日历（如果该日期已有此电影，addCalendarEvent 会返回失败，但不影响标记已看）
@@ -224,6 +234,7 @@ class StorageManager {
    * @param {Object} data - { rating, review }
    */
   updateWatchedReview(movieId, data) {
+    this._validateMovieId(movieId)
     const all = this.getAllMovieStatus()
     const movie = all[movieId]
 

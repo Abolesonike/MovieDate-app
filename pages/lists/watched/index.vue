@@ -9,21 +9,32 @@
     <!-- 空状态 -->
     <view v-else-if="movieList.length === 0" class="empty-container">
       <text class="empty-icon">🎬</text>
-      <text class="empty-title">暂无想看的电影</text>
-      <text class="empty-desc">去电影页发现好电影吧</text>
+      <text class="empty-title">暂无已看电影</text>
+      <text class="empty-desc">看完电影后来记录一下吧</text>
       <button class="empty-btn" @click="goToMoviePage">去发现</button>
     </view>
 
     <!-- 电影列表 -->
     <scroll-view v-else class="movie-list" scroll-y enable-flex @scrolltolower="loadMore">
-      <MovieCard
+      <movie-card-horizontal
         v-for="movie in movieList"
         :key="movie.id"
         :movie="movie"
-        variant="horizontal"
-        :showStatus="false"
+        :show-status="false"
         @click="goToDetail(movie)"
-      />
+      >
+        <template #extra>
+          <view class="user-review-section" v-if="movie.userRating || movie.userReview">
+            <view class="user-rating" v-if="movie.userRating">
+              <text class="rating-label">我的评分</text>
+              <text class="rating-stars">{{ '⭐'.repeat(movie.userRating) }}</text>
+            </view>
+            <text v-if="movie.userReview" class="user-review-text">{{ movie.userReview }}</text>
+            <text v-if="movie.watchedDate" class="watched-date">观看于 {{ movie.watchedDate }}</text>
+          </view>
+        </template>
+      </movie-card-horizontal>
+
       <!-- 加载更多提示 -->
       <view v-if="loadingMore" class="load-more-tip">
         <text class="tip-text">加载中...</text>
@@ -40,11 +51,11 @@
 <script>
 import tmdbApi from '@/utils/tmdb.js'
 import storage from '@/utils/storage.js'
-import MovieCard from '@/components/movie-card/movie-card.vue'
+import MovieCardHorizontal from '@/components/movie-card/movie-card-horizontal.vue'
 
 export default {
   components: {
-    MovieCard
+    MovieCardHorizontal
   },
   data() {
     return {
@@ -54,7 +65,7 @@ export default {
       currentPage: 1,
       pageSize: 10,
       movieList: [],
-      wantData: []
+      watchedData: []
     }
   },
   onLoad() {
@@ -76,10 +87,10 @@ export default {
       this.hasMore = true
 
       try {
-        // 获取想看列表数据
-        this.wantData = storage.getWantList()
+        // 获取已看列表数据
+        this.watchedData = storage.getWatchedList()
 
-        if (this.wantData.length === 0) {
+        if (this.watchedData.length === 0) {
           this.movieList = []
           this.hasMore = false
           return
@@ -88,7 +99,7 @@ export default {
         // 加载第一页数据
         await this.loadMoviesByPage()
       } catch (error) {
-        console.error('加载想看列表失败:', error)
+        console.error('加载已看列表失败:', error)
         uni.showToast({
           title: '加载失败',
           icon: 'none'
@@ -101,7 +112,7 @@ export default {
     async loadMoviesByPage() {
       const start = (this.currentPage - 1) * this.pageSize
       const end = start + this.pageSize
-      const pageData = this.wantData.slice(start, end)
+      const pageData = this.watchedData.slice(start, end)
 
       if (pageData.length === 0) {
         this.hasMore = false
@@ -114,7 +125,9 @@ export default {
           const movieDetails = await tmdbApi.getMovieDetails(item.movieId)
           return {
             ...movieDetails,
-            wantDate: item.timeline?.want?.date
+            userRating: item.timeline?.watched?.rating,
+            userReview: item.timeline?.watched?.review,
+            watchedDate: item.timeline?.watched?.date
           }
         } catch (error) {
           console.error(`获取电影 ${item.movieId} 详情失败:`, error)
@@ -131,7 +144,7 @@ export default {
         this.movieList = [...this.movieList, ...validMovies]
       }
 
-      this.hasMore = end < this.wantData.length
+      this.hasMore = end < this.watchedData.length
     },
 
     async loadMore() {
@@ -152,13 +165,13 @@ export default {
 
     goToDetail(movie) {
       uni.navigateTo({
-        url: `/pages/movie-detail/movie-detail?movieId=${movie.id}`
+        url: `/pages/movie/detail/index?movieId=${movie.id}`
       })
     },
 
     goToMoviePage() {
       uni.switchTab({
-        url: '/pages/movie/movie'
+        url: '/pages/movie/index'
       })
     }
   }
@@ -237,6 +250,46 @@ export default {
   padding: 12px;
   height: 100vh;
   box-sizing: border-box;
+}
+
+/* 用户评价区域 */
+.user-review-section {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.user-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.rating-label {
+  font-size: 12px;
+  color: #999;
+}
+
+.rating-stars {
+  font-size: 12px;
+}
+
+.user-review-text {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.watched-date {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
 }
 
 .list-footer {

@@ -57,11 +57,10 @@
           </view>
           <!-- 电影列表 -->
           <view v-else class="movie-list">
-            <movie-card
+            <movie-card-horizontal
               v-for="(movie, index) in hotMovies"
               :key="movie.id || index"
               :movie="getMovieWithStatus(movie)"
-              variant="horizontal"
               @click="goToMovieDetail(movie)"
             />
           </view>
@@ -128,11 +127,10 @@
           </view>
           <!-- 电影列表 -->
           <view v-else class="movie-list">
-            <movie-card
+            <movie-card-horizontal
               v-for="(movie, index) in findMovies"
               :key="movie.id || index"
               :movie="getMovieWithStatus(movie)"
-              variant="horizontal"
               @click="goToMovieDetail(movie)"
             />
           </view>
@@ -207,11 +205,11 @@
 <script>
 import tmdbApi from '@/utils/tmdb.js'
 import storage, { MOVIE_STATUS } from '@/utils/storage.js'
-import MovieCard from '@/components/movie-card/movie-card.vue'
+import MovieCardHorizontal from '@/components/movie-card/movie-card-horizontal.vue'
 
 export default {
   components: {
-    MovieCard
+    MovieCardHorizontal
   },
   data() {
     return {
@@ -278,7 +276,7 @@ export default {
 
     // 前往设置页面
     goToSettings() {
-      uni.switchTab({ url: '/pages/me/me' })
+      uni.switchTab({ url: '/pages/me/index' })
     },
 
     // Tab 切换
@@ -419,11 +417,11 @@ export default {
     goToMovieDetail(movie) {
       // 只传递 movieId，详情页从 TMDB API 获取完整信息
       uni.navigateTo({
-        url: `/pages/movie-detail/movie-detail?movieId=${movie.id}`
+        url: `/pages/movie/detail/index?movieId=${movie.id}`
       })
     },
 
-    // 获取带状态的电影数据（用于 movie-card 显示状态标签）
+    // 获取带状态的电影数据（用于电影卡片显示状态标签）
     getMovieWithStatus(movie) {
       const statusData = storage.getMovieStatus(movie.id)
       return {

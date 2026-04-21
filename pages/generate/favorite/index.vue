@@ -286,7 +286,7 @@ export default {
       // 跳转到选择页面
       const tabs = this.editType === 'person' ? 'personSearch' : 'search,want,watched'
       uni.navigateTo({
-        url: `/pages/movie-picker/movie-picker?source=favorite-grid&tabs=${tabs}&pickType=${this.editType}`
+        url: `/pages/movie/picker/index?source=favorite-grid&tabs=${tabs}&pickType=${this.editType}`
       })
       // 监听选择结果
       uni.$once('favoriteGridPicked', this.onPicked)
@@ -369,7 +369,7 @@ export default {
       // 直接跳转到选择页面
       const tabs = this.editType === 'person' ? 'personSearch' : 'search,want,watched'
       uni.navigateTo({
-        url: `/pages/movie-picker/movie-picker?source=favorite-grid&tabs=${tabs}&pickType=${this.editType}`
+        url: `/pages/movie/picker/index?source=favorite-grid&tabs=${tabs}&pickType=${this.editType}`
       })
       uni.$once('favoriteGridPicked', this.onPicked)
     },

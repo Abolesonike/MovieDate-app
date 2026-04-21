@@ -87,11 +87,10 @@
           </view>
           <view class="movies-container">
             <view v-if="day.movies && day.movies.length > 0" class="movie-list">
-              <movie-card
+              <movie-card-vertical
                 v-for="(movie, mIndex) in day.movies"
                 :key="mIndex"
                 :movie="movie"
-                variant="vertical"
                 :show-status="true"
                 :clickable="false"
               />
@@ -131,9 +130,8 @@
           </view>
 
           <view v-for="(movie, index) in selectedDayMovies" :key="index" class="movie-detail-item">
-            <movie-card
+            <movie-card-compact
               :movie="movie"
-              variant="compact"
               :show-status="true"
               @click="goToMovieDetail(movie)"
             />
@@ -164,11 +162,13 @@
 <script>
 import storage, { MOVIE_STATUS } from '@/utils/storage.js'
 import tmdbApi from '@/utils/tmdb.js'
-import MovieCard from '@/components/movie-card/movie-card.vue'
+import MovieCardVertical from '@/components/movie-card/movie-card-vertical.vue'
+import MovieCardCompact from '@/components/movie-card/movie-card-compact.vue'
 
 export default {
   components: {
-    MovieCard
+    MovieCardVertical,
+    MovieCardCompact
   },
   data() {
     return {
@@ -452,7 +452,7 @@ export default {
     showAddMovieDialog() {
       this.showMoviePopup = false
       uni.navigateTo({
-        url: `/pages/movie-picker/movie-picker?source=calendar&tabs=search,want&dateKey=${this.selectedDateKey}`
+        url: `/pages/movie/picker/index?source=calendar&tabs=search,want&dateKey=${this.selectedDateKey}`
       })
     },
 
@@ -503,7 +503,7 @@ export default {
     goToMovieDetail(movie) {
       // 只传递 movieId，详情页从 TMDB API 获取完整信息
       uni.navigateTo({
-        url: `/pages/movie-detail/movie-detail?movieId=${movie.movieId}`
+        url: `/pages/movie/detail/index?movieId=${movie.movieId}`
       })
     },
 

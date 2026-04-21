@@ -192,13 +192,13 @@ export default {
 
     goToDoubanTop250() {
       uni.navigateTo({
-        url: '/pages/movie-tops/douban-top250'
+        url: '/pages/tops/douban/index'
       })
     },
 
     goToTmdbTop250() {
       uni.navigateTo({
-        url: '/pages/movie-tops/tmdb-top250'
+        url: '/pages/tops/tmdb/index'
       })
     },
 
@@ -216,7 +216,7 @@ export default {
 
     goToTimelinePoster() {
       uni.navigateTo({
-        url: '/pages/timeline-poster/timeline-poster'
+        url: '/pages/generate/timeline/index'
       })
     },
 
@@ -231,7 +231,7 @@ export default {
 
     goToPersonalTop10() {
       uni.navigateTo({
-        url: '/pages/movie-tops/personal-top10'
+        url: '/pages/tops/personal/index'
       })
     },
 
@@ -246,7 +246,7 @@ export default {
 
     goToFavoriteGrid() {
       uni.navigateTo({
-        url: '/pages/favorite-grid/favorite-grid'
+        url: '/pages/generate/favorite/index'
       })
     }
   }
