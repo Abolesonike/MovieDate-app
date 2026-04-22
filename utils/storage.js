@@ -1027,6 +1027,9 @@ class StorageManager {
     this.cache = { movieStatus: null, calendarEvents: null }
     uni.removeStorageSync(STORAGE_KEYS.MOVIE_STATUS)
     uni.removeStorageSync(STORAGE_KEYS.CALENDAR_EVENTS)
+    uni.removeStorageSync(STORAGE_KEYS.FAVORITE_GRID)
+    uni.removeStorageSync(STORAGE_KEYS.PERSONAL_TOP10)
+    uni.removeStorageSync(STORAGE_KEYS.USER_SETTINGS)
   }
 
   /**

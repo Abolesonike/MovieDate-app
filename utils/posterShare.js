@@ -141,19 +141,17 @@ export function generatePosterWallImage({
 
       // 7. 导出为 JPG
       ctx.draw(false, () => {
-        setTimeout(() => {
-          uni.canvasToTempFilePath({
-            x: 0,
-            y: 0,
-            width: CANVAS_WIDTH,
-            height: canvasHeight,
-            canvasId,
-            fileType: 'jpg',
-            quality: 0.92,
-            success: (res) => resolve(res.tempFilePath),
-            fail: (err) => reject(err)
-          }, componentThis)
-        }, 300)
+        uni.canvasToTempFilePath({
+          x: 0,
+          y: 0,
+          width: CANVAS_WIDTH,
+          height: canvasHeight,
+          canvasId,
+          fileType: 'jpg',
+          quality: 0.92,
+          success: (res) => resolve(res.tempFilePath),
+          fail: (err) => reject(err)
+        }, componentThis)
       })
     } catch (error) {
       reject(error)
@@ -335,7 +333,6 @@ export function generateTimelinePosterImage({
 
       // 7. 导出为 JPG
       ctx.draw(false, () => {
-        setTimeout(() => {
           uni.canvasToTempFilePath({
             x: 0,
             y: 0,
@@ -347,7 +344,6 @@ export function generateTimelinePosterImage({
             success: (res) => resolve(res.tempFilePath),
             fail: (err) => reject(err)
           }, componentThis)
-        }, 400)
       })
     } catch (error) {
       reject(error)
@@ -468,7 +464,6 @@ export function generateFavoriteGridImage({
 
       // 6. 导出为 JPG
       ctx.draw(false, () => {
-        setTimeout(() => {
           uni.canvasToTempFilePath({
             x: 0,
             y: 0,
@@ -480,7 +475,6 @@ export function generateFavoriteGridImage({
             success: (res) => resolve(res.tempFilePath),
             fail: (err) => reject(err)
           }, componentThis)
-        }, 300)
       })
     } catch (error) {
       reject(error)
@@ -611,7 +605,6 @@ export function generatePersonalTop10Image({
 
       // 7. 导出为 JPG
       ctx.draw(false, () => {
-        setTimeout(() => {
           uni.canvasToTempFilePath({
             x: 0,
             y: 0,
@@ -623,7 +616,6 @@ export function generatePersonalTop10Image({
             success: (res) => resolve(res.tempFilePath),
             fail: (err) => reject(err)
           }, componentThis)
-        }, 300)
       })
     } catch (error) {
       reject(error)

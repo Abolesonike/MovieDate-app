@@ -185,7 +185,6 @@ export default {
       isPastDate: false,
       isToday: false,
       isFutureDate: false,
-      scrollTopValue: 0,
       scrollTopValue: 0
     }
   },
