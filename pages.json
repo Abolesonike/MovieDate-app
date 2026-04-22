@@ -105,6 +105,27 @@
 				"enablePullDownRefresh": false,
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/playlist/index",
+			"style": {
+				"navigationBarTitleText": "片单",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/playlist/detail/index",
+			"style": {
+				"navigationBarTitleText": "片单详情",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/playlist/edit/index",
+			"style": {
+				"navigationBarTitleText": "编辑片单",
+				"enablePullDownRefresh": false
+			}
 		}
 	],
 	"globalStyle": {
@@ -136,6 +157,12 @@
 				"text": "海报墙",
 				"iconPath": "static/icons/haibao-b.svg",
 				"selectedIconPath": "static/icons/haibao.svg"
+			},
+			{
+				"pagePath": "pages/playlist/index",
+				"text": "片单",
+				"iconPath": "static/icons/pindao-b.svg",
+				"selectedIconPath": "static/icons/pindao.svg"
 			},
 			{
 				"pagePath": "pages/me/index",

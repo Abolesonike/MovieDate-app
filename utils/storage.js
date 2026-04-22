@@ -10,7 +10,8 @@ const STORAGE_KEYS = {
   USER_SETTINGS: 'user_settings',    // 用户设置
   SYNC_CONFIG: 'sync_config',        // 云同步配置
   PERSONAL_TOP10: 'personal_top10',  // 个人Top10
-  FAVORITE_GRID: 'favorite_grid'      // 个人喜好海报墙
+  FAVORITE_GRID: 'favorite_grid',    // 个人喜好海报墙
+  PLAYLISTS: 'movie_playlists'       // 片单数据
 }
 
 // 电影状态枚举
@@ -1037,6 +1038,262 @@ class StorageManager {
    */
   clearCache() {
     this.cache = { movieStatus: null, calendarEvents: null }
+  }
+
+  // ==================== 片单管理 ====================
+
+  /**
+   * 生成 UUID
+   */
+  _generateId() {
+    return 'playlist_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  }
+
+  /**
+   * 获取所有片单
+   * @returns {Array} 片单数组
+   */
+  getAllPlaylists() {
+    try {
+      const data = uni.getStorageSync(STORAGE_KEYS.PLAYLISTS)
+      const list = data ? JSON.parse(data) : []
+      return list.sort((a, b) => (b.sortOrder || 0) - (a.sortOrder || 0))
+    } catch (e) {
+      console.error('读取片单失败:', e)
+      return []
+    }
+  }
+
+  /**
+   * 获取单个片单
+   * @param {string} playlistId
+   * @returns {Object|null}
+   */
+  getPlaylist(playlistId) {
+    const list = this.getAllPlaylists()
+    return list.find(p => p.id === playlistId) || null
+  }
+
+  /**
+   * 创建片单
+   * @param {Object} data - { name, description, tags }
+   * @returns {Object} { success, playlist?, message? }
+   */
+  createPlaylist(data = {}) {
+    if (!data.name || !data.name.trim()) {
+      return { success: false, message: '片单名称不能为空' }
+    }
+
+    const list = this.getAllPlaylists()
+    const now = Date.now()
+
+    const playlist = {
+      id: this._generateId(),
+      name: data.name.trim(),
+      description: data.description ? data.description.trim() : '',
+      tags: Array.isArray(data.tags) ? data.tags : [],
+      coverImage: '',
+      movieIds: [],
+      createdAt: now,
+      updatedAt: now,
+      sortOrder: now
+    }
+
+    list.push(playlist)
+    this._savePlaylists(list)
+
+    return { success: true, playlist }
+  }
+
+  /**
+   * 更新片单
+   * @param {string} playlistId
+   * @param {Object} updates - { name, description, tags, coverImage }
+   * @returns {Object}
+   */
+  updatePlaylist(playlistId, updates = {}) {
+    const list = this.getAllPlaylists()
+    const index = list.findIndex(p => p.id === playlistId)
+
+    if (index < 0) {
+      return { success: false, message: '片单不存在' }
+    }
+
+    const playlist = list[index]
+
+    if (updates.name !== undefined) {
+      if (!updates.name.trim()) {
+        return { success: false, message: '片单名称不能为空' }
+      }
+      playlist.name = updates.name.trim()
+    }
+    if (updates.description !== undefined) {
+      playlist.description = updates.description ? updates.description.trim() : ''
+    }
+    if (updates.tags !== undefined) {
+      playlist.tags = Array.isArray(updates.tags) ? updates.tags : []
+    }
+    if (updates.coverImage !== undefined) {
+      playlist.coverImage = updates.coverImage
+    }
+
+    playlist.updatedAt = Date.now()
+    this._savePlaylists(list)
+
+    return { success: true, playlist }
+  }
+
+  /**
+   * 删除片单
+   * @param {string} playlistId
+   * @returns {Object}
+   */
+  deletePlaylist(playlistId) {
+    const list = this.getAllPlaylists()
+    const index = list.findIndex(p => p.id === playlistId)
+
+    if (index < 0) {
+      return { success: false, message: '片单不存在' }
+    }
+
+    list.splice(index, 1)
+    this._savePlaylists(list)
+
+    return { success: true, message: '删除成功' }
+  }
+
+  /**
+   * 向片单添加电影
+   * @param {string} playlistId
+   * @param {Array<number>} movieIds
+   * @returns {Object}
+   */
+  addMoviesToPlaylist(playlistId, movieIds) {
+    if (!Array.isArray(movieIds) || movieIds.length === 0) {
+      return { success: false, message: '请选择要添加的电影' }
+    }
+
+    const list = this.getAllPlaylists()
+    const index = list.findIndex(p => p.id === playlistId)
+
+    if (index < 0) {
+      return { success: false, message: '片单不存在' }
+    }
+
+    const playlist = list[index]
+    const existingIds = new Set(playlist.movieIds)
+    let addedCount = 0
+
+    movieIds.forEach(movieId => {
+      if (!existingIds.has(movieId)) {
+        playlist.movieIds.push(movieId)
+        addedCount++
+      }
+    })
+
+    if (addedCount === 0) {
+      return { success: false, message: '所选电影已在片单中' }
+    }
+
+    playlist.updatedAt = Date.now()
+    this._savePlaylists(list)
+
+    return { success: true, addedCount, message: `已添加 ${addedCount} 部电影` }
+  }
+
+  /**
+   * 从片单移除电影
+   * @param {string} playlistId
+   * @param {number} movieId
+   * @returns {Object}
+   */
+  removeMovieFromPlaylist(playlistId, movieId) {
+    const list = this.getAllPlaylists()
+    const index = list.findIndex(p => p.id === playlistId)
+
+    if (index < 0) {
+      return { success: false, message: '片单不存在' }
+    }
+
+    const playlist = list[index]
+    const originalLength = playlist.movieIds.length
+    playlist.movieIds = playlist.movieIds.filter(id => id !== movieId)
+
+    if (playlist.movieIds.length === originalLength) {
+      return { success: false, message: '该电影不在片单中' }
+    }
+
+    playlist.updatedAt = Date.now()
+    this._savePlaylists(list)
+
+    return { success: true, message: '已移除电影' }
+  }
+
+  /**
+   * 获取片单的完成进度
+   * @param {string} playlistId
+   * @returns {Object} { total, watched, progress, want, planned }
+   */
+  getPlaylistProgress(playlistId) {
+    const playlist = this.getPlaylist(playlistId)
+
+    if (!playlist) {
+      return { total: 0, watched: 0, progress: 0, want: 0, planned: 0 }
+    }
+
+    const total = playlist.movieIds.length
+    let watched = 0
+    let want = 0
+    let planned = 0
+
+    playlist.movieIds.forEach(movieId => {
+      const statusData = this.getMovieStatus(movieId)
+      if (statusData.status === MOVIE_STATUS.WATCHED) watched++
+      else if (statusData.status === MOVIE_STATUS.WANT_TO_WATCH) want++
+      else if (statusData.status === MOVIE_STATUS.PLANNED) planned++
+    })
+
+    return {
+      total,
+      watched,
+      want,
+      planned,
+      progress: total > 0 ? Math.round(watched / total * 100) : 0
+    }
+  }
+
+  /**
+   * 复制片单
+   * @param {string} playlistId
+   * @returns {Object}
+   */
+  duplicatePlaylist(playlistId) {
+    const playlist = this.getPlaylist(playlistId)
+    if (!playlist) {
+      return { success: false, message: '片单不存在' }
+    }
+
+    const newPlaylist = {
+      id: this._generateId(),
+      name: playlist.name + ' (副本)',
+      description: playlist.description,
+      tags: [...playlist.tags],
+      coverImage: playlist.coverImage,
+      movieIds: [...playlist.movieIds],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      sortOrder: Date.now()
+    }
+
+    const list = this.getAllPlaylists()
+    list.push(newPlaylist)
+    this._savePlaylists(list)
+
+    return { success: true, playlist: newPlaylist }
+  }
+
+  _savePlaylists(data) {
+    uni.setStorageSync(STORAGE_KEYS.PLAYLISTS, JSON.stringify(data))
   }
 }
 

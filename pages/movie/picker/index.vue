@@ -146,6 +146,7 @@ export default {
     return {
       // 页面参数
       source: '',
+      playlistId: '',
       tabsList: [],
       pageTitle: '选择电影',
       maxCount: 0,
@@ -183,6 +184,7 @@ export default {
   onLoad(options) {
     // 解析参数
     this.source = options.source || ''
+    this.playlistId = options.playlistId || ''
     this.pageTitle = options.title || '选择电影'
     this.maxCount = parseInt(options.maxCount) || 0
     this.dateKey = options.dateKey || ''
@@ -378,6 +380,27 @@ export default {
             }
         uni.$emit('favoriteGridPicked', pickedData)
         uni.navigateBack()
+        return
+      }
+
+      // playlist 场景：添加到片单
+      if (this.source === 'playlist') {
+        const result = storage.addMoviesToPlaylist(this.playlistId, [itemId])
+        if (result.success) {
+          this.selectedIds.add(itemId)
+          this.selectedIds = new Set(this.selectedIds)
+          uni.showToast({ title: result.message, icon: 'success' })
+
+          // 达到上限自动返回
+          const currentCount = this.excludedIds.size + this.selectedIds.size
+          if (this.maxCount > 0 && currentCount >= this.maxCount) {
+            setTimeout(() => {
+              uni.navigateBack()
+            }, 800)
+          }
+        } else {
+          uni.showToast({ title: result.message, icon: 'none' })
+        }
         return
       }
 
