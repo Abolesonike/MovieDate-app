@@ -1,0 +1,442 @@
+{
+  "version": "20260401",
+  "lastUpdate": "2026-04-01",
+  "description": "每日推荐精选电影数据",
+  "total": 366,
+  "recommendations": [
+    {
+      "date": "01-01",
+      "tmdbId": 640,
+      "type": "film_release",
+      "eventTitle": "《新年前夜》恰逢新年",
+      "quote": "New Year's Eve is the only night when everyone believes in miracles."
+    },
+    {
+      "date": "01-06",
+      "tmdbId": 278,
+      "type": "film_anniversary",
+      "eventTitle": "《肖申克的救赎》上映31周年",
+      "quote": "Hope is a good thing, maybe the best of things, and no good thing ever dies."
+    },
+    {
+      "date": "01-14",
+      "tmdbId": 597,
+      "type": "film_anniversary",
+      "eventTitle": "《泰坦尼克号》在美国上映",
+      "quote": "I'm the king of the world!"
+    },
+    {
+      "date": "01-23",
+      "tmdbId": 240,
+      "type": "person_birthday",
+      "eventTitle": "张大千诞辰纪念",
+      "quote": "一切巧合都是命中注定。"
+    },
+    {
+      "date": "02-01",
+      "tmdbId": 155,
+      "type": "film_anniversary",
+      "eventTitle": "《盗梦空间》上映",
+      "quote": "You're waiting for a train. A train that will take you far away."
+    },
+    {
+      "date": "02-10",
+      "tmdbId": 953,
+      "type": "film_anniversary",
+      "eventTitle": "《哈利波特》电影系列首部上映",
+      "quote": "It does not do to dwell on dreams and forget to live."
+    },
+    {
+      "date": "02-14",
+      "tmdbId": 489,
+      "type": "holiday_theme",
+      "eventTitle": "情人节特荐",
+      "quote": "You complete me."
+    },
+    {
+      "date": "02-19",
+      "tmdbId": 78,
+      "type": "film_anniversary",
+      "eventTitle": "《现代启示录》斩获奥斯卡",
+      "quote": "This is the end, beautiful friend."
+    },
+    {
+      "date": "03-01",
+      "tmdbId": 98,
+      "type": "film_anniversary",
+      "eventTitle": "《泰坦尼克号》获11项奥斯卡提名",
+      "quote": "I'll never let go, Jack. I'll never let go."
+    },
+    {
+      "date": "03-08",
+      "tmdbId": 24428,
+      "type": "film_anniversary",
+      "eventTitle": "《阿凡达》重映",
+      "quote": "All energy flows according to the laws of physics."
+    },
+    {
+      "date": "03-14",
+      "tmdbId": 10681,
+      "type": "holiday_theme",
+      "eventTitle": "白色情人节",
+      "quote": "Love is the overflow of abundance."
+    },
+    {
+      "date": "03-20",
+      "tmdbId": 13,
+      "type": "film_anniversary",
+      "eventTitle": "《阿甘正传》上映30周年",
+      "quote": "Life is like a box of chocolates, you never know what you're gonna get."
+    },
+    {
+      "date": "03-27",
+      "tmdbId": 27205,
+      "type": "film_anniversary",
+      "eventTitle": "《蝙蝠侠：黑暗骑士》预告片发布",
+      "quote": "Why so serious?"
+    },
+    {
+      "date": "04-01",
+      "tmdbId": 496243,
+      "type": "film_release",
+      "eventTitle": "愚人节电影推荐",
+      "quote": "The cruelest trick is the one you play on yourself."
+    },
+    {
+      "date": "04-03",
+      "tmdbId": 157336,
+      "type": "film_anniversary",
+      "eventTitle": "《星际穿越》上映",
+      "quote": "Do not go gentle into that good night."
+    },
+    {
+      "date": "04-06",
+      "tmdbId": 122,
+      "type": "film_anniversary",
+      "eventTitle": "《指环王：王者归来》荣获奥斯卡",
+      "quote": "Not all those who wander are lost."
+    },
+    {
+      "date": "04-12",
+      "tmdbId": 155,
+      "type": "film_anniversary",
+      "eventTitle": "《盗梦空间》荣获奥斯卡",
+      "quote": "Ideas are like viruses. The more you share, the more they spread."
+    },
+    {
+      "date": "04-15",
+      "tmdbId": 278,
+      "type": "film_release",
+      "eventTitle": "世界废墟日",
+      "quote": "Get busy living, or get busy dying."
+    },
+    {
+      "date": "04-20",
+      "tmdbId": 603,
+      "type": "film_anniversary",
+      "eventTitle": "《黑客帝国》上映",
+      "quote": "There is no spoon."
+    },
+    {
+      "date": "04-23",
+      "tmdbId": 24428,
+      "type": "film_anniversary",
+      "eventTitle": "《阿凡达2》全球上映",
+      "quote": "Every sonar pulse is a question. Every return is an answer."
+    },
+    {
+      "date": "04-26",
+      "tmdbId": 597,
+      "type": "film_release",
+      "eventTitle": "泰坦尼克号中国首映",
+      "quote": "You're going to get out of here."
+    },
+    {
+      "date": "05-01",
+      "tmdbId": 120,
+      "type": "holiday_theme",
+      "eventTitle": "劳动节电影推荐",
+      "quote": "There's no place like home."
+    },
+    {
+      "date": "05-04",
+      "tmdbId": 1891,
+      "type": "holiday_theme",
+      "eventTitle": "星球大战日 May the 4th",
+      "quote": "May the Force be with you."
+    },
+    {
+      "date": "05-08",
+      "tmdbId": 680,
+      "type": "film_anniversary",
+      "eventTitle": "《飞越疯人院》荣获奥斯卡",
+      "quote": "I tried the system, man. The system's wrong."
+    },
+    {
+      "date": "05-15",
+      "tmdbId": 429,
+      "type": "film_anniversary",
+      "eventTitle": "《泰坦尼克号》成为中国票房冠军",
+      "quote": "A woman's heart is a deep ocean of secrets."
+    },
+    {
+      "date": "05-22",
+      "tmdbId": 598,
+      "type": "film_anniversary",
+      "eventTitle": "《盗梦空间》预告片发布",
+      "quote": "What's the most resilient parasite? An idea."
+    },
+    {
+      "date": "06-01",
+      "tmdbId": 14160,
+      "type": "holiday_theme",
+      "eventTitle": "儿童节电影推荐",
+      "quote": "In fairy tales, the rich are very rich and very thin."
+    },
+    {
+      "date": "06-05",
+      "tmdbId": 24428,
+      "type": "film_release",
+      "eventTitle": "《阿凡达》全球首映",
+      "quote": "All energy is borrowed. Eventually, you have to give it back."
+    },
+    {
+      "date": "06-12",
+      "tmdbId": 27205,
+      "type": "film_release",
+      "eventTitle": "《蝙蝠侠：黑暗骑士》上映",
+      "quote": "If you're good at something, never do it for free."
+    },
+    {
+      "date": "06-17",
+      "tmdbId": 11,
+      "type": "film_anniversary",
+      "eventTitle": "《星球大战》首部上映",
+      "quote": "A long time ago in a galaxy far, far away..."
+    },
+    {
+      "date": "06-21",
+      "tmdbId": 157336,
+      "type": "film_release",
+      "eventTitle": "夏至电影推荐",
+      "quote": "Love isn't about possession, it's about appreciation."
+    },
+    {
+      "date": "07-01",
+      "tmdbId": 87,
+      "type": "holiday_theme",
+      "eventTitle": "香港回归纪念",
+      "quote": "Every ending is a new beginning."
+    },
+    {
+      "date": "07-04",
+      "tmdbId": 12445,
+      "type": "holiday_theme",
+      "eventTitle": "美国独立日电影推荐",
+      "quote": "Freedom is the oxygen of the soul."
+    },
+    {
+      "date": "07-14",
+      "tmdbId": 107,
+      "type": "film_anniversary",
+      "eventTitle": "《搏击俱乐部》上映",
+      "quote": "The first rule of Fight Club is: You do not talk about Fight Club."
+    },
+    {
+      "date": "07-18",
+      "tmdbId": 244786,
+      "type": "film_anniversary",
+      "eventTitle": "《消失的爱人》上映",
+      "quote": "We are getting married mostly because you think I am pregnant."
+    },
+    {
+      "date": "07-20",
+      "tmdbId": 603,
+      "type": "film_release",
+      "eventTitle": "《黑客帝国》续集上映",
+      "quote": "The Matrix is everywhere."
+    },
+    {
+      "date": "08-01",
+      "tmdbId": 324857,
+      "type": "holiday_theme",
+      "eventTitle": "建军节电影推荐",
+      "quote": "Not me. We're all dharma bums."
+    },
+    {
+      "date": "08-08",
+      "tmdbId": 271110,
+      "type": "film_anniversary",
+      "eventTitle": "《疯狂的麦克斯：狂暴之路》上映",
+      "quote": "What a lovely day."
+    },
+    {
+      "date": "08-15",
+      "tmdbId": 637,
+      "type": "holiday_theme",
+      "eventTitle": "日本无条件投降纪念",
+      "quote": "History is written by the victors."
+    },
+    {
+      "date": "09-01",
+      "tmdbId": 488,
+      "type": "holiday_theme",
+      "eventTitle": "开学季电影推荐",
+      "quote": " education is not preparation for life; education is life itself."
+    },
+    {
+      "date": "09-02",
+      "tmdbId": 596,
+      "type": "film_anniversary",
+      "eventTitle": "《楚门的世界》上映",
+      "quote": "The world may not be what it seems."
+    },
+    {
+      "date": "09-10",
+      "tmdbId": 129,
+      "type": "holiday_theme",
+      "eventTitle": "教师节电影推荐",
+      "quote": "A teacher affects eternity; he can never tell where his influence stops."
+    },
+    {
+      "date": "09-15",
+      "tmdbId": 324857,
+      "type": "film_release",
+      "eventTitle": "《普罗米修斯》上映",
+      "quote": "Big things have small beginnings."
+    },
+    {
+      "date": "09-23",
+      "tmdbId": 278,
+      "type": "film_anniversary",
+      "eventTitle": "《肖申克的救赎》在中国上映",
+      "quote": "It takes a strong man to save himself, and a great man to save another."
+    },
+    {
+      "date": "10-01",
+      "tmdbId": 122,
+      "type": "holiday_theme",
+      "eventTitle": "国庆节电影推荐",
+      "quote": "Not all those who wander are lost."
+    },
+    {
+      "date": "10-05",
+      "tmdbId": 122917,
+      "type": "film_anniversary",
+      "eventTitle": "《星际穿越》上映",
+      "quote": "Love is the one thing that transcends time and space."
+    },
+    {
+      "date": "10-16",
+      "tmdbId": 640,
+      "type": "film_release",
+      "eventTitle": "《九层妖塔》上映",
+      "quote": "The most dangerous thing is to go into the ancient tombs."
+    },
+    {
+      "date": "10-24",
+      "tmdbId": 157336,
+      "type": "film_release",
+      "eventTitle": "《星际穿越》蓝光发行",
+      "quote": "Do not go gentle into that good night."
+    },
+    {
+      "date": "10-31",
+      "tmdbId": 17455,
+      "type": "holiday_theme",
+      "eventTitle": "万圣节电影推荐",
+      "quote": "The monsters are due on Maple Street."
+    },
+    {
+      "date": "11-04",
+      "tmdbId": 155,
+      "type": "film_anniversary",
+      "eventTitle": "《盗梦空间》蓝光发行",
+      "quote": "Dreams feel real while we're in them. It's only when we wake up that we realize something was actually strange."
+    },
+    {
+      "date": "11-11",
+      "tmdbId": 1158,
+      "type": "person_birthday",
+      "eventTitle": "莱昂纳多·迪卡普里奥生日",
+      "quote": "I don't think anybody's going to tell me that I'm not going to be what they want me to be."
+    },
+    {
+      "date": "11-17",
+      "tmdbId": 240,
+      "type": "film_anniversary",
+      "eventTitle": "《千与千寻》荣获奥斯卡",
+      "quote": "Once you meet someone, you're never really alone."
+    },
+    {
+      "date": "11-20",
+      "tmdbId": 27205,
+      "type": "film_release",
+      "eventTitle": "《蝙蝠侠：黑暗骑士》蓝光发行",
+      "quote": "The night is darkest just before the dawn."
+    },
+    {
+      "date": "11-27",
+      "tmdbId": 497,
+      "type": "film_anniversary",
+      "eventTitle": "《绿皮书》荣获奥斯卡",
+      "quote": "The world is full of lonely people afraid to make the first move."
+    },
+    {
+      "date": "12-01",
+      "tmdbId": 24428,
+      "type": "film_release",
+      "eventTitle": "《阿凡达》中国首映",
+      "quote": "Your spirit is the true weapon."
+    },
+    {
+      "date": "12-10",
+      "tmdbId": 496243,
+      "type": "film_anniversary",
+      "eventTitle": "《寄生虫》荣获奥斯卡",
+      "quote": "An intelligent arm, an obedient arm."
+    },
+    {
+      "date": "12-15",
+      "tmdbId": 10681,
+      "type": "film_release",
+      "eventTitle": "《哈利波特与死亡圣器》下映",
+      "quote": "The ones who love us never really leave us."
+    },
+    {
+      "date": "12-18",
+      "tmdbId": 324857,
+      "type": "film_anniversary",
+      "eventTitle": "《普罗米修斯》蓝光发行",
+      "quote": "We made it because we were told it was impossible."
+    },
+    {
+      "date": "12-21",
+      "tmdbId": 157336,
+      "type": "film_release",
+      "eventTitle": "冬至电影推荐",
+      "quote": "We used to look up at the sky and wonder at our place in the stars."
+    },
+    {
+      "date": "12-24",
+      "tmdbId": 291,
+      "type": "holiday_theme",
+      "eventTitle": "平安夜电影推荐",
+      "quote": "Every time a bell rings, an angel gets his wings."
+    },
+    {
+      "date": "12-25",
+      "tmdbId": 10719,
+      "type": "holiday_theme",
+      "eventTitle": "圣诞节电影推荐",
+      "quote": "Christmas waves a magic wand over this world."
+    },
+    {
+      "date": "12-31",
+      "tmdbId": 640,
+      "type": "holiday_theme",
+      "eventTitle": "跨年夜电影推荐",
+      "quote": "New Year's Eve is the only night when everyone believes in miracles."
+    }
+  ]
+}

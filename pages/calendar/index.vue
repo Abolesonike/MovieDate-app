@@ -17,13 +17,20 @@
         >
           月视图
         </button>
+        <button
+            :class="['mode-btn', viewMode === 'today' ? 'mode-btn-active' : '']"
+            size="mini"
+            @click="switchMode('today')"
+        >
+          每日一部
+        </button>
       </view>
-      <view class="date-nav">
+      <view v-if="viewMode !== 'today'" class="date-nav">
         <text class="nav-icon" @click="prevPeriod">‹</text>
         <text class="current-date">{{ currentDateText }}</text>
         <text class="nav-icon" @click="nextPeriod">›</text>
       </view>
-      <view class="today-btn" @click="goToToday">
+      <view v-if="viewMode !== 'today'" class="today-btn" @click="goToToday">
         <text>回到今日</text>
       </view>
     </view>
@@ -61,7 +68,7 @@
     </view>
 
     <!-- 周视图 -->
-    <view v-else class="week-view">
+    <view v-else-if="viewMode === 'week'" class="week-view">
       <scroll-view
         scroll-y
         class="week-content"
@@ -102,6 +109,60 @@
           </view>
         </view>
       </scroll-view>
+    </view>
+
+    <!-- 今日推荐视图 -->
+    <view v-else-if="viewMode === 'today'" class="today-view">
+      <daily-recommend-card />
+      <view>
+
+    <!-- 操作按钮（固定底部） -->
+    <view v-if="recommendation && !loading && !error" class="action-bar">
+      <view
+        class="action-btn"
+        :class="{ 'action-btn--active': movieStatus === 'want' }"
+        @click="handleWant"
+      >
+        <text class="btn-text">{{ movieStatus === 'want' ? '已想看' : '想看' }}</text>
+      </view>
+      <view
+        class="action-btn"
+        :class="{ 'action-btn--active': movieStatus === 'watched' }"
+        @click="handleWatched"
+      >
+        <text class="btn-text">{{ movieStatus === 'watched' ? '已看过' : '标记已看' }}</text>
+      </view>
+      <view
+        class="action-btn"
+        :class="{ 'action-btn--active': movieStatus === 'planned' }"
+        @click="handleAddToCalendar"
+      >
+        <text class="btn-text">{{ movieStatus === 'planned' ? '已添加日历' : '添加到日历' }}</text>
+      </view>
+    </view>
+
+    <!-- 日期选择器弹窗 -->
+    <view v-if="showCalendarPicker" class="calendar-mask" @click="showCalendarPicker = false">
+      <view class="calendar-popup" @click.stop>
+        <view class="calendar-header">
+          <text class="calendar-title">{{ calendarPickerMode === 'watched' ? '选择观看日期' : '选择日期' }}</text>
+          <text class="calendar-close" @click="showCalendarPicker = false">✕</text>
+        </view>
+        <picker mode="date" :value="selectedDate" :start="calendarPickerMode === 'planned' ? minDateStr : undefined" :end="calendarPickerMode === 'watched' ? maxDateStr : undefined" @change="onDateChange">
+          <view class="date-picker">
+            <text class="date-text">{{ selectedDate || '请选择日期' }}</text>
+            <text class="picker-arrow">›</text>
+          </view>
+        </picker>
+        <button class="confirm-btn" @click="onPickerConfirm">确定</button>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view v-else-if="!loading && !error" class="empty-container">
+      <u-empty icon="movie" text="暂无推荐" />
+    </view>
+  </view>
     </view>
 
     <!-- 底部统计 -->
@@ -164,11 +225,13 @@ import storage, { MOVIE_STATUS } from '@/utils/storage.js'
 import tmdbApi from '@/utils/tmdb.js'
 import MovieCardVertical from '@/components/movie-card/movie-card-vertical.vue'
 import MovieCardCompact from '@/components/movie-card/movie-card-compact.vue'
+import DailyRecommendCard from '@/components/daily-recommend/DailyRecommendCard.vue'
 
 export default {
   components: {
     MovieCardVertical,
-    MovieCardCompact
+    MovieCardCompact,
+    DailyRecommendCard
   },
   data() {
     return {
@@ -243,7 +306,9 @@ export default {
 
     switchMode(mode) {
       this.viewMode = mode
-      this.generateCalendar()
+      if (mode !== 'today') {
+        this.generateCalendar()
+      }
       if (mode === 'week') {
         // 延长等待时间，确保 DOM 已更新
         setTimeout(() => {
@@ -728,6 +793,16 @@ export default {
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 320px);
+}
+
+/* 今日推荐视图样式 */
+.today-view {
+  margin: 15px;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  height: calc(100vh - 170px);
 }
 
 .week-content {
