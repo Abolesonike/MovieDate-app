@@ -63,22 +63,19 @@
             <text class="empty-hint">点击下方添加电影</text>
           </view>
 
-          <movie-card-horizontal
-            v-for="movie in filteredMovies"
-            :key="movie.id"
-            :movie="movie"
-            :show-status="true"
-            @click="goToDetail(movie)"
-          />
-
-          <!-- 移除按钮 -->
           <view
             v-for="movie in filteredMovies"
-            :key="'remove-' + movie.id"
-            class="remove-btn"
-            @click="removeMovie(movie.id)"
+            :key="movie.id"
+            class="movie-item-wrapper"
           >
-            <text>移除</text>
+            <movie-card-horizontal
+              :movie="movie"
+              :show-status="true"
+              @click="goToDetail(movie)"
+            />
+            <view class="remove-btn" @click="removeMovie(movie.id)">
+              <text>移除</text>
+            </view>
           </view>
         </view>
 
