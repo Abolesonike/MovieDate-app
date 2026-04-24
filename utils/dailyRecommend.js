@@ -217,6 +217,7 @@ class DailyRecommendService {
         year: movieDetail.year,
         genre: movieDetail.genre,
         summary: movieDetail.summary,
+        director: movieDetail.director || '',
         // 保留自定义字段
         quote: recommendation.quote || '',
         quoteFrom: recommendation.quoteFrom || '',
@@ -259,6 +260,7 @@ class DailyRecommendService {
       rating: '9.7',
       year: '1994',
       genre: '剧情',
+      director: '弗兰克·德拉邦特',
       summary: '一场囚犯与狱警之间的故事，关于希望与救赎。',
       quote: 'Hope is a good thing, maybe the best of things, and no good thing ever dies.',
       quoteFrom: 'Andy Dufresne',

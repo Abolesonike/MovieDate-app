@@ -114,55 +114,6 @@
     <!-- 今日推荐视图 -->
     <view v-else-if="viewMode === 'today'" class="today-view">
       <daily-recommend-card />
-      <view>
-
-    <!-- 操作按钮（固定底部） -->
-    <view v-if="recommendation && !loading && !error" class="action-bar">
-      <view
-        class="action-btn"
-        :class="{ 'action-btn--active': movieStatus === 'want' }"
-        @click="handleWant"
-      >
-        <text class="btn-text">{{ movieStatus === 'want' ? '已想看' : '想看' }}</text>
-      </view>
-      <view
-        class="action-btn"
-        :class="{ 'action-btn--active': movieStatus === 'watched' }"
-        @click="handleWatched"
-      >
-        <text class="btn-text">{{ movieStatus === 'watched' ? '已看过' : '标记已看' }}</text>
-      </view>
-      <view
-        class="action-btn"
-        :class="{ 'action-btn--active': movieStatus === 'planned' }"
-        @click="handleAddToCalendar"
-      >
-        <text class="btn-text">{{ movieStatus === 'planned' ? '已添加日历' : '添加到日历' }}</text>
-      </view>
-    </view>
-
-    <!-- 日期选择器弹窗 -->
-    <view v-if="showCalendarPicker" class="calendar-mask" @click="showCalendarPicker = false">
-      <view class="calendar-popup" @click.stop>
-        <view class="calendar-header">
-          <text class="calendar-title">{{ calendarPickerMode === 'watched' ? '选择观看日期' : '选择日期' }}</text>
-          <text class="calendar-close" @click="showCalendarPicker = false">✕</text>
-        </view>
-        <picker mode="date" :value="selectedDate" :start="calendarPickerMode === 'planned' ? minDateStr : undefined" :end="calendarPickerMode === 'watched' ? maxDateStr : undefined" @change="onDateChange">
-          <view class="date-picker">
-            <text class="date-text">{{ selectedDate || '请选择日期' }}</text>
-            <text class="picker-arrow">›</text>
-          </view>
-        </picker>
-        <button class="confirm-btn" @click="onPickerConfirm">确定</button>
-      </view>
-    </view>
-
-    <!-- 空状态 -->
-    <view v-else-if="!loading && !error" class="empty-container">
-      <u-empty icon="movie" text="暂无推荐" />
-    </view>
-  </view>
     </view>
 
     <!-- 底部统计 -->

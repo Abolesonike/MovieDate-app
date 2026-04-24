@@ -431,7 +431,7 @@ class TMDBApi {
     })
 
     try {
-      const data = await this.request(`/movie/${movieId}`)
+      const data = await this.request(`/movie/${movieId}`, { append_to_response: 'credits' })
       const result = this.transformMovie(data)
 
       console.log('[TMDB] 获取电影详情成功:', {
@@ -601,9 +601,19 @@ class TMDBApi {
       return null
     }
 
+    // 从 credits 中提取导演（当通过 append_to_response=credits 获取时）
+    let director = ''
+    if (tmdbMovie.credits && tmdbMovie.credits.crew) {
+      const directors = tmdbMovie.credits.crew.filter(p => p.job === 'Director')
+      if (directors.length > 0) {
+        director = directors.map(d => d.name).join(' / ')
+      }
+    }
+
     const result = {
       id: tmdbMovie.id,
       title: tmdbMovie.title,
+      originalTitle: tmdbMovie.original_title || tmdbMovie.title,
       poster: tmdbMovie.poster_path
         ? `${this.IMAGE_BASE_URL}${tmdbMovie.poster_path}`
         : '',
@@ -613,8 +623,9 @@ class TMDBApi {
       year: tmdbMovie.release_date
         ? tmdbMovie.release_date.split('-')[0]
         : '',
-      genre: this.getGenreNames(tmdbMovie.genre_ids),
-      summary: tmdbMovie.overview || ''
+      genre: this.getGenreNames(tmdbMovie.genre_ids || (tmdbMovie.genres ? tmdbMovie.genres.map(g => g.id) : [])),
+      summary: tmdbMovie.overview || '',
+      director
     }
 
     return result
