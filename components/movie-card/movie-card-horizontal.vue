@@ -76,7 +76,7 @@ export default {
 .movie-card-horizontal {
   position: relative;
   display: flex;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   margin-bottom: 12px;
   overflow: hidden;
@@ -91,7 +91,7 @@ export default {
 .card-poster {
   width: 100px;
   height: 150px;
-  background-color: #f0f0f0;
+  background-color: var(--bg-hover);
   flex-shrink: 0;
 }
 
@@ -106,7 +106,7 @@ export default {
 
 .card-title {
   font-size: 16px;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 600;
   margin-bottom: 8px;
   overflow: hidden;
@@ -138,12 +138,12 @@ export default {
 
 .card-genre,
 .card-year {
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .card-summary {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.6;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -168,26 +168,26 @@ export default {
   justify-content: center;
   font-size: 12px;
   font-weight: bold;
-  color: #666;
-  background: #f5f5f5;
+  color: var(--text-secondary);
+  background: var(--bg-page);
   border-radius: 0 0 8px 0;
   z-index: 1;
 }
 
 .card-ranking.gold {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  background: #FFD700;
   color: #fff;
   box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
 }
 
 .card-ranking.silver {
-  background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+  background: #C0C0C0;
   color: #fff;
   box-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
 }
 
 .card-ranking.bronze {
-  background: linear-gradient(135deg, #cd7f32 0%, #e8a87c 100%);
+  background: #CD7F32;
   color: #fff;
   box-shadow: 0 2px 8px rgba(205, 127, 50, 0.4);
 }
@@ -203,9 +203,9 @@ export default {
 }
 
 .tag-default {
-  background-color: #f5f5f5;
-  color: #666;
-  border: 1px solid #e0e0e0;
+  background-color: var(--bg-page);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
 .tag-warning {

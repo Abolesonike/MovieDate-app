@@ -477,7 +477,7 @@ export default {
 }
 
 .loading-text {
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 14px;
 }
 
@@ -515,7 +515,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
 }
 
 .placeholder-icon {
@@ -794,7 +794,7 @@ export default {
 
 .calendar-close {
   font-size: 20px;
-  color: #999;
+  color: var(--text-tertiary);
   cursor: pointer;
   padding: 4px;
 }
@@ -804,7 +804,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #333;
+  background: var(--bg-hover);
   border-radius: 8px;
   margin-bottom: 16px;
 }
@@ -816,14 +816,14 @@ export default {
 
 .picker-arrow {
   font-size: 20px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .confirm-btn {
   width: 100%;
   padding: 12px;
   font-size: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 8px;

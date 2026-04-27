@@ -325,23 +325,23 @@ export default {
   justify-content: center;
   gap: 16rpx;
   padding: 24rpx 20rpx;
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-light);
 }
 
 .period-item {
   padding: 12rpx 28rpx;
   border-radius: 32rpx;
-  background: #f0f0f0;
+  background: var(--bg-hover);
 
   &.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary);
   }
 }
 
 .period-text {
   font-size: 26rpx;
-  color: #666;
+  color: var(--text-secondary);
 
   .period-item.active & {
     color: #fff;
@@ -375,20 +375,20 @@ export default {
 
 .empty-title {
   font-size: 32rpx;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 16rpx;
 }
 
 .empty-subtitle {
   font-size: 26rpx;
-  color: #999;
+  color: var(--text-tertiary);
   text-align: center;
 }
 
 .loading-tip {
   text-align: center;
   padding: 40rpx 0;
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 26rpx;
 }
 
@@ -429,13 +429,13 @@ export default {
 .month-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin-left: 24rpx;
 }
 
 .month-count {
   font-size: 24rpx;
-  color: #999;
+  color: var(--text-tertiary);
   margin-left: 16rpx;
 }
 
@@ -453,8 +453,8 @@ export default {
   position: absolute;
   left: 0;
   border-radius: 50%;
-  background: #fff;
-  border: 2rpx solid #ccc;
+  background: var(--bg-card);
+  border: 2rpx solid var(--border);
 }
 
 .year-dot {
@@ -462,7 +462,7 @@ export default {
   height: 20rpx;
   top: 50%;
   margin-top: -10rpx;
-  border-color: #999;
+  border-color: var(--text-tertiary);
   background: #999;
 }
 
@@ -478,8 +478,8 @@ export default {
   width: 12rpx;
   height: 12rpx;
   top: 24rpx;
-  border-color: #667eea;
-  background: #667eea;
+  border-color: var(--primary);
+  background: var(--primary);
 }
 
 /* 月度海报缩略 */
@@ -517,14 +517,14 @@ export default {
 
 .entry-date {
   font-size: 24rpx;
-  color: #666;
+  color: var(--text-secondary);
   display: block;
   margin-bottom: 10rpx;
 }
 
 .entry-card {
   display: flex;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16rpx;
   padding: 16rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
@@ -556,7 +556,7 @@ export default {
 
 .entry-status {
   font-size: 22rpx;
-  color: #667eea;
+  color: var(--primary);
   background: rgba(102, 126, 234, 0.1);
   padding: 4rpx 12rpx;
   border-radius: 8rpx;
@@ -568,14 +568,14 @@ export default {
 
 .entry-title {
   font-size: 28rpx;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
   line-height: 1.4;
 }
 
 .entry-review {
   font-size: 24rpx;
-  color: #666;
+  color: var(--text-secondary);
   margin-top: 10rpx;
   line-height: 1.5;
   overflow: hidden;
@@ -594,7 +594,7 @@ export default {
   position: fixed;
   right: 30rpx;
   bottom: 60rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   border-radius: 60rpx;
   padding: 20rpx 34rpx;
   display: flex;
@@ -639,7 +639,7 @@ export default {
 .preview-content {
   width: 100%;
   max-width: 640rpx;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   overflow: hidden;
   padding: 20rpx;
@@ -662,15 +662,15 @@ export default {
   text-align: center;
   padding: 24rpx 0;
   border-radius: 12rpx;
-  background: #f0f0f0;
+  background: var(--bg-hover);
 
   text {
     font-size: 28rpx;
-    color: #666;
+    color: var(--text-secondary);
   }
 
   &.primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary);
 
     text {
       color: #fff;

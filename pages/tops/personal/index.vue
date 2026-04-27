@@ -340,8 +340,8 @@ export default {
   justify-content: space-between;
   height: 88rpx;
   padding: 0 20rpx;
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-light);
 }
 
 .nav-back {
@@ -354,7 +354,7 @@ export default {
 
 .nav-back-icon {
   font-size: 36rpx;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .nav-title {
@@ -378,7 +378,7 @@ export default {
   line-height: 1;
 
   &.disabled {
-    color: #ccc;
+    color: var(--text-tertiary);
   }
 }
 
@@ -403,13 +403,13 @@ export default {
 
 .empty-title {
   font-size: 32rpx;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 16rpx;
 }
 
 .empty-subtitle {
   font-size: 26rpx;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .top10-list {
@@ -419,7 +419,7 @@ export default {
 .top10-item {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16rpx;
   padding: 20rpx;
   margin-bottom: 16rpx;
@@ -445,19 +445,19 @@ export default {
   flex-shrink: 0;
 
   &.gold {
-    background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);
+    background: #FFD700;
   }
 
   &.silver {
-    background: linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 100%);
+    background: #C0C0C0;
   }
 
   &.bronze {
-    background: linear-gradient(135deg, #e8a87c 0%, #cd7f32 100%);
+    background: #CD7F32;
   }
 
   &.normal {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary);
   }
 }
 
@@ -486,7 +486,7 @@ export default {
 
 .item-title {
   font-size: 30rpx;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
   margin-bottom: 8rpx;
   overflow: hidden;
@@ -496,7 +496,7 @@ export default {
 
 .item-meta {
   font-size: 24rpx;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .drag-handle {
@@ -511,7 +511,7 @@ export default {
 .drag-line {
   width: 6rpx;
   height: 6rpx;
-  background-color: #ccc;
+  background-color: var(--text-tertiary);
   border-radius: 3rpx;
   margin: 3rpx 0;
 }
@@ -527,7 +527,7 @@ export default {
   width: 52rpx;
   height: 52rpx;
   border-radius: 50%;
-  background: #f5f5f5;
+  background: var(--bg-page);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -539,7 +539,7 @@ export default {
 
 .action-icon {
   font-size: 28rpx;
-  color: #666;
+  color: var(--text-secondary);
 
   &.delete {
     color: #ff6b6b;
@@ -569,7 +569,7 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+  background: var(--primary);
   color: #fff;
   font-weight: 600;
   box-shadow: 0 8rpx 24rpx rgba(255, 107, 107, 0.4);
@@ -586,7 +586,7 @@ export default {
   }
   
   &.disabled {
-    background: #ccc;
+    background: var(--border);
     box-shadow: none;
     
     .fab-icon {
@@ -595,7 +595,7 @@ export default {
   }
   
   &.fab-btn-left {
-    background: linear-gradient(135deg, #42b983 0%, #3498db 100%);
+    background: var(--primary);
   }
 }
 
@@ -624,7 +624,7 @@ export default {
 .preview-content {
   width: 100%;
   max-width: 640rpx;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   overflow: hidden;
   padding: 20rpx;
@@ -647,15 +647,15 @@ export default {
   text-align: center;
   padding: 24rpx 0;
   border-radius: 12rpx;
-  background: #f0f0f0;
+  background: var(--bg-hover);
 
   text {
     font-size: 28rpx;
-    color: #666;
+    color: var(--text-secondary);
   }
 
   &.primary {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    background: var(--primary);
 
     text {
       color: #fff;

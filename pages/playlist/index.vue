@@ -90,7 +90,7 @@ export default {
 <style scoped>
 .playlist-page {
   height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg-page);
 }
 
 .nav-bar {
@@ -98,14 +98,14 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .nav-title {
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .nav-actions {
@@ -142,13 +142,13 @@ export default {
 
 .empty-text {
   font-size: 16px;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .empty-hint {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 24px;
 }
 

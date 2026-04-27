@@ -571,7 +571,7 @@ export default {
 <style scoped>
 .calendar-page {
   height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--bg-page);
   padding-bottom: 60px;
   overflow: hidden;
   position: relative;
@@ -585,7 +585,7 @@ export default {
 
 /* 头部样式 */
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   padding: 20px 15px;
   color: #fff;
 }
@@ -608,8 +608,8 @@ export default {
 }
 
 .mode-btn-active {
-  background-color: #fff;
-  color: #667eea;
+  background-color: var(--bg-card);
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -656,11 +656,11 @@ export default {
 
 /* 月视图样式 */
 .month-view {
-  background-color: #fff;
+  background-color: var(--bg-card);
   margin: 15px;
   border-radius: 12px;
   padding: 15px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   max-height: calc(100vh - 200px);
   overflow-y: auto;
 }
@@ -675,7 +675,7 @@ export default {
 .weekday {
   text-align: center;
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
   padding: 8px 0;
 }
 
@@ -692,7 +692,7 @@ export default {
   align-items: center;
   justify-content: flex-start;
   padding-top: 8px;
-  background-color: #fafafa;
+  background-color: var(--bg-hover);
   border-radius: 8px;
   position: relative;
   cursor: pointer;
@@ -709,13 +709,13 @@ export default {
 
 .today {
   background-color: #e6f0ff;
-  border: 2px solid #667eea;
+  border: 2px solid var(--primary);
 }
 
 .day-number {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 4px;
 }
 
@@ -736,11 +736,11 @@ export default {
 
 /* 周视图样式 */
 .week-view {
-  background-color: #fff;
+  background-color: var(--bg-card);
   margin: 15px;
   border-radius: 12px;
   padding: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 320px);
@@ -749,9 +749,9 @@ export default {
 /* 今日推荐视图样式 */
 .today-view {
   margin: 15px;
-  background-color: #fff;
+  background-color: var(--bg-card);
   border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px var(--shadow);
   overflow: hidden;
   height: calc(100vh - 170px);
 }
@@ -770,7 +770,7 @@ export default {
 .week-day-row {
   display: flex;
   align-items: stretch;
-  background-color: #fafafa;
+  background-color: var(--bg-hover);
   padding: 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -780,13 +780,13 @@ export default {
 
 /* 今天的特殊样式 */
 .week-day-row.is-today {
-  background: linear-gradient(135deg, #e6f0ff 0%, #f0f4ff 100%);
-  border-left: 4px solid #667eea;
+  background: var(--primary-light);
+  border-left: 4px solid var(--primary);
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
 }
 
 .week-day-row:active {
-  background-color: #f0f0f0;
+  background-color: var(--bg-hover);
 }
 
 .day-info {
@@ -801,20 +801,20 @@ export default {
 
 .weekday-name {
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 4px;
 }
 
 .day-number {
   font-size: 18px;
   font-weight: bold;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .today-badge {
   font-size: 10px;
   color: #fff;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   padding: 2px 6px;
   border-radius: 8px;
   font-weight: 500;
@@ -838,7 +838,7 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 13px;
 }
 
@@ -853,12 +853,12 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
+  background: var(--bg-card);
   padding: 12px;
   text-align: center;
   font-size: 14px;
-  color: #666;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
+  box-shadow: 0 -2px 8px var(--shadow);
 }
 
 /* 弹窗遮罩 */
@@ -878,7 +878,7 @@ export default {
 .movie-detail-popup {
   width: 100%;
   height: 70%;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
@@ -889,13 +889,13 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .popup-title {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .popup-actions {
@@ -907,7 +907,7 @@ export default {
 .add-btn {
   padding: 6px 12px;
   font-size: 13px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 16px;
@@ -915,7 +915,7 @@ export default {
 
 .close-icon {
   font-size: 20px;
-  color: #999;
+  color: var(--text-tertiary);
   cursor: pointer;
   padding: 4px;
 }
@@ -939,13 +939,13 @@ export default {
 
 .empty-text {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .add-btn-small {
   padding: 8px 16px;
   font-size: 13px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 16px;
@@ -980,7 +980,7 @@ export default {
 
 .divider {
   height: 1px;
-  background-color: #eee;
+  background-color: var(--border-light);
   margin: 12px 0;
 }
 
@@ -988,7 +988,7 @@ export default {
 .add-movie-popup {
   width: 100%;
   height: 60%;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
@@ -996,13 +996,13 @@ export default {
 
 .search-section {
   padding: 12px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .search-box {
   display: flex;
   align-items: center;
-  background: #f5f5f5;
+  background: var(--bg-page);
   border-radius: 20px;
   padding: 8px 12px;
 }
@@ -1033,7 +1033,7 @@ export default {
 
 .loading-text {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .result-list {
@@ -1044,14 +1044,14 @@ export default {
   display: flex;
   align-items: center;
   padding: 12px;
-  background: #fafafa;
+  background: var(--bg-hover);
   border-radius: 8px;
   margin-bottom: 8px;
   cursor: pointer;
 }
 
 .result-item:active {
-  background: #f0f0f0;
+  background: var(--bg-hover);
 }
 
 .result-poster {
@@ -1069,7 +1069,7 @@ export default {
 
 .result-title {
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
   display: block;
   margin-bottom: 4px;
@@ -1089,12 +1089,12 @@ export default {
 }
 
 .result-year {
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .plus-icon {
   font-size: 20px;
-  color: #667eea;
+  color: var(--primary);
   margin-left: 8px;
 }
 
@@ -1105,6 +1105,6 @@ export default {
 
 .empty-search .empty-text {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 </style>

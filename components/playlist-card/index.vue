@@ -54,7 +54,7 @@ export default {
 .playlist-card {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   margin-bottom: 12px;
   padding: 16px;
@@ -84,7 +84,7 @@ export default {
 
 .playlist-name {
   font-size: 16px;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -97,7 +97,7 @@ export default {
 
 .playlist-progress {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .playlist-tags {
@@ -109,15 +109,15 @@ export default {
 .tag-item {
   display: inline-block;
   padding: 2px 8px;
-  background: #f0f0f0;
+  background: var(--bg-hover);
   border-radius: 4px;
   font-size: 11px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .playlist-arrow {
   font-size: 20px;
-  color: #ccc;
+  color: var(--text-tertiary);
   margin-left: 12px;
 }
 </style>

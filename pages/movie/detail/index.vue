@@ -438,25 +438,25 @@ export default {
 <style scoped>
 .movie-detail-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--bg-page);
   padding: 16px;
 }
 
 /* 头部样式 */
 .movie-header {
   display: flex;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .header-poster {
   width: 100px;
   height: 150px;
   border-radius: 8px;
-  background-color: #f0f0f0;
+  background-color: var(--bg-hover);
   flex-shrink: 0;
 }
 
@@ -471,7 +471,7 @@ export default {
 .header-title {
   font-size: 18px;
   font-weight: bold;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 8px;
   line-height: 1.4;
 }
@@ -496,12 +496,12 @@ export default {
 }
 
 .header-year {
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 13px;
 }
 
 .header-genre {
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 13px;
 }
 
@@ -509,17 +509,17 @@ export default {
 .status-section {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
   gap: 8px;
 }
 
 .status-label {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .status-tag {
@@ -531,9 +531,9 @@ export default {
 }
 
 .tag-default {
-  background-color: #f5f5f5;
-  color: #666;
-  border: 1px solid #e0e0e0;
+  background-color: var(--bg-page);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
 .tag-warning {
@@ -558,11 +558,11 @@ export default {
 .action-section {
   display: flex;
   gap: 10px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 12px 16px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .action-btn {
@@ -579,12 +579,12 @@ export default {
 }
 
 .btn-default {
-  background: #f5f5f5;
-  color: #666;
+  background: var(--bg-page);
+  color: var(--text-secondary);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   color: #fff;
 }
 
@@ -594,11 +594,11 @@ export default {
 
 /* 评价区域 */
 .review-section {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .rating-row {
@@ -610,7 +610,7 @@ export default {
 
 .rating-row .label {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .rating-stars {
@@ -640,7 +640,7 @@ export default {
   min-height: 80px;
   padding: 12px;
   font-size: 14px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   resize: none;
   outline: none;
@@ -648,46 +648,46 @@ export default {
 }
 
 .review-textarea:focus {
-  border-color: #667eea;
+  border-color: var(--primary);
 }
 
 .word-count {
   display: block;
   text-align: right;
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
   margin-top: 8px;
 }
 
 /* 简介区域 */
 .summary-section {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .section-title {
   font-size: 15px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 10px;
   display: block;
 }
 
 .summary-text {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.8;
 }
 
 /* 演职人员 */
 .credits-section {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 16px;
   margin-top: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .credit-group {
@@ -700,7 +700,7 @@ export default {
 
 .credit-label {
   font-size: 13px;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 10px;
   display: block;
 }
@@ -722,13 +722,13 @@ export default {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background-color: #f0f0f0;
+  background-color: var(--bg-hover);
   margin-bottom: 6px;
 }
 
 .credit-name {
   font-size: 13px;
-  color: #333;
+  color: var(--text-primary);
   text-align: center;
   width: 100%;
   white-space: nowrap;
@@ -738,7 +738,7 @@ export default {
 
 .credit-role {
   font-size: 11px;
-  color: #999;
+  color: var(--text-tertiary);
   text-align: center;
   width: 100%;
   white-space: nowrap;
@@ -762,7 +762,7 @@ export default {
 
 .calendar-popup {
   width: 100%;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16px 16px 0 0;
   padding: 20px;
 }
@@ -777,12 +777,12 @@ export default {
 .calendar-title {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .calendar-close {
   font-size: 20px;
-  color: #999;
+  color: var(--text-tertiary);
   cursor: pointer;
   padding: 4px;
 }
@@ -792,26 +792,26 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #f5f5f5;
+  background: var(--bg-page);
   border-radius: 8px;
   margin-bottom: 16px;
 }
 
 .date-text {
   font-size: 15px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .picker-arrow {
   font-size: 20px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .confirm-btn {
   width: 100%;
   padding: 12px;
   font-size: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 8px;

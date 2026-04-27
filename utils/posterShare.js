@@ -3,6 +3,8 @@
  * 基于 uni-app canvas 绘制海报墙并导出为 JPEG
  */
 
+import { getThemeColor } from './theme.js'
+
 function getImageInfo(src) {
   return new Promise((resolve, reject) => {
     uni.getImageInfo({
@@ -544,11 +546,12 @@ export function generatePersonalTop10Image({
       })
 
       // 角标颜色
+      const themeColor = getThemeColor()
       const getBadgeColor = (rank) => {
         if (rank === 1) return '#FFD700'
         if (rank === 2) return '#C0C0C0'
         if (rank === 3) return '#CD7F32'
-        return '#667eea'
+        return themeColor.primary
       }
 
       // 5. 绘制海报、排名角标和名字

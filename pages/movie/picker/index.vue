@@ -456,15 +456,15 @@ export default {
   display: flex;
   align-items: center;
   padding: 20rpx;
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-light);
 }
 
 .search-wrapper {
   flex: 1;
   display: flex;
   align-items: center;
-  background: #f0f0f0;
+  background: var(--bg-hover);
   border-radius: 36rpx;
   padding: 14rpx 24rpx;
 }
@@ -477,19 +477,19 @@ export default {
 .search-input {
   flex: 1;
   font-size: 28rpx;
-  color: #333;
+  color: var(--text-primary);
   height: 40rpx;
 }
 
 .clear-icon {
   font-size: 24rpx;
-  color: #999;
+  color: var(--text-tertiary);
   padding: 8rpx;
 }
 
 .cancel-text {
   font-size: 28rpx;
-  color: #666;
+  color: var(--text-secondary);
   margin-left: 20rpx;
 }
 
@@ -497,8 +497,8 @@ export default {
 .tab-bar {
   display: flex;
   align-items: center;
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-light);
   padding: 0 20rpx;
 }
 
@@ -518,7 +518,7 @@ export default {
 
 .tab-text {
   font-size: 28rpx;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .tab-active {
@@ -551,13 +551,13 @@ export default {
 
 .tip-text {
   font-size: 28rpx;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .loading-state {
   text-align: center;
   padding: 80rpx 0;
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 28rpx;
 }
 
@@ -576,7 +576,7 @@ export default {
 
 .empty-text {
   font-size: 28rpx;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 12rpx;
 }
 
@@ -592,7 +592,7 @@ export default {
 .movie-item {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16rpx;
   padding: 20rpx;
   margin-bottom: 16rpx;
@@ -622,7 +622,7 @@ export default {
 
 .movie-title {
   font-size: 30rpx;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
   margin-bottom: 10rpx;
   overflow: hidden;
@@ -632,7 +632,7 @@ export default {
 
 .movie-meta {
   font-size: 24rpx;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 10rpx;
 }
 
@@ -644,7 +644,7 @@ export default {
 .select-btn {
   padding: 12rpx 28rpx;
   border-radius: 28rpx;
-  background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%);
+  background: var(--primary);
   margin-left: 16rpx;
   flex-shrink: 0;
 
@@ -662,7 +662,7 @@ export default {
 .load-more-tip {
   text-align: center;
   padding: 24rpx 0;
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 24rpx;
 }
 

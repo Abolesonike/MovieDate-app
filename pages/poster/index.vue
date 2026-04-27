@@ -256,12 +256,12 @@ export default {
 <style lang="scss" scoped>
 .container {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--bg-page);
 }
 
 /* 页面标题 */
 .page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   padding: 40rpx 30rpx 60rpx;
 }
 
@@ -292,7 +292,7 @@ export default {
   overflow: hidden;
   margin-bottom: 30rpx;
   height: 240rpx;
-  box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8rpx 30rpx var(--shadow);
 
   &.disabled {
     opacity: 0.6;
@@ -307,49 +307,49 @@ export default {
 /* 豆瓣卡片 - 绿色主题 */
 .wall-card.douban {
   .wall-bg {
-    background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+    background: #00b894;
   }
 }
 
 /* TMDB卡片 - 金色主题 */
 .wall-card.tmdb {
   .wall-bg {
-    background: linear-gradient(135deg, #f39c12 0%, #d68910 100%);
+    background: #f39c12;
   }
 }
 
 /* 奥斯卡卡片 - 红色主题 */
 .wall-card.oscar {
   .wall-bg {
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    background: #e74c3c;
   }
 }
 
 /* AFI卡片 - 蓝色主题 */
 .wall-card.afi {
   .wall-bg {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    background: #3498db;
   }
 }
 
-/* 时间轴卡片 - 紫色主题 */
+/* 时间轴卡片 - 主题色 */
 .wall-card.timeline {
   .wall-bg {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary);
   }
 }
 
 /* 个人TOP10卡片 - 玫红/珊瑚主题 */
 .wall-card.personal-top10 {
   .wall-bg {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    background: #ff6b6b;
   }
 }
 
 /* 个人喜好表卡片 - 深蓝/紫主题 */
 .wall-card.favorite-grid {
   .wall-bg {
-    background: linear-gradient(135deg, #2c3e50 0%, #1a1a2e 100%);
+    background: #2c3e50;
   }
 }
 
@@ -422,7 +422,7 @@ export default {
 
 .progress-fill {
   height: 100%;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 4rpx;
   transition: width 0.5s ease;
 }

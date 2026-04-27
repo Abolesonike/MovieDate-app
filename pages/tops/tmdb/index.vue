@@ -200,7 +200,7 @@ export default {
 }
 
 .header-card {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   padding: 40rpx;
   text-align: center;
@@ -218,7 +218,7 @@ export default {
 .header-subtitle {
   display: block;
   font-size: 26rpx;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 /* 海报墙 */
@@ -251,7 +251,7 @@ export default {
 .wall-title {
   margin-top: 8rpx;
   font-size: 20rpx;
-  color: #333;
+  color: var(--text-primary);
   text-align: center;
   width: 100%;
   white-space: nowrap;
@@ -275,20 +275,20 @@ export default {
 
 .empty-title {
   font-size: 32rpx;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 16rpx;
 }
 
 .empty-subtitle {
   font-size: 26rpx;
-  color: #999;
+  color: var(--text-tertiary);
   text-align: center;
 }
 
 .loading-tip {
   text-align: center;
   padding: 40rpx 0;
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 26rpx;
 }
 
@@ -297,7 +297,7 @@ export default {
   position: fixed;
   right: 30rpx;
   bottom: 60rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   border-radius: 60rpx;
   padding: 20rpx 34rpx;
   display: flex;
@@ -342,7 +342,7 @@ export default {
 .preview-content {
   width: 100%;
   max-width: 640rpx;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   overflow: hidden;
   padding: 20rpx;
@@ -365,15 +365,15 @@ export default {
   text-align: center;
   padding: 24rpx 0;
   border-radius: 12rpx;
-  background: #f0f0f0;
+  background: var(--bg-hover);
 
   text {
     font-size: 28rpx;
-    color: #666;
+    color: var(--text-secondary);
   }
 
   &.primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary);
 
     text {
       color: #fff;

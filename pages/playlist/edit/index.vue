@@ -160,7 +160,7 @@ export default {
 <style scoped>
 .edit-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg-page);
 }
 
 .nav-bar {
@@ -168,8 +168,8 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .nav-cancel, .nav-save {
@@ -180,7 +180,7 @@ export default {
 .nav-title {
   font-size: 17px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .form-content {
@@ -194,19 +194,19 @@ export default {
 .form-label {
   display: block;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 8px;
 }
 
 .form-input {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
   padding: 12px;
   font-size: 15px;
 }
 
 .form-textarea {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
   padding: 12px;
   font-size: 15px;
@@ -239,11 +239,11 @@ export default {
 
 .tag-add {
   padding: 6px 12px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px dashed #ddd;
   border-radius: 16px;
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .hot-tags {
@@ -252,7 +252,7 @@ export default {
 
 .hot-tags-label {
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .hot-tags-list {
@@ -264,9 +264,9 @@ export default {
 
 .hot-tag {
   padding: 4px 10px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
 }
 </style>

@@ -175,7 +175,7 @@ export default {
 <style scoped>
 .list-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--bg-page);
 }
 
 /* 加载状态 */
@@ -200,7 +200,7 @@ export default {
 
 .loading-text {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 /* 空状态 */
@@ -219,21 +219,21 @@ export default {
 
 .empty-title {
   font-size: 18px;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
   margin-bottom: 8px;
 }
 
 .empty-desc {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 24px;
 }
 
 .empty-btn {
   padding: 10px 32px;
   font-size: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 20px;
@@ -253,12 +253,12 @@ export default {
   gap: 8px;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-light);
 }
 
 .planned-label {
   font-size: 12px;
-  color: #667eea;
+  color: var(--primary);
   background: #e6f7ff;
   padding: 2px 8px;
   border-radius: 4px;
@@ -266,7 +266,7 @@ export default {
 
 .planned-date {
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .list-footer {
@@ -281,6 +281,6 @@ export default {
 
 .tip-text {
   font-size: 13px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 </style>

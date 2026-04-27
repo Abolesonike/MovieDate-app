@@ -181,7 +181,7 @@ export default {
 <style scoped>
 .list-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--bg-page);
 }
 
 /* 加载状态 */
@@ -206,7 +206,7 @@ export default {
 
 .loading-text {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 /* 空状态 */
@@ -225,21 +225,21 @@ export default {
 
 .empty-title {
   font-size: 18px;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
   margin-bottom: 8px;
 }
 
 .empty-desc {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 24px;
 }
 
 .empty-btn {
   padding: 10px 32px;
   font-size: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 20px;
@@ -256,7 +256,7 @@ export default {
 .user-review-section {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-light);
 }
 
 .user-rating {
@@ -268,7 +268,7 @@ export default {
 
 .rating-label {
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .rating-stars {
@@ -277,7 +277,7 @@ export default {
 
 .user-review-text {
   font-size: 13px;
-  color: #333;
+  color: var(--text-primary);
   line-height: 1.5;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -288,7 +288,7 @@ export default {
 
 .watched-date {
   font-size: 11px;
-  color: #999;
+  color: var(--text-tertiary);
   margin-top: 4px;
 }
 
@@ -304,6 +304,6 @@ export default {
 
 .tip-text {
   font-size: 13px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 </style>

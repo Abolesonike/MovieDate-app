@@ -506,8 +506,8 @@ export default {
   justify-content: space-between;
   height: 88rpx;
   padding: 0 20rpx;
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-light);
 }
 
 .nav-back {
@@ -520,7 +520,7 @@ export default {
 
 .nav-back-icon {
   font-size: 36rpx;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .nav-title {
@@ -539,7 +539,7 @@ export default {
 
 .nav-action-icon {
   font-size: 32rpx;
-  color: #666;
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
@@ -557,7 +557,7 @@ export default {
 
 .page-subtitle {
   font-size: 24rpx;
-  color: #999;
+  color: var(--text-tertiary);
   margin-top: 8rpx;
   display: block;
 }
@@ -593,7 +593,7 @@ export default {
   padding-bottom: 150%;
   border-radius: 12rpx;
   overflow: hidden;
-  background: #e8e8e8;
+  background: var(--border);
   border: 1rpx solid #e0e0e0;
 }
 
@@ -618,13 +618,13 @@ export default {
 
 .placeholder-icon {
   font-size: 48rpx;
-  color: #ccc;
+  color: var(--text-tertiary);
   font-weight: 300;
 }
 
 .item-label {
   font-size: 20rpx;
-  color: #333;
+  color: var(--text-primary);
   margin-top: 8rpx;
   text-align: center;
   width: 100%;
@@ -642,8 +642,8 @@ export default {
   display: flex;
   justify-content: space-around;
   padding: 20rpx 40rpx 40rpx;
-  background: #fff;
-  border-top: 1rpx solid #eee;
+  background: var(--bg-card);
+  border-top: 1rpx solid var(--border-light);
 }
 
 .action-btn {
@@ -660,7 +660,7 @@ export default {
 
 .action-text {
   font-size: 24rpx;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 /* 弹窗 */
@@ -678,7 +678,7 @@ export default {
 .modal-content {
   width: 100%;
   max-width: 600rpx;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   padding: 40rpx;
 }
@@ -695,22 +695,22 @@ export default {
 .modal-input {
   width: 100%;
   height: 80rpx;
-  background: #f5f5f5;
+  background: var(--bg-page);
   border-radius: 12rpx;
   padding: 0 24rpx;
   font-size: 28rpx;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 24rpx;
 }
 
 .modal-textarea {
   width: 100%;
   height: 300rpx;
-  background: #f5f5f5;
+  background: var(--bg-page);
   border-radius: 12rpx;
   padding: 20rpx 24rpx;
   font-size: 26rpx;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 24rpx;
 }
 
@@ -722,23 +722,23 @@ export default {
 
 .type-label {
   font-size: 28rpx;
-  color: #666;
+  color: var(--text-secondary);
   margin-right: 20rpx;
 }
 
 .type-option {
   padding: 12rpx 32rpx;
   border-radius: 32rpx;
-  background: #f0f0f0;
+  background: var(--bg-hover);
   margin-right: 16rpx;
 
   text {
     font-size: 26rpx;
-    color: #666;
+    color: var(--text-secondary);
   }
 
   &.type-active {
-    background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%);
+    background: var(--primary);
 
     text {
       color: #fff;
@@ -756,15 +756,15 @@ export default {
   text-align: center;
   padding: 24rpx 0;
   border-radius: 12rpx;
-  background: #f0f0f0;
+  background: var(--bg-hover);
 
   text {
     font-size: 28rpx;
-    color: #666;
+    color: var(--text-secondary);
   }
 
   &.primary {
-    background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%);
+    background: var(--primary);
 
     text {
       color: #fff;
@@ -777,7 +777,7 @@ export default {
 .action-menu {
   width: 100%;
   max-width: 600rpx;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   overflow: hidden;
 }
@@ -785,11 +785,11 @@ export default {
 .action-menu-item {
   text-align: center;
   padding: 30rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid var(--border-light);
 
   text {
     font-size: 30rpx;
-    color: #333;
+    color: var(--text-primary);
   }
 
   &.danger text {
@@ -800,7 +800,7 @@ export default {
     border-bottom: none;
 
     text {
-      color: #999;
+      color: var(--text-tertiary);
     }
   }
 }
@@ -820,7 +820,7 @@ export default {
 .preview-content {
   width: 100%;
   max-width: 640rpx;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   overflow: hidden;
   padding: 20rpx;
@@ -843,15 +843,15 @@ export default {
   text-align: center;
   padding: 24rpx 0;
   border-radius: 12rpx;
-  background: #f0f0f0;
+  background: var(--bg-hover);
 
   text {
     font-size: 28rpx;
-    color: #666;
+    color: var(--text-secondary);
   }
 
   &.primary {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    background: var(--primary);
 
     text {
       color: #fff;

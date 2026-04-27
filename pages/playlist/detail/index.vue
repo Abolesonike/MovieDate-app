@@ -248,15 +248,15 @@ export default {
 <style scoped>
 .playlist-detail-page {
   height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg-page);
 }
 
 .nav-bar {
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .nav-back {
@@ -269,7 +269,7 @@ export default {
   flex: 1;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -306,7 +306,7 @@ export default {
 
 .cover-placeholder {
   height: 120px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -324,7 +324,7 @@ export default {
 
 .description-text {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -341,7 +341,7 @@ export default {
 
 .progress-label {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .progress-percent {
@@ -358,7 +358,7 @@ export default {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #007AFF 0%, #00C7BE 100%);
+  background: var(--primary);
   border-radius: 4px;
   transition: width 0.3s;
 }
@@ -372,10 +372,10 @@ export default {
 
 .filter-tab {
   padding: 6px 16px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16px;
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .filter-tab.active {
@@ -394,23 +394,23 @@ export default {
 
 .empty-text {
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .empty-hint {
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .remove-btn {
   display: inline-block;
   padding: 4px 12px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 12px;
 }
 
@@ -438,7 +438,7 @@ export default {
 
 .menu-sheet {
   width: 100%;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16px 16px 0 0;
   padding: 8px 0;
 }
@@ -447,7 +447,7 @@ export default {
   padding: 14px 20px;
   text-align: center;
   font-size: 16px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .menu-item-danger {
@@ -458,7 +458,7 @@ export default {
   padding: 14px 20px;
   text-align: center;
   font-size: 16px;
-  color: #666;
+  color: var(--text-secondary);
   border-top: 8px solid #f5f5f5;
   margin-top: 8px;
 }

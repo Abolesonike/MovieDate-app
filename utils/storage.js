@@ -11,7 +11,9 @@ const STORAGE_KEYS = {
   SYNC_CONFIG: 'sync_config',        // 云同步配置
   PERSONAL_TOP10: 'personal_top10',  // 个人Top10
   FAVORITE_GRID: 'favorite_grid',    // 个人喜好海报墙
-  PLAYLISTS: 'movie_playlists'       // 片单数据
+  PLAYLISTS: 'movie_playlists',      // 片单数据
+  THEME: 'app_theme',                // 主题色
+  DARK_MODE: 'app_dark_mode'         // 深色模式
 }
 
 // 电影状态枚举
@@ -1021,6 +1023,49 @@ class StorageManager {
 
   // ==================== 数据清理 ====================
 
+  // ==================== 主题设置 ====================
+
+  /**
+   * 获取主题色
+   * @returns {string}
+   */
+  getTheme() {
+    try {
+      return uni.getStorageSync(STORAGE_KEYS.THEME)
+    } catch (e) {
+      return null
+    }
+  }
+
+  /**
+   * 设置主题色
+   * @param {string} themeKey
+   */
+  setTheme(themeKey) {
+    uni.setStorageSync(STORAGE_KEYS.THEME, themeKey)
+  }
+
+  /**
+   * 获取深色模式
+   * @returns {boolean}
+   */
+  getDarkMode() {
+    try {
+      const value = uni.getStorageSync(STORAGE_KEYS.DARK_MODE)
+      return value === true || value === 'true'
+    } catch (e) {
+      return false
+    }
+  }
+
+  /**
+   * 设置深色模式
+   * @param {boolean} isDark
+   */
+  setDarkMode(isDark) {
+    uni.setStorageSync(STORAGE_KEYS.DARK_MODE, isDark)
+  }
+
   /**
    * 清除所有数据
    */
@@ -1031,6 +1076,8 @@ class StorageManager {
     uni.removeStorageSync(STORAGE_KEYS.FAVORITE_GRID)
     uni.removeStorageSync(STORAGE_KEYS.PERSONAL_TOP10)
     uni.removeStorageSync(STORAGE_KEYS.USER_SETTINGS)
+    uni.removeStorageSync(STORAGE_KEYS.THEME)
+    uni.removeStorageSync(STORAGE_KEYS.DARK_MODE)
   }
 
   /**

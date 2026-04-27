@@ -443,7 +443,7 @@ export default {
 <style scoped>
 .movie-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--bg-page);
 }
 
 .no-api-key {
@@ -460,7 +460,7 @@ export default {
 
 .empty-text {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
   display: block;
   margin-bottom: 16px;
 }
@@ -469,7 +469,7 @@ export default {
 .retry-btn {
   padding: 8px 20px;
   font-size: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 20px;
@@ -484,8 +484,8 @@ export default {
 
 .tab-header {
   display: flex;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
 }
 
 .tab-item {
@@ -493,13 +493,13 @@ export default {
   text-align: center;
   padding: 14px 0;
   font-size: 15px;
-  color: #666;
+  color: var(--text-secondary);
   position: relative;
   transition: all 0.3s;
 }
 
 .tab-active {
-  color: #667eea;
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -511,7 +511,7 @@ export default {
   transform: translateX(-50%);
   width: 30px;
   height: 3px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   border-radius: 2px;
 }
 
@@ -536,7 +536,7 @@ export default {
 
 .loading-text {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 /* 电影列表布局 */
@@ -547,13 +547,13 @@ export default {
 /* 找电影页面样式 */
 .search-box {
   padding: 12px;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .search-input-wrapper {
   display: flex;
   align-items: center;
-  background: #f5f5f5;
+  background: var(--bg-page);
   border-radius: 20px;
   padding: 8px 12px;
 }
@@ -568,20 +568,20 @@ export default {
 
 .clear-icon {
   font-size: 16px;
-  color: #999;
+  color: var(--text-tertiary);
   margin-left: 8px;
   cursor: pointer;
 }
 
 .filter-section {
-  background: #fff;
+  background: var(--bg-card);
   padding: 12px;
   margin-bottom: 12px;
 }
 
 .filter-title {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 10px;
   font-weight: 500;
 }
@@ -595,22 +595,22 @@ export default {
 .filter-tag {
   padding: 6px 12px;
   font-size: 13px;
-  background: #f5f5f5;
-  color: #666;
+  background: var(--bg-page);
+  color: var(--text-secondary);
   border-radius: 16px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   transition: all 0.2s;
 }
 
 .filter-tag-active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   color: #fff;
-  border-color: #667eea;
+  border-color: var(--primary);
 }
 
 /* Top250 排行榜样式 */
 .top250-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   padding: 20px 16px;
   margin-bottom: 12px;
   border-radius: 0 0 16px 16px;
@@ -642,11 +642,11 @@ export default {
 .top250-item {
   display: flex;
   align-items: flex-start;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 8px;
   margin-bottom: 12px;
   padding: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
   transition: transform 0.2s;
 }
 
@@ -662,27 +662,27 @@ export default {
   justify-content: center;
   font-size: 16px;
   font-weight: bold;
-  color: #666;
-  background: #f5f5f5;
+  color: var(--text-secondary);
+  background: var(--bg-page);
   border-radius: 50%;
   margin-right: 12px;
   flex-shrink: 0;
 }
 
 .ranking-number.gold {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  background: #FFD700;
   color: #fff;
   box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
 }
 
 .ranking-number.silver {
-  background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+  background: #C0C0C0;
   color: #fff;
   box-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
 }
 
 .ranking-number.bronze {
-  background: linear-gradient(135deg, #cd7f32 0%, #e8a87c 100%);
+  background: #CD7F32;
   color: #fff;
   box-shadow: 0 2px 8px rgba(205, 127, 50, 0.4);
 }
@@ -690,7 +690,7 @@ export default {
 .top250-poster {
   width: 80px;
   height: 110px;
-  background-color: #f0f0f0;
+  background-color: var(--bg-hover);
   border-radius: 6px;
   flex-shrink: 0;
   margin-right: 12px;
@@ -706,7 +706,7 @@ export default {
 
 .top250-title {
   font-size: 15px;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -735,16 +735,16 @@ export default {
 }
 
 .top250-genre {
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .top250-year {
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .top250-summary {
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.5;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -763,9 +763,9 @@ export default {
 .load-more-btn {
   padding: 8px 24px;
   font-size: 14px;
-  background: #fff;
-  color: #667eea;
-  border: 1px solid #667eea;
+  background: var(--bg-card);
+  color: var(--primary);
+  border: 1px solid var(--primary);
   border-radius: 20px;
 }
 

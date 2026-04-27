@@ -312,6 +312,47 @@
       </view>
     </view>
 
+    <!-- 外观设置 -->
+    <view class="theme-section">
+      <view class="section-header">
+        <text class="section-icon">🎨</text>
+        <text class="section-title">外观设置</text>
+      </view>
+
+      <view class="theme-content">
+        <!-- 主题色选择 -->
+        <view class="theme-row">
+          <text class="theme-label">主题色</text>
+          <view class="theme-colors">
+            <view
+              v-for="(config, key) in themeColors"
+              :key="key"
+              class="theme-color-item"
+              :class="{ active: currentTheme === key }"
+              :style="{ backgroundColor: config.primary }"
+              @click="changeTheme(key)"
+            >
+              <text v-if="currentTheme === key" class="theme-check">✓</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 深色模式开关 -->
+        <view class="theme-row">
+          <text class="theme-label">深色模式</text>
+          <view
+            class="dark-mode-toggle"
+            :class="{ active: isDarkMode }"
+            @click="toggleDarkMode"
+          >
+            <view class="toggle-track">
+              <view class="toggle-thumb"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <!-- 关于信息 -->
     <view class="about-section">
       <view class="section-header">
@@ -338,6 +379,7 @@
 <script>
 import tmdbApi from '@/utils/tmdb.js'
 import storage from '@/utils/storage.js'
+import { THEME_COLORS, getTheme, setTheme, getDarkMode, setDarkMode } from '@/utils/theme.js'
 
 export default {
   data() {
@@ -361,7 +403,10 @@ export default {
         watchedCount: 0,
         plannedCount: 0,
         totalEvents: 0
-      }
+      },
+      themeColors: THEME_COLORS,
+      currentTheme: getTheme(),
+      isDarkMode: getDarkMode()
     }
   },
   onLoad() {
@@ -999,6 +1044,18 @@ export default {
       if (path) {
         uni.navigateTo({ url: path })
       }
+    },
+
+    // 切换主题色
+    changeTheme(themeKey) {
+      this.currentTheme = themeKey
+      setTheme(themeKey)
+    },
+
+    // 切换深色模式
+    toggleDarkMode() {
+      this.isDarkMode = !this.isDarkMode
+      setDarkMode(this.isDarkMode)
     }
   }
 }
@@ -1007,7 +1064,7 @@ export default {
 <style scoped>
 .me-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--bg-page);
   padding-bottom: 20px;
 }
 
@@ -1032,11 +1089,11 @@ export default {
 
 .loading-text {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   padding: 40px 20px 20px;
 }
 
@@ -1048,11 +1105,11 @@ export default {
 
 /* 统计区域 */
 .stats-section {
-  background: #fff;
+  background: var(--bg-card);
   margin: 12px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .stats-content {
@@ -1075,19 +1132,19 @@ export default {
 }
 
 .stat-item:active {
-  background: #f5f5f5;
+  background: var(--bg-hover);
   border-radius: 8px;
 }
 
 .stat-value {
   font-size: 24px;
   font-weight: bold;
-  color: #667eea;
+  color: var(--primary);
 }
 
 .stat-label {
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
   margin-top: 4px;
 }
 
@@ -1095,13 +1152,14 @@ export default {
 .settings-section,
 .data-section,
 .sync-section,
+.theme-section,
 .help-section,
 .about-section {
-  background: #fff;
+  background: var(--bg-card);
   margin: 12px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .section-header {
@@ -1109,7 +1167,7 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .section-icon {
@@ -1119,16 +1177,16 @@ export default {
 .section-title {
   font-size: 16px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   flex: 1;
 }
 
 .dev-tag {
   padding: 2px 8px;
   font-size: 11px;
-  background: #fff7e6;
-  color: #fa8c16;
-  border: 1px solid #ffd591;
+  background: var(--tag-want-bg);
+  color: var(--tag-want-text);
+  border: 1px solid var(--tag-want-border);
   border-radius: 4px;
 }
 
@@ -1151,12 +1209,12 @@ export default {
 .label-text {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .label-tip {
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .proxy-actions {
@@ -1173,7 +1231,7 @@ export default {
 
 .save-proxy-btn {
   flex: 1;
-  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
 }
@@ -1181,16 +1239,16 @@ export default {
 .clear-proxy-btn {
   padding: 8px 12px;
   font-size: 13px;
-  background: #f5f5f5;
-  color: #666;
-  border: 1px solid #e0e0e0;
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 
 .proxy-status {
   margin-top: 8px;
   padding: 6px 10px;
-  background: #f5f5f5;
+  background: var(--bg-page);
   border-radius: 6px;
 }
 
@@ -1200,16 +1258,16 @@ export default {
 }
 
 .text-success {
-  color: #52c41a;
+  color: var(--tag-watched-text);
 }
 
 .text-default {
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .divider {
   height: 1px;
-  background: #e8e8e8;
+  background: var(--border);
   margin: 16px 0;
 }
 
@@ -1229,7 +1287,7 @@ export default {
   flex: 1;
   padding: 10px;
   font-size: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -1242,9 +1300,9 @@ export default {
 .clear-btn {
   padding: 10px 16px;
   font-size: 14px;
-  background: #f5f5f5;
-  color: #666;
-  border: 1px solid #e0e0e0;
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 
@@ -1261,22 +1319,22 @@ export default {
 }
 
 .tag-success {
-  background: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
+  background: var(--tag-watched-bg);
+  color: var(--tag-watched-text);
+  border: 1px solid var(--tag-watched-border);
 }
 
 .tag-warning {
-  background: #fff7e6;
-  color: #fa8c16;
-  border: 1px solid #ffd591;
+  background: var(--tag-want-bg);
+  color: var(--tag-want-text);
+  border: 1px solid var(--tag-want-border);
 }
 
 .test-btn {
   width: 100%;
   padding: 10px;
   font-size: 14px;
-  background: #52c41a;
+  background: var(--tag-watched-text);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -1296,13 +1354,13 @@ export default {
   display: flex;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .data-item:active {
-  background: #f5f5f5;
+  background: var(--bg-hover);
 }
 
 .data-item:last-child {
@@ -1327,12 +1385,12 @@ export default {
 
 .item-title {
   font-size: 15px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .item-desc {
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .item-desc-danger {
@@ -1342,7 +1400,7 @@ export default {
 
 .item-arrow {
   font-size: 20px;
-  color: #ccc;
+  color: var(--border);
 }
 
 /* 云同步 */
@@ -1354,7 +1412,7 @@ export default {
   display: flex;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .sync-item.disabled {
@@ -1369,8 +1427,8 @@ export default {
   padding: 16px;
   text-align: center;
   font-size: 13px;
-  color: #999;
-  background: #fafafa;
+  color: var(--text-tertiary);
+  background: var(--bg-hover);
 }
 
 /* 帮助说明 */
@@ -1394,7 +1452,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #667eea;
+  background: var(--primary);
   color: #fff;
   border-radius: 50%;
   font-size: 12px;
@@ -1406,7 +1464,7 @@ export default {
 .step-text {
   flex: 1;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.6;
   padding-top: 2px;
 }
@@ -1416,8 +1474,8 @@ export default {
   padding: 10px;
   font-size: 14px;
   background: transparent;
-  color: #667eea;
-  border: 1px solid #667eea;
+  color: var(--primary);
+  border: 1px solid var(--primary);
   border-radius: 8px;
 }
 
@@ -1425,8 +1483,8 @@ export default {
 .proxy-tips {
   margin-top: 16px;
   padding: 12px;
-  background: #fff7e6;
-  border-left: 3px solid #fa8c16;
+  background: var(--tag-want-bg);
+  border-left: 3px solid var(--tag-want-text);
   border-radius: 4px;
 }
 
@@ -1434,25 +1492,107 @@ export default {
   display: block;
   font-size: 13px;
   font-weight: 500;
-  color: #d46b08;
+  color: var(--tag-want-text);
   margin-bottom: 8px;
 }
 
 .tip-text {
   display: block;
   font-size: 12px;
-  color: #873800;
+  color: var(--text-secondary);
   line-height: 1.8;
   margin-bottom: 2px;
 }
 
+/* 外观设置 */
+.theme-content {
+  padding: 16px;
+}
+
+.theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.theme-row:last-child {
+  margin-bottom: 0;
+}
+
+.theme-label {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.theme-colors {
+  display: flex;
+  gap: 12px;
+}
+
+.theme-color-item {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  transition: transform 0.2s;
+}
+
+.theme-color-item.active {
+  border-color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+.theme-check {
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* 深色模式开关 */
+.dark-mode-toggle {
+  cursor: pointer;
+}
+
+.toggle-track {
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--border);
+  position: relative;
+  transition: background 0.3s;
+}
+
+.dark-mode-toggle.active .toggle-track {
+  background: var(--primary);
+}
+
+.toggle-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.dark-mode-toggle.active .toggle-thumb {
+  transform: translateX(22px);
+}
+
 /* 调试信息 */
 .debug-section {
-  background: #fff;
+  background: var(--bg-card);
   margin: 12px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .debug-content {
@@ -1466,13 +1606,13 @@ export default {
 }
 
 .debug-label {
-  color: #999;
+  color: var(--text-tertiary);
   margin-right: 8px;
   min-width: 80px;
 }
 
 .debug-value {
-  color: #333;
+  color: var(--text-primary);
   flex: 1;
   word-break: break-all;
 }
@@ -1485,7 +1625,7 @@ export default {
 .about-text {
   display: block;
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.8;
   margin-bottom: 4px;
 }
@@ -1494,9 +1634,9 @@ export default {
   margin: 0 16px 16px;
   padding: 10px;
   font-size: 14px;
-  background: #f5f5f5;
-  color: #666;
-  border: 1px solid #e0e0e0;
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 </style>

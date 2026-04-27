@@ -145,7 +145,7 @@ export default {
 <style scoped>
 .person-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--bg-page);
   padding: 16px;
 }
 
@@ -153,18 +153,18 @@ export default {
 .person-header {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .person-avatar {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #f0f0f0;
+  background-color: var(--bg-hover);
   flex-shrink: 0;
   margin-right: 16px;
 }
@@ -180,52 +180,52 @@ export default {
 .person-name {
   font-size: 20px;
   font-weight: bold;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .person-meta {
   font-size: 13px;
-  color: #999;
+  color: var(--text-tertiary);
   line-height: 1.5;
 }
 
 /* 简介 */
 .bio-section {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .section-title {
   font-size: 15px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 10px;
   display: block;
 }
 
 .bio-text {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.8;
 }
 
 /* 作品区域 */
 .works-section {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .works-tabs {
   display: flex;
   gap: 20px;
   margin-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
   padding-bottom: 12px;
 }
 
@@ -247,30 +247,30 @@ export default {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
 }
 
 .tab-text {
   font-size: 15px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .tab-item.active .tab-text {
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
 .tab-count {
   font-size: 12px;
-  color: #999;
-  background: #f5f5f5;
+  color: var(--text-tertiary);
+  background: var(--bg-page);
   padding: 2px 8px;
   border-radius: 10px;
 }
 
 .tab-item.active .tab-count {
   background: #f0ebff;
-  color: #764ba2;
+  color: var(--primary);
 }
 
 .works-list {
@@ -284,6 +284,6 @@ export default {
 
 .empty-text {
   font-size: 14px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 </style>
