@@ -68,134 +68,100 @@
   </view>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import doubanMapping from '@/utils/doubanMapping.js'
 import tmdbApi from '@/utils/tmdb.js'
 import storage from '@/utils/storage.js'
 import { generatePosterWallImage } from '@/utils/posterShare.js'
 
-export default {
-  data() {
-    return {
-      watchedMovies: [],
-      loading: false,
-      stats: {
-        total: 250,
-        watchedCount: 0
-      },
-      previewImage: ''
-    }
-  },
+const watchedMovies = ref([])
+const loading = ref(false)
+const stats = ref({ total: 250, watchedCount: 0 })
+const previewImage = ref('')
 
-  async onLoad() {
-    await this.loadData()
-  },
+async function fetchMovieDetails(doubanMovies) {
+  if (!doubanMovies || doubanMovies.length === 0) return []
 
-  methods: {
-    async loadData() {
-      this.loading = true
+  const movies = await Promise.all(
+    doubanMovies.map(async (doubanMovie) => {
       try {
-        // 1. 初始化映射数据
-        await doubanMapping.init()
-
-        // 2. 获取用户已看电影列表
-        const movieStatus = storage.getAllMovieStatus()
-        const watchedIds = Object.entries(movieStatus)
-          .filter(([id, data]) => data.status === 'watched')
-          .map(([id]) => parseInt(id))
-
-        // 3. 获取观影统计
-        const stats = doubanMapping.getWatchStats(watchedIds)
-        this.stats = {
-          total: stats.total,
-          watchedCount: stats.watchedCount
-        }
-
-        // 4. 获取已看电影详情（带豆瓣排名信息）
-        const watchedTop250 = doubanMapping.getWatchedTop250(watchedIds)
-        this.watchedMovies = await this.fetchMovieDetails(watchedTop250)
+        const tmdbDetail = await tmdbApi.getMovieDetails(doubanMovie.tmdbId)
+        return { ...doubanMovie, poster: tmdbDetail?.poster || '' }
       } catch (error) {
-        console.error('[DoubanTop250] 加载数据失败:', error)
-        uni.showToast({
-          title: '加载失败，请重试',
-          icon: 'none'
-        })
-      } finally {
-        this.loading = false
+        console.error(`[DoubanTop250] 获取电影详情失败: ${doubanMovie.title}`, error)
+        return { ...doubanMovie, poster: '' }
       }
-    },
+    })
+  )
+  return movies
+}
 
-    async fetchMovieDetails(doubanMovies) {
-      if (!doubanMovies || doubanMovies.length === 0) return []
+async function loadData() {
+  loading.value = true
+  try {
+    await doubanMapping.init()
 
-      const movies = []
-      for (const doubanMovie of doubanMovies) {
-        try {
-          const tmdbDetail = await tmdbApi.getMovieDetails(doubanMovie.tmdbId)
-          if (tmdbDetail) {
-            movies.push({
-              ...doubanMovie,
-              poster: tmdbDetail.poster
-            })
-          }
-        } catch (error) {
-          console.error(`[DoubanTop250] 获取电影详情失败: ${doubanMovie.title}`, error)
-          movies.push({
-            ...doubanMovie,
-            poster: ''
-          })
-        }
-      }
-      return movies
-    },
+    const movieStatus = storage.getAllMovieStatus()
+    const watchedIds = Object.entries(movieStatus)
+      .filter(([_, data]) => data.status === 'watched')
+      .map(([id]) => parseInt(id))
 
-    async onExport() {
-      if (this.watchedMovies.length === 0) return
-      uni.showLoading({ title: '生成中...', mask: true })
-      try {
-        const path = await generatePosterWallImage({
-          title: '豆瓣 Top250 观影海报墙',
-          subtitle: `已看 ${this.stats.watchedCount} / ${this.stats.total}`,
-          movies: this.watchedMovies.map(m => ({
-            poster: m.poster,
-            title: m.title
-          })),
-          canvasId: 'shareCanvas',
-          componentThis: this
-        })
-        this.previewImage = path
-      } catch (error) {
-        console.error('生成分享图失败:', error)
-        uni.showToast({ title: '生成失败', icon: 'none' })
-      } finally {
-        uni.hideLoading()
-      }
-    },
+    const watchStats = doubanMapping.getWatchStats(watchedIds)
+    stats.value = { total: watchStats.total, watchedCount: watchStats.watchedCount }
 
-    closePreview() {
-      this.previewImage = ''
-    },
+    const watchedTop250 = doubanMapping.getWatchedTop250(watchedIds)
+    watchedMovies.value = await fetchMovieDetails(watchedTop250)
+  } catch (error) {
+    console.error('[DoubanTop250] 加载数据失败:', error)
+    uni.showToast({ title: '加载失败，请重试', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
 
-    async saveImage() {
-      try {
-        await uni.saveImageToPhotosAlbum({ filePath: this.previewImage })
-        uni.showToast({ title: '已保存到相册', icon: 'success' })
-      } catch (e) {
-        if (e.errMsg && e.errMsg.includes('auth deny')) {
-          uni.showModal({
-            title: '需要授权',
-            content: '请允许保存图片到相册',
-            success: (res) => {
-              if (res.confirm) uni.openSetting()
-            }
-          })
-        } else {
-          uni.showToast({ title: '保存失败', icon: 'none' })
-        }
-      }
+async function onExport() {
+  if (watchedMovies.value.length === 0) return
+  uni.showLoading({ title: '生成中...', mask: true })
+  try {
+    const path = await generatePosterWallImage({
+      title: '豆瓣 Top250 观影海报墙',
+      subtitle: `已看 ${stats.value.watchedCount} / ${stats.value.total}`,
+      movies: watchedMovies.value.map(m => ({ poster: m.poster, title: m.title })),
+      canvasId: 'shareCanvas'
+    })
+    previewImage.value = path
+  } catch (error) {
+    console.error('生成分享图失败:', error)
+    uni.showToast({ title: '生成失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
+}
+
+function closePreview() {
+  previewImage.value = ''
+}
+
+async function saveImage() {
+  try {
+    await uni.saveImageToPhotosAlbum({ filePath: previewImage.value })
+    uni.showToast({ title: '已保存到相册', icon: 'success' })
+  } catch (e) {
+    if (e.errMsg?.includes('auth deny')) {
+      uni.showModal({
+        title: '需要授权',
+        content: '请允许保存图片到相册',
+        success: (res) => { if (res.confirm) uni.openSetting() }
+      })
+    } else {
+      uni.showToast({ title: '保存失败', icon: 'none' })
     }
   }
 }
+
+onLoad(() => loadData())
 </script>
 
 <style lang="scss" scoped>

@@ -376,689 +376,447 @@
     </view>
   </template>
 
-<script>
+<script setup>
+import { ref, shallowRef } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import tmdbApi from '@/utils/tmdb.js'
 import storage from '@/utils/storage.js'
 import { THEME_COLORS, getTheme, setTheme, getDarkMode, setDarkMode } from '@/utils/theme.js'
 
-export default {
-  data() {
-    return {
-      apiKeyInput: '',
-      apiProxyInput: '',
-      hasApiKey: false,
-      hasCustomProxy: false,
-      isValidating: false,
-      isLoading: false,
-      storageReady: false,
-      debugMode: false,
-      debugInfo: {
-        timestamp: '',
-        storageStatus: '',
-        permissionStatus: '',
-        storageValue: ''
-      },
-      stats: {
-        wantCount: 0,
-        watchedCount: 0,
-        plannedCount: 0,
-        totalEvents: 0
-      },
-      themeColors: THEME_COLORS,
-      currentTheme: getTheme(),
-      isDarkMode: getDarkMode()
+const apiKeyInput = ref('')
+const apiProxyInput = ref('')
+const hasApiKey = ref(false)
+const hasCustomProxy = ref(false)
+const isValidating = ref(false)
+const isLoading = ref(false)
+const storageReady = ref(false)
+const debugMode = ref(false)
+const debugInfo = shallowRef({
+  timestamp: '',
+  storageStatus: '',
+  permissionStatus: '',
+  storageValue: ''
+})
+const stats = ref({
+  wantCount: 0,
+  watchedCount: 0,
+  plannedCount: 0,
+  totalEvents: 0
+})
+const themeColors = THEME_COLORS
+const currentTheme = ref(getTheme())
+const isDarkMode = ref(getDarkMode())
+
+async function initializeApp() {
+  isLoading.value = true
+  const startTime = Date.now()
+
+  try {
+    updateDebugInfo('开始初始化应用', 'info')
+    checkApiEnvironment()
+
+    let permissions = false
+    let retryCount = 0
+    const maxRetries = 3
+
+    while (retryCount < maxRetries) {
+      try {
+        permissions = await checkStoragePermissions()
+        if (permissions) {
+          updateDebugInfo(`权限检查成功 (尝试 ${retryCount + 1}/${maxRetries})`, 'success')
+          break
+        }
+      } catch (error) {
+        console.warn(`权限检查第 ${retryCount + 1} 次尝试失败:`, error)
+      }
+      retryCount++
+      if (retryCount < maxRetries) {
+        updateDebugInfo(`权限检查失败，${retryCount}秒后重试...`, 'warning')
+        await new Promise(resolve => setTimeout(resolve, retryCount * 1000))
+      }
     }
-  },
-  onLoad() {
-    this.initializeApp()
-  },
-  onShow() {
-    this.initializeApp()
-  },
-  methods: {
-    // 初始化应用
-    async initializeApp() {
-      this.isLoading = true
-      const startTime = Date.now()
 
+    if (!permissions && retryCount >= maxRetries) {
+      updateDebugInfo('所有权限检查尝试都失败了，继续初始化但可能无法保存', 'error')
+    }
+
+    updateDebugInfo('等待存储就绪...', 'info')
+    await waitForStorageReady()
+
+    let writeTestSuccess = false
+    for (let i = 0; i < 3; i++) {
       try {
-        this.updateDebugInfo('开始初始化应用', 'info')
-        this.checkApiEnvironment()
-
-        // 检查存储权限 - 使用多次尝试的方式
-        this.updateDebugInfo('检查存储权限...', 'info')
-        let permissions = false
-        let retryCount = 0
-        const maxRetries = 3
-
-        while (retryCount < maxRetries) {
-          try {
-            permissions = await this.checkStoragePermissions()
-            if (permissions) {
-              this.updateDebugInfo(`权限检查成功 (尝试 ${retryCount + 1}/${maxRetries})`, 'success')
-              break
-            }
-          } catch (error) {
-            console.warn(`权限检查第 ${retryCount + 1} 次尝试失败:`, error)
-          }
-
-          retryCount++
-          if (retryCount < maxRetries) {
-            this.updateDebugInfo(`权限检查失败，${retryCount}秒后重试...`, 'warning')
-            await new Promise(resolve => setTimeout(resolve, retryCount * 1000))
-          }
-        }
-
-        if (!permissions && retryCount >= maxRetries) {
-          this.updateDebugInfo('所有权限检查尝试都失败了，继续初始化但可能无法保存', 'error')
-          // 继续初始化但不阻止使用
-        }
-
-        // 等待一小段时间确保存储就绪
-        this.updateDebugInfo('等待存储就绪...', 'info')
-        await this.waitForStorageReady()
-
-        // 测试存储读写 - 尝试多次
-        let writeTestSuccess = false
-        for (let i = 0; i < 3; i++) {
-          try {
-            const testKey = 'test_' + Date.now()
-            uni.setStorageSync('__temp_test__', testKey)
-            const retrievedKey = uni.getStorageSync('__temp_test__')
-            uni.removeStorageSync('__temp_test__')
-
-            if (retrievedKey === testKey) {
-              this.updateDebugInfo(`读写测试成功 (尝试 ${i + 1}/3)`, 'success')
-              writeTestSuccess = true
-              break
-            } else {
-              throw new Error('读写数据不匹配')
-            }
-          } catch (error) {
-            console.warn(`读写测试第 ${i + 1} 次失败:`, error)
-          }
-        }
-
-        if (!writeTestSuccess) {
-          this.updateDebugInfo('读写测试多次失败，将使用降级模式', 'error')
-          // 继续但不保证数据持久化
-        }
-
-        // 加载 API Key、代理配置和统计数据 - 即使存储有问题也尝试加载
-        this.updateDebugInfo('加载 API Key...', 'info')
-        try {
-          this.loadApiKey()
-        } catch (error) {
-          console.error('加载 API Key 失败:', error)
-        }
-
-        this.updateDebugInfo('加载代理配置...', 'info')
-        try {
-          this.loadApiProxy()
-        } catch (error) {
-          console.error('加载代理配置失败:', error)
-        }
-
-        this.updateDebugInfo('加载数据统计...', 'info')
-        try {
-          this.loadStats()
-        } catch (error) {
-          console.error('加载统计数据失败:', error)
-        }
-
-        this.storageReady = true
-        const duration = Date.now() - startTime
-        this.updateDebugInfo(`初始化完成，耗时 ${duration}ms，存储状态: ${writeTestSuccess ? '正常' : '降级'}`, writeTestSuccess ? 'success' : 'warning')
-
-      } catch (error) {
-        console.error('初始化失败:', error)
-        this.updateDebugInfo(`初始化失败: ${error.message}`, 'error')
-        // 不阻塞界面，让用户可以正常使用
-        this.storageReady = true
-        this.isLoading = false
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    // 检查存储权限
-    async checkStoragePermissions() {
-      try {
-        // 简化权限检查，直接尝试写入测试
-        const testKey = 'permission_test_' + Date.now()
-        try {
-          uni.setStorageSync('__permission_test__', testKey)
-          uni.removeStorageSync('__permission_test__')
-          console.log('权限检查：存储可用')
-          return true
-        } catch (error) {
-          console.error('权限检查：存储失败', error)
-          return false
-        }
-      } catch (error) {
-        console.error('权限检查异常:', error)
-        return false
-      }
-    },
-
-    // 检查权限
-    async checkPermissions() {
-      return new Promise((resolve) => {
-        try {
-          // 尝试使用 uni.getSetting（新版本）
-          if (typeof uni.getSetting === 'function') {
-            uni.getSetting({
-              success: (res) => {
-                resolve({
-                  write: res.authSetting['scope.writePhotosAlbum'] || false,
-                  read: true
-                })
-              },
-              fail: () => {
-                resolve({
-                  write: false,
-                  read: false
-                })
-              }
-            })
-          } else {
-            // 旧版本直接返回，通过尝试授权来验证
-            resolve({
-              write: false, // 假设需要授权
-              read: true
-            })
-          }
-        } catch (error) {
-          console.error('权限检查异常:', error)
-          resolve({
-            write: false,
-            read: false
-          })
-        }
-      })
-    },
-
-    // 等待存储就绪
-    waitForStorageReady() {
-      return new Promise((resolve) => {
-        // 首先检查 uni API 是否可用
-        if (!uni || typeof uni.setStorageSync !== 'function') {
-          this.updateDebugInfo('uni API 不可用，使用降级方案', 'warning')
-          resolve()
-          return
-        }
-
-        // 测试存储是否可用
         const testKey = 'test_' + Date.now()
-        try {
-          uni.setStorageSync('__test__', testKey)
-          uni.removeStorageSync('__test__')
-          this.updateDebugInfo('存储测试成功', 'success')
-          resolve()
-        } catch (error) {
-          console.error('存储测试失败:', error)
-          this.updateDebugInfo(`存储测试失败: ${error.message}`, 'error')
-          // 等待 500ms 再次尝试
-          setTimeout(() => {
-            resolve()
-          }, 500)
+        uni.setStorageSync('__temp_test__', testKey)
+        const retrievedKey = uni.getStorageSync('__temp_test__')
+        uni.removeStorageSync('__temp_test__')
+        if (retrievedKey === testKey) {
+          updateDebugInfo(`读写测试成功 (尝试 ${i + 1}/3)`, 'success')
+          writeTestSuccess = true
+          break
         }
-      })
-    },
-
-    // 检查API环境
-    checkApiEnvironment() {
-      const apiInfo = {
-        platform: uni.getSystemInfoSync().platform,
-        version: uni.getSystemInfoSync().uniRuntimeVersion,
-        appVersion: uni.getSystemInfoSync().appVersion,
-        uniApiAvailable: typeof uni.setStorageSync === 'function'
-      }
-      this.updateDebugInfo(`API环境: ${JSON.stringify(apiInfo)}`, 'info')
-      return apiInfo
-    },
-
-    // 更新调试信息
-    updateDebugInfo(message, type = 'info') {
-      const now = new Date().toLocaleString()
-      this.debugInfo = {
-        timestamp: now,
-        storageStatus: type === 'success' ? '就绪' : '错误',
-        permissionStatus: type,
-        storageValue: message
-      }
-      console.log(`[${now}] ${type}: ${message}`)
-    },
-
-    // 切换调试模式
-    toggleDebugMode() {
-      this.debugMode = !this.debugMode
-      if (this.debugMode) {
-        this.updateDebugInfo('调试模式已开启', 'info')
-        // 检查存储状态
-        const savedKey = tmdbApi.getApiKey()
-        this.updateDebugInfo(`存储值: ${savedKey ? '已保存' : '空'}`, 'info')
-        // 输出 TMDB 调试信息
-        const debugInfo = tmdbApi.getDebugInfo()
-        this.updateDebugInfo(`TMDB调试信息: ${JSON.stringify(debugInfo, null, 2)}`, 'info')
-      } else {
-        this.updateDebugInfo('调试模式已关闭', 'info')
-      }
-    },
-
-    // API Key 输入处理
-    onApiKeyInput(event) {
-      console.log('输入事件触发, event类型:', typeof event)
-      
-      let value = ''
-      
-      // 确保正确处理输入事件，兼容不同平台
-      if (typeof event === 'string') {
-        value = event
-      } else if (event && event.detail && typeof event.detail.value !== 'undefined') {
-        value = event.detail.value
-      } else if (event && event.target && typeof event.target.value !== 'undefined') {
-        value = event.target.value
-      } else {
-        console.warn('无法从事件中获取值, event:', event)
-        return
-      }
-      
-      console.log('提取的值:', value)
-      this.apiKeyInput = value
-    },
-
-    // API 代理地址输入处理
-    onApiProxyInput(event) {
-      let value = ''
-      
-      // 确保正确处理输入事件，兼容不同平台
-      if (typeof event === 'string') {
-        value = event
-      } else if (event && event.detail && typeof event.detail.value !== 'undefined') {
-        value = event.detail.value
-      } else if (event && event.target && typeof event.target.value !== 'undefined') {
-        value = event.target.value
-      } else {
-        console.warn('无法从事件中获取值, event:', event)
-        return
-      }
-      
-      this.apiProxyInput = value
-    },
-
-    // 输入框失焦处理
-    onInputBlur() {
-      // 收起键盘，避免影响后续操作
-      uni.hideKeyboard()
-    },
-
-    // 加载已保存的 API Key
-    loadApiKey() {
-      if (!this.storageReady) {
-        console.warn('存储未就绪，跳过加载 API Key')
-        return
-      }
-
-      try {
-        const savedKey = tmdbApi.getApiKey()
-        if (savedKey) {
-          console.log('成功加载 API Key')
-          this.apiKeyInput = savedKey
-          this.hasApiKey = true
-        } else {
-          console.log('未找到保存的 API Key')
-          this.apiKeyInput = ''
-          this.hasApiKey = false
-        }
+        throw new Error('读写数据不匹配')
       } catch (error) {
-        console.error('加载 API Key 失败:', error)
-        this.apiKeyInput = ''
-        this.hasApiKey = false
-        uni.showToast({
-          title: '读取设置失败',
-          icon: 'none'
-        })
+        console.warn(`读写测试第 ${i + 1} 次失败:`, error)
       }
-    },
-
-    // 加载代理配置
-    loadApiProxy() {
-      if (!this.storageReady) {
-        console.warn('存储未就绪，跳过加载代理配置')
-        return
-      }
-
-      try {
-        const savedProxy = tmdbApi.getApiProxy()
-        if (savedProxy) {
-          console.log('成功加载代理地址:', savedProxy)
-          this.apiProxyInput = savedProxy
-          this.hasCustomProxy = true
-        } else {
-          console.log('未配置自定义代理')
-          this.apiProxyInput = ''
-          this.hasCustomProxy = false
-        }
-      } catch (error) {
-        console.error('加载代理配置失败:', error)
-        this.apiProxyInput = ''
-        this.hasCustomProxy = false
-      }
-    },
-
-    // 加载统计数据
-    loadStats() {
-      if (!this.storageReady) {
-        console.warn('存储未就绪，跳过加载数据统计')
-        return
-      }
-
-      try {
-        this.stats = storage.getStatistics()
-      } catch (error) {
-        console.error('加载数据统计失败:', error)
-        this.stats = {
-          wantCount: 0,
-          watchedCount: 0,
-          plannedCount: 0,
-          totalEvents: 0
-        }
-      }
-    },
-
-    // 保存 API Key
-    async saveApiKey() {
-      if (!this.storageReady) {
-        uni.showToast({
-          title: '存储未就绪，请重试',
-          icon: 'none'
-        })
-        return
-      }
-
-      const key = this.apiKeyInput.trim()
-      if (!key) {
-        uni.showToast({ title: '请输入 API Key', icon: 'none' })
-        return
-      }
-
-      this.isValidating = true
-
-      try {
-        // 先测试保存是否成功
-        const saveResult = tmdbApi.setApiKey(key)
-        if (!saveResult) {
-          throw new Error('保存失败')
-        }
-
-        // 验证 API Key
-        const isValid = await tmdbApi.validateApiKey(key)
-        if (isValid) {
-          this.hasApiKey = true
-          uni.showToast({ title: '保存成功', icon: 'success' })
-
-          // 验证保存的数据是否能正确读取
-          const savedKey = tmdbApi.getApiKey()
-          console.log('保存后读取的 API Key:', savedKey)
-          if (savedKey !== key) {
-            console.error('保存的数据不一致')
-            uni.showToast({
-              title: '保存异常，请检查',
-              icon: 'none'
-            })
-          }
-        } else {
-          // 如果验证失败，清除无效的 key
-          tmdbApi.clearApiKey()
-          uni.showToast({ 
-            title: 'API Key 无效或网络不可达\n请检查代理配置', 
-            icon: 'none',
-            duration: 3000
-          })
-        }
-      } catch (error) {
-        console.error('保存 API Key 失败:', error)
-        uni.showToast({
-          title: error.message || '保存失败，请重试',
-          icon: 'none',
-          duration: 3000
-        })
-      } finally {
-        this.isValidating = false
-      }
-    },
-
-    // 保存 API 代理地址
-    async saveApiProxy() {
-      if (!this.storageReady) {
-        uni.showToast({
-          title: '存储未就绪，请重试',
-          icon: 'none'
-        })
-        return
-      }
-
-      const proxy = this.apiProxyInput.trim()
-      if (!proxy) {
-        uni.showToast({ title: '请输入代理地址', icon: 'none' })
-        return
-      }
-
-      // 验证 URL 格式
-      if (!proxy.startsWith('http://') && !proxy.startsWith('https://')) {
-        uni.showToast({ 
-          title: '代理地址必须以 http:// 或 https:// 开头', 
-          icon: 'none',
-          duration: 2500
-        })
-        return
-      }
-
-      this.isValidating = true
-
-      try {
-        // 保存代理地址
-        const saveResult = tmdbApi.setApiProxy(proxy)
-        if (!saveResult) {
-          throw new Error('保存失败')
-        }
-
-        this.hasCustomProxy = true
-        uni.showToast({ title: '代理已保存', icon: 'success' })
-
-        // 如果有 API Key,自动测试连接
-        if (this.hasApiKey) {
-          uni.showLoading({ title: '测试连接...' })
-          try {
-            const isValid = await tmdbApi.validateApiKey(this.apiKeyInput)
-            uni.hideLoading()
-            if (isValid) {
-              uni.showToast({ title: '连接成功!', icon: 'success' })
-            } else {
-              uni.showToast({ 
-                title: '代理可能不可用\n请检查地址是否正确', 
-                icon: 'none',
-                duration: 3000
-              })
-            }
-          } catch (err) {
-            uni.hideLoading()
-            console.error('测试连接失败:', err)
-            uni.showToast({ 
-              title: '连接测试失败', 
-              icon: 'none' 
-            })
-          }
-        }
-      } catch (error) {
-        console.error('保存代理失败:', error)
-        uni.showToast({
-          title: error.message || '保存失败',
-          icon: 'none'
-        })
-      } finally {
-        this.isValidating = false
-      }
-    },
-
-    // 清除 API Key
-    clearApiKey() {
-      uni.showModal({
-        title: '确认清除',
-        content: '确定要清除已保存的 API Key 吗？',
-        success: (res) => {
-          if (res.confirm) {
-            tmdbApi.clearApiKey()
-            this.apiKeyInput = ''
-            this.hasApiKey = false
-            uni.showToast({ title: '已清除', icon: 'success' })
-          }
-        }
-      })
-    },
-
-    // 清除 API 代理
-    clearApiProxy() {
-      uni.showModal({
-        title: '确认清除',
-        content: '确定要清除代理配置吗？将恢复使用默认地址。',
-        success: (res) => {
-          if (res.confirm) {
-            tmdbApi.clearApiProxy()
-            this.apiProxyInput = ''
-            this.hasCustomProxy = false
-            uni.showToast({ title: '已清除', icon: 'success' })
-          }
-        }
-      })
-    },
-
-    // 导出数据
-    async handleExport() {
-      uni.showLoading({ title: '导出中...' })
-      try {
-        const result = await storage.exportToFile()
-        uni.hideLoading()
-        if (result && result.success !== false) {
-          uni.showToast({ title: '导出成功', icon: 'success' })
-        }
-      } catch (err) {
-        uni.hideLoading()
-        uni.showToast({ title: '导出失败', icon: 'error' })
-      }
-    },
-
-    // 导入数据
-    async handleImport() {
-      uni.showModal({
-        title: '导入数据',
-        content: '导入将合并现有数据，是否继续？',
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              const result = await storage.importFromFile()
-              if (result.success) {
-                uni.showToast({
-                  title: `导入成功：${result.imported.movieCount} 部电影`,
-                  icon: 'success'
-                })
-                this.loadStats()
-              } else {
-                uni.showToast({ title: result.error || '导入失败', icon: 'none' })
-              }
-            } catch (err) {
-              uni.showToast({ title: '导入失败', icon: 'error' })
-            }
-          }
-        }
-      })
-    },
-
-    // 清除所有数据
-    handleClearData() {
-      uni.showModal({
-        title: '警告',
-        content: '此操作将清除所有电影状态和日历数据，且不可恢复！',
-        confirmColor: '#ee0a24',
-        success: (res) => {
-          if (res.confirm) {
-            storage.clearAllData()
-            this.loadStats()
-            uni.showToast({ title: '已清除', icon: 'success' })
-          }
-        }
-      })
-    },
-
-    // 测试 TMDB 连接
-    async testTmdbConnection() {
-      if (!this.hasApiKey) {
-        uni.showToast({ title: '请先输入 API Key', icon: 'none' })
-        return
-      }
-
-      this.isValidating = true
-      this.updateDebugInfo('开始测试 TMDB 连接...', 'info')
-
-      try {
-        // 测试获取配置
-        const config = await tmdbApi.request('/configuration')
-        this.updateDebugInfo('配置测试成功', 'success')
-
-        // 尝试获取热门电影
-        const popularMovies = await tmdbApi.getPopularMovies(1)
-        this.updateDebugInfo(`热门电影测试成功: 获取到 ${popularMovies.totalResults} 部电影`, 'success')
-
-        // 尝试搜索电影
-        const searchResult = await tmdbApi.searchMovies('test')
-        this.updateDebugInfo(`搜索测试成功: 搜索到 ${searchResult.totalResults} 个结果`, 'success')
-
-        uni.showToast({ title: '连接测试成功', icon: 'success' })
-      } catch (error) {
-        this.updateDebugInfo(`连接测试失败: ${error.message}`, 'error')
-        uni.showToast({ title: `连接测试失败: ${error.message}`, icon: 'error' })
-      } finally {
-        this.isValidating = false
-      }
-    },
-
-    // 打开 TMDB 官网
-    openTmdbWebsite() {
-      uni.setClipboardData({
-        data: 'https://www.themoviedb.org/settings/api',
-        success: () => {
-          uni.showToast({ title: '链接已复制', icon: 'success' })
-        }
-      })
-    },
-
-    // 跳转到列表页
-    goToList(type) {
-      const pathMap = {
-        want: '/pages/lists/want/index',
-        watched: '/pages/lists/watched/index',
-        planned: '/pages/lists/planned/index'
-      }
-      const path = pathMap[type]
-      if (path) {
-        uni.navigateTo({ url: path })
-      }
-    },
-
-    // 切换主题色
-    changeTheme(themeKey) {
-      this.currentTheme = themeKey
-      setTheme(themeKey)
-    },
-
-    // 切换深色模式
-    toggleDarkMode() {
-      this.isDarkMode = !this.isDarkMode
-      setDarkMode(this.isDarkMode)
     }
+
+    if (!writeTestSuccess) {
+      updateDebugInfo('读写测试多次失败，将使用降级模式', 'error')
+    }
+
+    try { loadApiKey() } catch (e) { console.error('加载 API Key 失败:', e) }
+    try { loadApiProxy() } catch (e) { console.error('加载代理配置失败:', e) }
+    try { loadStats() } catch (e) { console.error('加载统计数据失败:', e) }
+
+    storageReady.value = true
+    const duration = Date.now() - startTime
+    updateDebugInfo(`初始化完成，耗时 ${duration}ms，存储状态: ${writeTestSuccess ? '正常' : '降级'}`, writeTestSuccess ? 'success' : 'warning')
+  } catch (error) {
+    console.error('初始化失败:', error)
+    updateDebugInfo(`初始化失败: ${error.message}`, 'error')
+    storageReady.value = true
+    isLoading.value = false
+  } finally {
+    isLoading.value = false
   }
 }
+
+async function checkStoragePermissions() {
+  try {
+    const testKey = 'permission_test_' + Date.now()
+    uni.setStorageSync('__permission_test__', testKey)
+    uni.removeStorageSync('__permission_test__')
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
+function waitForStorageReady() {
+  return new Promise((resolve) => {
+    if (!uni || typeof uni.setStorageSync !== 'function') {
+      updateDebugInfo('uni API 不可用，使用降级方案', 'warning')
+      resolve()
+      return
+    }
+    try {
+      const testKey = 'test_' + Date.now()
+      uni.setStorageSync('__test__', testKey)
+      uni.removeStorageSync('__test__')
+      updateDebugInfo('存储测试成功', 'success')
+      resolve()
+    } catch (error) {
+      console.error('存储测试失败:', error)
+      updateDebugInfo(`存储测试失败: ${error.message}`, 'error')
+      setTimeout(() => resolve(), 500)
+    }
+  })
+}
+
+function checkApiEnvironment() {
+  const apiInfo = {
+    platform: uni.getSystemInfoSync().platform,
+    version: uni.getSystemInfoSync().uniRuntimeVersion,
+    appVersion: uni.getSystemInfoSync().appVersion,
+    uniApiAvailable: typeof uni.setStorageSync === 'function'
+  }
+  updateDebugInfo(`API环境: ${JSON.stringify(apiInfo)}`, 'info')
+  return apiInfo
+}
+
+function updateDebugInfo(message, type = 'info') {
+  const now = new Date().toLocaleString()
+  debugInfo.value = {
+    timestamp: now,
+    storageStatus: type === 'success' ? '就绪' : '错误',
+    permissionStatus: type,
+    storageValue: message
+  }
+  console.log(`[${now}] ${type}: ${message}`)
+}
+
+function toggleDebugMode() {
+  debugMode.value = !debugMode.value
+  if (debugMode.value) {
+    updateDebugInfo('调试模式已开启', 'info')
+    const savedKey = tmdbApi.getApiKey()
+    updateDebugInfo(`存储值: ${savedKey ? '已保存' : '空'}`, 'info')
+    const info = tmdbApi.getDebugInfo()
+    updateDebugInfo(`TMDB调试信息: ${JSON.stringify(info, null, 2)}`, 'info')
+  } else {
+    updateDebugInfo('调试模式已关闭', 'info')
+  }
+}
+
+function extractInputValue(event) {
+  if (typeof event === 'string') return event
+  if (event?.detail?.value !== undefined) return event.detail.value
+  if (event?.target?.value !== undefined) return event.target.value
+  console.warn('无法从事件中获取值:', event)
+  return null
+}
+
+function onApiKeyInput(event) {
+  const value = extractInputValue(event)
+  if (value !== null) apiKeyInput.value = value
+}
+
+function onApiProxyInput(event) {
+  const value = extractInputValue(event)
+  if (value !== null) apiProxyInput.value = value
+}
+
+function onInputBlur() {
+  uni.hideKeyboard()
+}
+
+function loadApiKey() {
+  if (!storageReady.value) return
+  try {
+    const savedKey = tmdbApi.getApiKey()
+    if (savedKey) {
+      apiKeyInput.value = savedKey
+      hasApiKey.value = true
+    } else {
+      apiKeyInput.value = ''
+      hasApiKey.value = false
+    }
+  } catch (error) {
+    apiKeyInput.value = ''
+    hasApiKey.value = false
+    uni.showToast({ title: '读取设置失败', icon: 'none' })
+  }
+}
+
+function loadApiProxy() {
+  if (!storageReady.value) return
+  try {
+    const savedProxy = tmdbApi.getApiProxy()
+    if (savedProxy) {
+      apiProxyInput.value = savedProxy
+      hasCustomProxy.value = true
+    } else {
+      apiProxyInput.value = ''
+      hasCustomProxy.value = false
+    }
+  } catch (error) {
+    apiProxyInput.value = ''
+    hasCustomProxy.value = false
+  }
+}
+
+function loadStats() {
+  if (!storageReady.value) return
+  try {
+    stats.value = storage.getStatistics()
+  } catch (error) {
+    stats.value = { wantCount: 0, watchedCount: 0, plannedCount: 0, totalEvents: 0 }
+  }
+}
+
+async function saveApiKey() {
+  if (!storageReady.value) {
+    uni.showToast({ title: '存储未就绪，请重试', icon: 'none' })
+    return
+  }
+  const key = apiKeyInput.value.trim()
+  if (!key) {
+    uni.showToast({ title: '请输入 API Key', icon: 'none' })
+    return
+  }
+  isValidating.value = true
+  try {
+    const saveResult = tmdbApi.setApiKey(key)
+    if (!saveResult) throw new Error('保存失败')
+
+    const isValid = await tmdbApi.validateApiKey(key)
+    if (isValid) {
+      hasApiKey.value = true
+      uni.showToast({ title: '保存成功', icon: 'success' })
+    } else {
+      tmdbApi.clearApiKey()
+      uni.showToast({ title: 'API Key 无效或网络不可达\n请检查代理配置', icon: 'none', duration: 3000 })
+    }
+  } catch (error) {
+    uni.showToast({ title: error.message || '保存失败，请重试', icon: 'none', duration: 3000 })
+  } finally {
+    isValidating.value = false
+  }
+}
+
+async function saveApiProxy() {
+  if (!storageReady.value) {
+    uni.showToast({ title: '存储未就绪，请重试', icon: 'none' })
+    return
+  }
+  const proxy = apiProxyInput.value.trim()
+  if (!proxy) {
+    uni.showToast({ title: '请输入代理地址', icon: 'none' })
+    return
+  }
+  if (!proxy.startsWith('http://') && !proxy.startsWith('https://')) {
+    uni.showToast({ title: '代理地址必须以 http:// 或 https:// 开头', icon: 'none', duration: 2500 })
+    return
+  }
+  isValidating.value = true
+  try {
+    const saveResult = tmdbApi.setApiProxy(proxy)
+    if (!saveResult) throw new Error('保存失败')
+    hasCustomProxy.value = true
+    uni.showToast({ title: '代理已保存', icon: 'success' })
+
+    if (hasApiKey.value) {
+      uni.showLoading({ title: '测试连接...' })
+      try {
+        const isValid = await tmdbApi.validateApiKey(apiKeyInput.value)
+        uni.hideLoading()
+        uni.showToast({ title: isValid ? '连接成功!' : '代理可能不可用\n请检查地址是否正确', icon: isValid ? 'success' : 'none', duration: isValid ? 1500 : 3000 })
+      } catch (err) {
+        uni.hideLoading()
+        uni.showToast({ title: '连接测试失败', icon: 'none' })
+      }
+    }
+  } catch (error) {
+    uni.showToast({ title: error.message || '保存失败', icon: 'none' })
+  } finally {
+    isValidating.value = false
+  }
+}
+
+function clearApiKey() {
+  uni.showModal({
+    title: '确认清除',
+    content: '确定要清除已保存的 API Key 吗？',
+    success: (res) => {
+      if (res.confirm) {
+        tmdbApi.clearApiKey()
+        apiKeyInput.value = ''
+        hasApiKey.value = false
+        uni.showToast({ title: '已清除', icon: 'success' })
+      }
+    }
+  })
+}
+
+function clearApiProxy() {
+  uni.showModal({
+    title: '确认清除',
+    content: '确定要清除代理配置吗？将恢复使用默认地址。',
+    success: (res) => {
+      if (res.confirm) {
+        tmdbApi.clearApiProxy()
+        apiProxyInput.value = ''
+        hasCustomProxy.value = false
+        uni.showToast({ title: '已清除', icon: 'success' })
+      }
+    }
+  })
+}
+
+async function handleExport() {
+  uni.showLoading({ title: '导出中...' })
+  try {
+    const result = await storage.exportToFile()
+    uni.hideLoading()
+    if (result && result.success !== false) {
+      uni.showToast({ title: '导出成功', icon: 'success' })
+    }
+  } catch (err) {
+    uni.hideLoading()
+    uni.showToast({ title: '导出失败', icon: 'error' })
+  }
+}
+
+async function handleImport() {
+  uni.showModal({
+    title: '导入数据',
+    content: '导入将合并现有数据，是否继续？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          const result = await storage.importFromFile()
+          if (result.success) {
+            uni.showToast({ title: `导入成功：${result.imported.movieCount} 部电影`, icon: 'success' })
+            loadStats()
+          } else {
+            uni.showToast({ title: result.error || '导入失败', icon: 'none' })
+          }
+        } catch (err) {
+          uni.showToast({ title: '导入失败', icon: 'error' })
+        }
+      }
+    }
+  })
+}
+
+function handleClearData() {
+  uni.showModal({
+    title: '警告',
+    content: '此操作将清除所有电影状态和日历数据，且不可恢复！',
+    confirmColor: '#ee0a24',
+    success: (res) => {
+      if (res.confirm) {
+        storage.clearAllData()
+        loadStats()
+        uni.showToast({ title: '已清除', icon: 'success' })
+      }
+    }
+  })
+}
+
+async function testTmdbConnection() {
+  if (!hasApiKey.value) {
+    uni.showToast({ title: '请先输入 API Key', icon: 'none' })
+    return
+  }
+  isValidating.value = true
+  updateDebugInfo('开始测试 TMDB 连接...', 'info')
+  try {
+    await tmdbApi.request('/configuration')
+    updateDebugInfo('配置测试成功', 'success')
+    const popularMovies = await tmdbApi.getPopularMovies(1)
+    updateDebugInfo(`热门电影测试成功: 获取到 ${popularMovies.totalResults} 部电影`, 'success')
+    const searchResult = await tmdbApi.searchMovies('test')
+    updateDebugInfo(`搜索测试成功: 搜索到 ${searchResult.totalResults} 个结果`, 'success')
+    uni.showToast({ title: '连接测试成功', icon: 'success' })
+  } catch (error) {
+    updateDebugInfo(`连接测试失败: ${error.message}`, 'error')
+    uni.showToast({ title: `连接测试失败: ${error.message}`, icon: 'error' })
+  } finally {
+    isValidating.value = false
+  }
+}
+
+function openTmdbWebsite() {
+  uni.setClipboardData({
+    data: 'https://www.themoviedb.org/settings/api',
+    success: () => uni.showToast({ title: '链接已复制', icon: 'success' })
+  })
+}
+
+function goToList(type) {
+  const pathMap = {
+    want: '/pages/lists/want/index',
+    watched: '/pages/lists/watched/index',
+    planned: '/pages/lists/planned/index'
+  }
+  const path = pathMap[type]
+  if (path) uni.navigateTo({ url: path })
+}
+
+function changeTheme(themeKey) {
+  currentTheme.value = themeKey
+  setTheme(themeKey)
+}
+
+function toggleDarkMode() {
+  isDarkMode.value = !isDarkMode.value
+  setDarkMode(isDarkMode.value)
+}
+
+onLoad(() => initializeApp())
+onShow(() => initializeApp())
 </script>
 
 <style scoped>

@@ -44,132 +44,29 @@
   </view>
 </template>
 
-<script>
-import tmdbApi from '@/utils/tmdb.js'
+<script setup>
+import { onLoad, onShow, onPullDownRefresh } from '@dcloudio/uni-app'
 import storage from '@/utils/storage.js'
 import MovieCardHorizontal from '@/components/movie-card/movie-card-horizontal.vue'
+import { useMovieList } from '@/composables/useMovieList.js'
 
-export default {
-  components: {
-    MovieCardHorizontal
-  },
-  data() {
-    return {
-      isLoading: true,
-      loadingMore: false,
-      hasMore: true,
-      currentPage: 1,
-      pageSize: 10,
-      movieList: [],
-      plannedData: []
-    }
-  },
-  onLoad() {
-    this.loadData()
-  },
-  onShow() {
-    // 返回页面时刷新数据
-    this.loadData()
-  },
-  onPullDownRefresh() {
-    this.loadData().finally(() => {
-      uni.stopPullDownRefresh()
-    })
-  },
-  methods: {
-    async loadData() {
-      this.isLoading = true
-      this.currentPage = 1
-      this.hasMore = true
+const {
+  isLoading,
+  loadingMore,
+  hasMore,
+  movieList,
+  loadData,
+  loadMore,
+  goToDetail,
+  goToMoviePage
+} = useMovieList({
+  fetchList: () => storage.getPlannedList(),
+  mapItem: (item) => ({ plannedDate: item.timeline?.planned?.date })
+})
 
-      try {
-        // 获取待看列表数据
-        this.plannedData = storage.getPlannedList()
-
-        if (this.plannedData.length === 0) {
-          this.movieList = []
-          this.hasMore = false
-          return
-        }
-
-        // 加载第一页数据
-        await this.loadMoviesByPage()
-      } catch (error) {
-        console.error('加载待看列表失败:', error)
-        uni.showToast({
-          title: '加载失败',
-          icon: 'none'
-        })
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    async loadMoviesByPage() {
-      const start = (this.currentPage - 1) * this.pageSize
-      const end = start + this.pageSize
-      const pageData = this.plannedData.slice(start, end)
-
-      if (pageData.length === 0) {
-        this.hasMore = false
-        return
-      }
-
-      // 获取每部电影的详细信息
-      const moviePromises = pageData.map(async (item) => {
-        try {
-          const movieDetails = await tmdbApi.getMovieDetails(item.movieId)
-          return {
-            ...movieDetails,
-            plannedDate: item.timeline?.planned?.date
-          }
-        } catch (error) {
-          console.error(`获取电影 ${item.movieId} 详情失败:`, error)
-          return null
-        }
-      })
-
-      const movies = await Promise.all(moviePromises)
-      const validMovies = movies.filter(m => m !== null)
-
-      if (this.currentPage === 1) {
-        this.movieList = validMovies
-      } else {
-        this.movieList = [...this.movieList, ...validMovies]
-      }
-
-      this.hasMore = end < this.plannedData.length
-    },
-
-    async loadMore() {
-      if (this.loadingMore || !this.hasMore) return
-
-      this.loadingMore = true
-      this.currentPage++
-
-      try {
-        await this.loadMoviesByPage()
-      } catch (error) {
-        console.error('加载更多失败:', error)
-        this.currentPage--
-      } finally {
-        this.loadingMore = false
-      }
-    },
-
-    goToDetail(movie) {
-      uni.navigateTo({
-        url: `/pages/movie/detail/index?movieId=${movie.id}`
-      })
-    },
-
-    goToMoviePage() {
-      uni.switchTab({
-        url: '/pages/movie/index'
-      })
-    }
-  }
-}
+onLoad(() => loadData())
+onShow(() => loadData())
+onPullDownRefresh(() => loadData().finally(() => uni.stopPullDownRefresh()))
 </script>
 
 <style scoped>

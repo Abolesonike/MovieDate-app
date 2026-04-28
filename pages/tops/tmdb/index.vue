@@ -68,122 +68,95 @@
   </view>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import tmdbApi from '@/utils/tmdb.js'
 import storage from '@/utils/storage.js'
 import { generatePosterWallImage } from '@/utils/posterShare.js'
 
-export default {
-  data() {
-    return {
-      watchedMovies: [],
-      loading: false,
-      stats: {
-        total: 250,
-        watchedCount: 0
-      },
-      previewImage: ''
+const watchedMovies = ref([])
+const loading = ref(false)
+const stats = ref({ total: 250, watchedCount: 0 })
+const previewImage = ref('')
+
+async function loadData() {
+  loading.value = true
+  try {
+    const movieStatus = storage.getAllMovieStatus()
+    const watchedIds = Object.entries(movieStatus)
+      .filter(([_, data]) => data.status === 'watched')
+      .map(([id]) => parseInt(id))
+
+    const allMovies = []
+    let page = 1
+    let totalPages = 1
+    while (page <= 13 && page <= totalPages) {
+      const result = await tmdbApi.getTopRatedMovies(page)
+      totalPages = result.totalPages
+      const pageMovies = result.movies.map((movie, index) => {
+        const rank = (page - 1) * 20 + index + 1
+        return { ...movie, rank, isWatched: watchedIds.includes(movie.id) }
+      })
+      allMovies.push(...pageMovies)
+      page++
     }
-  },
 
-  async onLoad() {
-    await this.loadData()
-  },
+    watchedMovies.value = allMovies
+      .filter(m => m.isWatched)
+      .sort((a, b) => a.rank - b.rank)
 
-  methods: {
-    async loadData() {
-      this.loading = true
-      try {
-        const movieStatus = storage.getAllMovieStatus()
-        const watchedIds = Object.entries(movieStatus)
-          .filter(([_, data]) => data.status === 'watched')
-          .map(([id]) => parseInt(id))
+    stats.value.watchedCount = watchedMovies.value.length
+    uni.setStorageSync('tmdb_top250_watched_count', stats.value.watchedCount)
+  } catch (error) {
+    console.error('[TMDBTop250] 加载数据失败:', error)
+    uni.showToast({ title: '加载失败，请重试', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
 
-        let allMovies = []
-        let page = 1
-        let totalPages = 1
-        while (page <= 13 && page <= totalPages) {
-          const result = await tmdbApi.getTopRatedMovies(page)
-          totalPages = result.totalPages
-          const pageMovies = result.movies.map((movie, index) => {
-            const rank = (page - 1) * 20 + index + 1
-            return {
-              ...movie,
-              rank,
-              isWatched: watchedIds.includes(movie.id)
-            }
-          })
-          allMovies.push(...pageMovies)
-          page++
-        }
+async function onExport() {
+  if (watchedMovies.value.length === 0) return
+  uni.showLoading({ title: '生成中...', mask: true })
+  try {
+    const path = await generatePosterWallImage({
+      title: 'TMDB Top250 观影海报墙',
+      subtitle: `已看 ${stats.value.watchedCount} / ${stats.value.total}`,
+      movies: watchedMovies.value.map(m => ({ poster: m.poster, title: m.title })),
+      canvasId: 'shareCanvas'
+    })
+    previewImage.value = path
+  } catch (error) {
+    console.error('生成分享图失败:', error)
+    uni.showToast({ title: '生成失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
+}
 
-        this.watchedMovies = allMovies
-          .filter(m => m.isWatched)
-          .sort((a, b) => a.rank - b.rank)
-        this.updateStats()
-      } catch (error) {
-        console.error('[TMDBTop250] 加载数据失败:', error)
-        uni.showToast({
-          title: '加载失败，请重试',
-          icon: 'none'
-        })
-      } finally {
-        this.loading = false
-      }
-    },
+function closePreview() {
+  previewImage.value = ''
+}
 
-    updateStats() {
-      this.stats.watchedCount = this.watchedMovies.length
-      uni.setStorageSync('tmdb_top250_watched_count', this.stats.watchedCount)
-    },
-
-    async onExport() {
-      if (this.watchedMovies.length === 0) return
-      uni.showLoading({ title: '生成中...', mask: true })
-      try {
-        const path = await generatePosterWallImage({
-          title: 'TMDB Top250 观影海报墙',
-          subtitle: `已看 ${this.stats.watchedCount} / ${this.stats.total}`,
-          movies: this.watchedMovies.map(m => ({
-            poster: m.poster,
-            title: m.title
-          })),
-          canvasId: 'shareCanvas',
-          componentThis: this
-        })
-        this.previewImage = path
-      } catch (error) {
-        console.error('生成分享图失败:', error)
-        uni.showToast({ title: '生成失败', icon: 'none' })
-      } finally {
-        uni.hideLoading()
-      }
-    },
-
-    closePreview() {
-      this.previewImage = ''
-    },
-
-    async saveImage() {
-      try {
-        await uni.saveImageToPhotosAlbum({ filePath: this.previewImage })
-        uni.showToast({ title: '已保存到相册', icon: 'success' })
-      } catch (e) {
-        if (e.errMsg && e.errMsg.includes('auth deny')) {
-          uni.showModal({
-            title: '需要授权',
-            content: '请允许保存图片到相册',
-            success: (res) => {
-              if (res.confirm) uni.openSetting()
-            }
-          })
-        } else {
-          uni.showToast({ title: '保存失败', icon: 'none' })
-        }
-      }
+async function saveImage() {
+  try {
+    await uni.saveImageToPhotosAlbum({ filePath: previewImage.value })
+    uni.showToast({ title: '已保存到相册', icon: 'success' })
+  } catch (e) {
+    if (e.errMsg?.includes('auth deny')) {
+      uni.showModal({
+        title: '需要授权',
+        content: '请允许保存图片到相册',
+        success: (res) => { if (res.confirm) uni.openSetting() }
+      })
+    } else {
+      uni.showToast({ title: '保存失败', icon: 'none' })
     }
   }
 }
+
+onLoad(() => loadData())
 </script>
 
 <style lang="scss" scoped>

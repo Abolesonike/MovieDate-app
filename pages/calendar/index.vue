@@ -44,8 +44,8 @@
       </view>
       <view class="calendar-grid">
         <view
-          v-for="(day, index) in calendarDays"
-          :key="index"
+          v-for="day in calendarDays"
+          :key="day.dateKey"
           class="calendar-day"
           :class="{
             'other-month': !day.isCurrentMonth,
@@ -76,8 +76,8 @@
         scroll-with-animation
       >
         <view
-          v-for="(day, index) in currentWeekDays"
-          :key="index"
+          v-for="day in currentWeekDays"
+          :key="day.dateKey"
           :id="'day-row-' + index"
           class="week-day-row"
           :class="{
@@ -95,8 +95,8 @@
           <view class="movies-container">
             <view v-if="day.movies && day.movies.length > 0" class="movie-list">
               <movie-card-vertical
-                v-for="(movie, mIndex) in day.movies"
-                :key="mIndex"
+                v-for="movie in day.movies"
+                :key="movie.id"
                 :movie="movie"
                 :show-status="true"
                 :clickable="false"
@@ -141,7 +141,7 @@
             </view>
           </view>
 
-          <view v-for="(movie, index) in selectedDayMovies" :key="index" class="movie-detail-item">
+          <view v-for="movie in selectedDayMovies" :key="movie.id" class="movie-detail-item">
             <movie-card-compact
               :movie="movie"
               :show-status="true"
@@ -171,401 +171,347 @@
   </view>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, nextTick } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import storage, { MOVIE_STATUS } from '@/utils/storage.js'
 import tmdbApi from '@/utils/tmdb.js'
 import MovieCardVertical from '@/components/movie-card/movie-card-vertical.vue'
 import MovieCardCompact from '@/components/movie-card/movie-card-compact.vue'
 import DailyRecommendCard from '@/components/daily-recommend/DailyRecommendCard.vue'
 
-export default {
-  components: {
-    MovieCardVertical,
-    MovieCardCompact,
-    DailyRecommendCard
-  },
-  data() {
-    return {
-      viewMode: 'week',
-      currentDate: new Date(),
-      weekdays: ['一', '二', '三', '四', '五', '六', '日'],
-      calendarDays: [],
-      currentWeekDays: [],
-      // 弹窗相关
-      showMoviePopup: false,
-      selectedDateStr: '',
-      selectedDateKey: '',
-      selectedDayMovies: [],
-      isPastDate: false,
-      isToday: false,
-      isFutureDate: false,
-      scrollTopValue: 0
-    }
-  },
-  computed: {
-    currentDateText() {
-      const year = this.currentDate.getFullYear()
-      const month = this.currentDate.getMonth() + 1
-      if (this.viewMode === 'month') {
-        return `${year}年${month}月`
-      } else {
-        const startOfWeek = this.getWeekStart(this.currentDate)
-        const endOfWeek = new Date(startOfWeek)
-        endOfWeek.setDate(endOfWeek.getDate() + 6)
-        const startMonth = startOfWeek.getMonth() + 1
-        const endMonth = endOfWeek.getMonth() + 1
-        const weekOfMonth = this.getWeekOfMonth(this.currentDate)
-        if (startMonth === endMonth) {
-          return `${startMonth}月第${weekOfMonth}周`
-        } else {
-          return `${startMonth}月末 ~ ${endMonth}月初`
-        }
-      }
-    },
-    monthTotalMovies() {
-      let total = 0
-      this.calendarDays.forEach(day => {
-        if (day.isCurrentMonth) {
-          total += day.watchedCount || 0
-        }
-      })
-      return total
-    },
-    weekTotalMovies() {
-      let total = 0
-      this.currentWeekDays.forEach(day => {
-        total += day.watchedCount || 0
-      })
-      return total
-    }
-  },
-  onShow() {
-    storage.clearCache()
-    this.generateCalendar()
-    if (this.viewMode === 'week') {
-      this.$nextTick(() => this.scrollToToday())
-    }
-  },
-  methods: {
-    generateCalendar() {
-      if (this.viewMode === 'month') {
-        this.generateMonthCalendar()
-      } else {
-        this.generateWeekCalendar()
-      }
-    },
+const viewMode = ref('week')
+const currentDate = ref(new Date())
+const weekdays = ['一', '二', '三', '四', '五', '六', '日']
+const calendarDays = ref([])
+const currentWeekDays = ref([])
 
-    switchMode(mode) {
-      this.viewMode = mode
-      if (mode !== 'today') {
-        this.generateCalendar()
-      }
-      if (mode === 'week') {
-        // 延长等待时间，确保 DOM 已更新
-        setTimeout(() => {
-          this.scrollToToday()
-        }, 300)
-      }
-    },
+const showMoviePopup = ref(false)
+const selectedDateStr = ref('')
+const selectedDateKey = ref('')
+const selectedDayMovies = ref([])
+const isPastDate = ref(false)
+const isToday = ref(false)
+const isFutureDate = ref(false)
+const scrollTopValue = ref(0)
 
-    async generateMonthCalendar() {
-      const year = this.currentDate.getFullYear()
-      const month = this.currentDate.getMonth()
-      const firstDay = new Date(year, month, 1)
-      const startDate = new Date(firstDay)
-      const dayOfWeek = firstDay.getDay() || 7
-      startDate.setDate(startDate.getDate() - dayOfWeek + 1)
+const currentDateText = computed(() => {
+  const year = currentDate.value.getFullYear()
+  const month = currentDate.value.getMonth() + 1
+  if (viewMode.value === 'month') {
+    return `${year}年${month}月`
+  }
+  const startOfWeek = getWeekStart(currentDate.value)
+  const endOfWeek = new Date(startOfWeek)
+  endOfWeek.setDate(endOfWeek.getDate() + 6)
+  const startMonth = startOfWeek.getMonth() + 1
+  const endMonth = endOfWeek.getMonth() + 1
+  const weekOfMonth = getWeekOfMonth(currentDate.value)
+  if (startMonth === endMonth) {
+    return `${startMonth}月第${weekOfMonth}周`
+  }
+  return `${startMonth}月末 ~ ${endMonth}月初`
+})
 
-      const days = []
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
+const monthTotalMovies = computed(() =>
+  calendarDays.value.reduce((sum, day) =>
+    day.isCurrentMonth ? sum + (day.watchedCount || 0) : sum, 0)
+)
 
-      for (let i = 0; i < 42; i++) {
-        const date = new Date(startDate)
-        date.setDate(startDate.getDate() + i)
+const weekTotalMovies = computed(() =>
+  currentWeekDays.value.reduce((sum, day) => sum + (day.watchedCount || 0), 0)
+)
 
-        const dateKey = this.formatDate(date)
-        const events = storage.getEventsByDate(dateKey)
-
-        // 补充电影详细信息
-        const movies = await this.enrichMoviesWithDetails(events)
-
-        const isPast = date < today
-        const isFuture = date > today
-
-        const watchedCount = events.filter(e => e.status === MOVIE_STATUS.WATCHED).length
-        const plannedCount = events.filter(e => e.status === MOVIE_STATUS.PLANNED).length
-
-        days.push({
-          day: date.getDate(),
-          fullDate: date,
-          dateKey: dateKey,
-          isCurrentMonth: date.getMonth() === month,
-          isToday: this.isSameDate(date, today),
-          isPast,
-          isFuture,
-          movies: movies,
-          movieCount: events.length,
-          watchedCount,
-          plannedCount
-        })
-      }
-
-      this.calendarDays = days
-    },
-
-    async generateWeekCalendar() {
-      const weekStart = this.getWeekStart(this.currentDate)
-      const days = []
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-
-      // 先清空现有数据，避免状态不一致
-      this.currentWeekDays = []
-
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(weekStart)
-        date.setDate(weekStart.getDate() + i)
-
-        const dateKey = this.formatDate(date)
-        const events = storage.getEventsByDate(dateKey)
-
-        // 补充电影详细信息
-        const movies = await this.enrichMoviesWithDetails(events)
-
-        const isPast = date < today
-        const isFuture = date > today
-
-        const watchedCount = events.filter(e => e.status === MOVIE_STATUS.WATCHED).length
-        const plannedCount = events.filter(e => e.status === MOVIE_STATUS.PLANNED).length
-
-        days.push({
-          day: date.getDate(),
-          weekday: this.weekdays[(date.getDay() + 6) % 7],
-          fullDate: date,
-          dateKey: dateKey,
-          isToday: this.isSameDate(date, today),
-          isPast,
-          isFuture,
-          movies: movies,  // 使用补充后的电影数据
-          watchedCount,
-          plannedCount
-        })
-      }
-
-      this.currentWeekDays = days
-
-      // 生成完成后，如果是周视图则自动滚动到合适位置
-      if (this.viewMode === 'week') {
-        // 增加延迟，确保数据已完全渲染
-        setTimeout(() => {
-          this.scrollToToday()
-        }, 200)
-      }
-    },
-
-    getWeekStart(date) {
-      const d = new Date(date)
-      const day = d.getDay() || 7
-      d.setDate(d.getDate() - day + 1)
-      return d
-    },
-
-    getWeekOfMonth(date) {
-      const d = new Date(date)
-      const year = d.getFullYear()
-      const month = d.getMonth()
-      const firstDayOfMonth = new Date(year, month, 1).getDay()
-      const dayOfMonth = d.getDate()
-      return Math.ceil((dayOfMonth + firstDayOfMonth) / 7)
-    },
-
-    isSameDate(date1, date2) {
-      return date1.getFullYear() === date2.getFullYear() &&
-             date1.getMonth() === date2.getMonth() &&
-             date1.getDate() === date2.getDate()
-    },
-
-    formatDate(date) {
-      const y = date.getFullYear()
-      const m = String(date.getMonth() + 1).padStart(2, '0')
-      const d = String(date.getDate()).padStart(2, '0')
-      return `${y}-${m}-${d}`
-    },
-
-    prevPeriod() {
-      if (this.viewMode === 'month') {
-        const newDate = new Date(this.currentDate)
-        newDate.setMonth(newDate.getMonth() - 1)
-        this.currentDate = newDate
-      } else {
-        const newDate = new Date(this.currentDate)
-        newDate.setDate(newDate.getDate() - 7)
-        this.currentDate = newDate
-      }
-      this.generateCalendar()
-    },
-
-    nextPeriod() {
-      if (this.viewMode === 'month') {
-        const newDate = new Date(this.currentDate)
-        newDate.setMonth(newDate.getMonth() + 1)
-        this.currentDate = newDate
-      } else {
-        const newDate = new Date(this.currentDate)
-        newDate.setDate(newDate.getDate() + 7)
-        this.currentDate = newDate
-      }
-      this.generateCalendar()
-    },
-
-    goToToday() {
-      this.currentDate = new Date()
-      this.generateCalendar()
-      if (this.viewMode === 'week') {
-        this.$nextTick(() => this.scrollToToday())
-      }
-      uni.showToast({ title: '已回到今日', icon: 'success' })
-    },
-
-    scrollToToday() {
-      this.$nextTick(() => {
-        // 查找今天的索引
-        const todayIndex = this.currentWeekDays.findIndex(day => day.isToday)
-        let targetIndex = todayIndex
-
-        if (todayIndex === -1) {
-          // 如果本周不包含今天，滚动到第一个有电影的日期或第一个日期
-          const firstDayWithMovies = this.currentWeekDays.findIndex(day => day.movies && day.movies.length > 0)
-          targetIndex = firstDayWithMovies !== -1 ? firstDayWithMovies : 0
-        }
-
-        // 使用 scroll-top 实现滚动，更可靠
-        // 每个 day-row 大约高度 100px + 12px padding = 约 112px
-        const rowHeight = 112
-        this.scrollTopValue = targetIndex * rowHeight
-        console.log('滚动到索引:', targetIndex, 'scrollTop:', this.scrollTopValue)
-      })
-    },
-
-    selectDay(day) {
-      this.selectedDateKey = day.dateKey
-      const date = day.fullDate
-      this.selectedDateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
-      this.selectedDayMovies = [...day.movies]
-      this.isPastDate = day.isPast
-      this.isToday = day.isToday
-      this.isFutureDate = day.isFuture
-      this.showMoviePopup = true
-    },
-
-    closePopup() {
-      this.showMoviePopup = false
-    },
-
-    // 添加电影相关方法
-    showAddMovieDialog() {
-      this.showMoviePopup = false
-      uni.navigateTo({
-        url: `/pages/movie/picker/index?source=calendar&tabs=search,want&dateKey=${this.selectedDateKey}`
-      })
-    },
-
-    async markEventAsWatched(event) {
-      storage.updateCalendarEvent(this.selectedDateKey, event.id, {
-        status: MOVIE_STATUS.WATCHED
-      })
-      storage.markAsWatched(event.movieId)
-      // 重新获取事件并补充电影详情
-      const events = storage.getEventsByDate(this.selectedDateKey)
-      this.selectedDayMovies = await this.enrichMoviesWithDetails(events)
-      this.generateCalendar()
-      uni.showToast({ title: '已标记为已看', icon: 'success' })
-    },
-
-    async removeEvent(event) {
-      uni.showModal({
-        title: '确认删除',
-        content: `确定从 ${this.selectedDateStr} 删除这部电影？`,
-        success: async (res) => {
-          if (res.confirm) {
-            const all = storage.getAllMovieStatus()
-            const movieData = all[event.movieId]
-            const eventId = movieData.timeline.planned.calendarEventId
-            // 1. 从日历事件中删除
-            storage.removeCalendarEvent(this.selectedDateKey, eventId)
-
-            // 2. 如果电影状态是 planned 且关联此事件，重置电影状态为未看
-            const movieStatus = storage.getMovieStatus(event.movieId)
-            if (movieStatus.status === MOVIE_STATUS.PLANNED) {
-              const plannedTimeline = movieStatus.timeline?.planned
-              if (plannedTimeline?.calendarEventId === event.id) {
-                storage.removeMovieStatus(event.movieId)
-              }
-            }
-
-            // 3. 刷新日历显示并重新补充电影详情
-            const events = storage.getEventsByDate(this.selectedDateKey)
-            this.selectedDayMovies = await this.enrichMoviesWithDetails(events)
-            this.generateCalendar()
-
-            uni.showToast({ title: '已删除', icon: 'success' })
-          }
-        }
-      })
-    },
-
-    goToMovieDetail(movie) {
-      // 只传递 movieId，详情页从 TMDB API 获取完整信息
-      uni.navigateTo({
-        url: `/pages/movie/detail/index?movieId=${movie.movieId}`
-      })
-    },
-
-    /**
-     * 补充电影详细信息
-     * 从 TMDB API 获取电影的基本信息（title, poster, rating, year, genre, summary）
-     */
-    async enrichMoviesWithDetails(events) {
-      if (!events || events.length === 0) return []
-
-      const enrichedMovies = []
-
-      for (const event of events) {
-        try {
-          const movieDetail = await tmdbApi.getMovieDetails(event.movieId)
-          enrichedMovies.push({
-            ...event,
-            id: movieDetail.id,
-            movieId: movieDetail.id,
-            title: movieDetail.title,
-            poster: movieDetail.poster,
-            rating: movieDetail.rating,
-            year: movieDetail.year,
-            genre: movieDetail.genre,
-            summary: movieDetail.summary
-          })
-        } catch (err) {
-          console.error('获取电影详情失败:', event.movieId, err)
-          // 如果获取失败，保留基本状态信息
-          enrichedMovies.push({
-            ...event,
-            id: event.movieId,
-            movieId: event.movieId,
-            title: '电影信息加载失败',
-            poster: '',
-            rating: '0',
-            year: '',
-            genre: '',
-            summary: ''
-          })
-        }
-      }
-
-      return enrichedMovies
-    }
+function generateCalendar() {
+  if (viewMode.value === 'month') {
+    generateMonthCalendar()
+  } else {
+    generateWeekCalendar()
   }
 }
+
+function switchMode(mode) {
+  viewMode.value = mode
+  if (mode !== 'today') {
+    generateCalendar()
+  }
+  if (mode === 'week') {
+    setTimeout(() => scrollToToday(), 300)
+  }
+}
+
+async function generateMonthCalendar() {
+  const year = currentDate.value.getFullYear()
+  const month = currentDate.value.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const startDate = new Date(firstDay)
+  const dayOfWeek = firstDay.getDay() || 7
+  startDate.setDate(startDate.getDate() - dayOfWeek + 1)
+
+  const days = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  for (let i = 0; i < 42; i++) {
+    const date = new Date(startDate)
+    date.setDate(startDate.getDate() + i)
+
+    const dateKey = formatDate(date)
+    const events = storage.getEventsByDate(dateKey)
+    const movies = await enrichMoviesWithDetails(events)
+
+    const isPast = date < today
+    const isFuture = date > today
+
+    const watchedCount = events.filter(e => e.status === MOVIE_STATUS.WATCHED).length
+    const plannedCount = events.filter(e => e.status === MOVIE_STATUS.PLANNED).length
+
+    days.push({
+      day: date.getDate(),
+      fullDate: date,
+      dateKey,
+      isCurrentMonth: date.getMonth() === month,
+      isToday: isSameDate(date, today),
+      isPast,
+      isFuture,
+      movies,
+      movieCount: events.length,
+      watchedCount,
+      plannedCount
+    })
+  }
+
+  calendarDays.value = days
+}
+
+async function generateWeekCalendar() {
+  const weekStart = getWeekStart(currentDate.value)
+  const days = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  currentWeekDays.value = []
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(weekStart)
+    date.setDate(weekStart.getDate() + i)
+
+    const dateKey = formatDate(date)
+    const events = storage.getEventsByDate(dateKey)
+    const movies = await enrichMoviesWithDetails(events)
+
+    const isPast = date < today
+    const isFuture = date > today
+
+    const watchedCount = events.filter(e => e.status === MOVIE_STATUS.WATCHED).length
+    const plannedCount = events.filter(e => e.status === MOVIE_STATUS.PLANNED).length
+
+    days.push({
+      day: date.getDate(),
+      weekday: weekdays[(date.getDay() + 6) % 7],
+      fullDate: date,
+      dateKey,
+      isToday: isSameDate(date, today),
+      isPast,
+      isFuture,
+      movies,
+      watchedCount,
+      plannedCount
+    })
+  }
+
+  currentWeekDays.value = days
+
+  if (viewMode.value === 'week') {
+    setTimeout(() => scrollToToday(), 200)
+  }
+}
+
+function getWeekStart(date) {
+  const d = new Date(date)
+  const day = d.getDay() || 7
+  d.setDate(d.getDate() - day + 1)
+  return d
+}
+
+function getWeekOfMonth(date) {
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = d.getMonth()
+  const firstDayOfMonth = new Date(year, month, 1).getDay()
+  const dayOfMonth = d.getDate()
+  return Math.ceil((dayOfMonth + firstDayOfMonth) / 7)
+}
+
+function isSameDate(date1, date2) {
+  return date1.getFullYear() === date2.getFullYear() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getDate() === date2.getDate()
+}
+
+function formatDate(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function prevPeriod() {
+  const newDate = new Date(currentDate.value)
+  if (viewMode.value === 'month') {
+    newDate.setMonth(newDate.getMonth() - 1)
+  } else {
+    newDate.setDate(newDate.getDate() - 7)
+  }
+  currentDate.value = newDate
+  generateCalendar()
+}
+
+function nextPeriod() {
+  const newDate = new Date(currentDate.value)
+  if (viewMode.value === 'month') {
+    newDate.setMonth(newDate.getMonth() + 1)
+  } else {
+    newDate.setDate(newDate.getDate() + 7)
+  }
+  currentDate.value = newDate
+  generateCalendar()
+}
+
+function goToToday() {
+  currentDate.value = new Date()
+  generateCalendar()
+  if (viewMode.value === 'week') {
+    nextTick(() => scrollToToday())
+  }
+  uni.showToast({ title: '已回到今日', icon: 'success' })
+}
+
+function scrollToToday() {
+  nextTick(() => {
+    const todayIndex = currentWeekDays.value.findIndex(day => day.isToday)
+    let targetIndex = todayIndex
+
+    if (todayIndex === -1) {
+      const firstDayWithMovies = currentWeekDays.value.findIndex(day => day.movies && day.movies.length > 0)
+      targetIndex = firstDayWithMovies !== -1 ? firstDayWithMovies : 0
+    }
+
+    const rowHeight = 112
+    scrollTopValue.value = targetIndex * rowHeight
+  })
+}
+
+function selectDay(day) {
+  selectedDateKey.value = day.dateKey
+  const date = day.fullDate
+  selectedDateStr.value = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+  selectedDayMovies.value = [...day.movies]
+  isPastDate.value = day.isPast
+  isToday.value = day.isToday
+  isFutureDate.value = day.isFuture
+  showMoviePopup.value = true
+}
+
+function closePopup() {
+  showMoviePopup.value = false
+}
+
+function showAddMovieDialog() {
+  showMoviePopup.value = false
+  uni.navigateTo({
+    url: `/pages/movie/picker/index?source=calendar&tabs=search,want&dateKey=${selectedDateKey.value}`
+  })
+}
+
+async function markEventAsWatched(event) {
+  storage.updateCalendarEvent(selectedDateKey.value, event.id, {
+    status: MOVIE_STATUS.WATCHED
+  })
+  storage.markAsWatched(event.movieId)
+  const events = storage.getEventsByDate(selectedDateKey.value)
+  selectedDayMovies.value = await enrichMoviesWithDetails(events)
+  generateCalendar()
+  uni.showToast({ title: '已标记为已看', icon: 'success' })
+}
+
+async function removeEvent(event) {
+  uni.showModal({
+    title: '确认删除',
+    content: `确定从 ${selectedDateStr.value} 删除这部电影？`,
+    success: async (res) => {
+      if (res.confirm) {
+        const all = storage.getAllMovieStatus()
+        const movieData = all[event.movieId]
+        const eventId = movieData.timeline.planned.calendarEventId
+        storage.removeCalendarEvent(selectedDateKey.value, eventId)
+
+        const movieStatus = storage.getMovieStatus(event.movieId)
+        if (movieStatus.status === MOVIE_STATUS.PLANNED) {
+          const plannedTimeline = movieStatus.timeline?.planned
+          if (plannedTimeline?.calendarEventId === event.id) {
+            storage.removeMovieStatus(event.movieId)
+          }
+        }
+
+        const events = storage.getEventsByDate(selectedDateKey.value)
+        selectedDayMovies.value = await enrichMoviesWithDetails(events)
+        generateCalendar()
+        uni.showToast({ title: '已删除', icon: 'success' })
+      }
+    }
+  })
+}
+
+function goToMovieDetail(movie) {
+  uni.navigateTo({
+    url: `/pages/movie/detail/index?movieId=${movie.movieId}`
+  })
+}
+
+async function enrichMoviesWithDetails(events) {
+  if (!events || events.length === 0) return []
+
+  return Promise.all(
+    events.map(async (event) => {
+      try {
+        const movieDetail = await tmdbApi.getMovieDetails(event.movieId)
+        return {
+          ...event,
+          id: movieDetail.id,
+          movieId: movieDetail.id,
+          title: movieDetail.title,
+          poster: movieDetail.poster,
+          rating: movieDetail.rating,
+          year: movieDetail.year,
+          genre: movieDetail.genre,
+          summary: movieDetail.summary
+        }
+      } catch (err) {
+        console.error('获取电影详情失败:', event.movieId, err)
+        return {
+          ...event,
+          id: event.movieId,
+          movieId: event.movieId,
+          title: '电影信息加载失败',
+          poster: '',
+          rating: '0',
+          year: '',
+          genre: '',
+          summary: ''
+        }
+      }
+    })
+  )
+}
+
+onShow(() => {
+  storage.clearCache()
+  generateCalendar()
+  if (viewMode.value === 'week') {
+    nextTick(() => scrollToToday())
+  }
+})
 </script>
 
 <style scoped>
