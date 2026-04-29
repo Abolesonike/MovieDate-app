@@ -2,14 +2,15 @@
   <view class="daily-recommend-card">
     <!-- 加载状态 -->
     <view v-if="loading" class="loading-container">
-      <u-loading-icon size="32" color="#667eea"></u-loading-icon>
+      <view class="loading-spinner"></view>
       <text class="loading-text">正在加载今日推荐...</text>
     </view>
 
     <!-- 错误状态 -->
     <view v-else-if="error" class="error-container">
-      <u-empty icon="error" text="加载失败，请重试" />
-      <u-button type="primary" size="small" @click="retry">重试</u-button>
+      <text class="empty-icon">⚠️</text>
+      <text class="empty-text">加载失败，请重试</text>
+      <button class="retry-btn" @click="retry">重试</button>
     </view>
 
     <!-- 推荐内容 -->
@@ -127,7 +128,8 @@
 
     <!-- 空状态 -->
     <view v-if="!recommendation && !loading && !error" class="empty-container">
-      <u-empty icon="movie" text="暂无推荐" />
+      <text class="empty-icon">🎬</text>
+      <text class="empty-text">暂无推荐</text>
     </view>
   </view>
 </template>
@@ -479,6 +481,41 @@ export default {
 .loading-text {
   color: var(--text-tertiary);
   font-size: 14px;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(102, 126, 234, 0.2);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: var(--text-tertiary);
+}
+
+.retry-btn {
+  padding: 8px 24px;
+  font-size: 14px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  margin-top: 8px;
 }
 
 /* ========== 日历卡片 ========== */

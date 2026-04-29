@@ -12,7 +12,7 @@
     </view>
 
     <!-- 内容区 -->
-    <scroll-view class="content-scroll" scroll-y>
+    <scroll-view class="content-scroll" :scroll-y="scrollEnabled">
       <!-- 空状态 -->
       <view v-if="top10List.length === 0 && !loading" class="empty-state">
         <text class="empty-icon">🏆</text>
@@ -25,10 +25,8 @@
         <view
           v-for="(movie, index) in top10List"
           :key="movie.id"
-          class="top10-item"
-          @touchstart="onTouchStart($event, index)"
-          @touchmove="onTouchMove"
-          @touchend="onTouchEnd"
+          :class="['top10-item', dragState.currentIndex === index ? 'dragging' : '']"
+          :style="getItemStyle(index)"
         >
           <view class="rank-badge" :class="getRankClass(index + 1)">
             <text class="rank-text">{{ getRankLabel(index + 1) }}</text>
@@ -45,7 +43,13 @@
             <text class="item-meta">{{ movie.year }} · {{ movie.rating }}</text>
           </view>
 
-          <view class="drag-handle">
+          <view
+            class="drag-handle"
+            @touchstart.stop="onDragStart($event, index)"
+            @touchmove.stop="onDragMove"
+            @touchend.stop="onDragEnd"
+            @touchcancel.stop="onDragEnd"
+          >
             <view class="drag-line"></view>
             <view class="drag-line"></view>
             <view class="drag-line"></view>
@@ -117,18 +121,21 @@ export default {
       loading: false,
       top10List: [],
       previewImage: '',
+      scrollEnabled: true,
       dragState: {
         isDragging: false,
         currentIndex: -1,
+        targetIndex: -1,
         startY: 0,
-        currentY: 0,
-        offset: 0
+        itemHeight: 80,
+        moveOffset: 0
       }
     }
   },
 
   onLoad() {
     this.loadTop10()
+    this.getItemHeight()
   },
 
   onShow() {
@@ -194,64 +201,80 @@ export default {
       return rank
     },
 
-    onTouchStart(e, index) {
-      // 记录触摸开始位置和当前索引
-      this.dragState.startY = e.touches[0].pageY
-      this.dragState.currentIndex = index
-      this.dragState.isDragging = true
-      
-      // 为当前拖拽元素添加样式
-      const item = e.currentTarget
-      item.classList.add('dragging')
+    getItemHeight() {
+      setTimeout(() => {
+        const query = uni.createSelectorQuery().in(this)
+        query.select('.top10-item').boundingClientRect(rect => {
+          if (rect && rect.height > 0) {
+            this.dragState.itemHeight = rect.height
+          }
+        }).exec()
+      }, 300)
     },
 
-    onTouchMove(e) {
+    onDragStart(e, index) {
+      this.dragState.isDragging = true
+      this.dragState.currentIndex = index
+      this.dragState.targetIndex = index
+      this.dragState.startY = e.touches[0].pageY
+      this.dragState.moveOffset = 0
+      this.scrollEnabled = false
+    },
+
+    onDragMove(e) {
       if (!this.dragState.isDragging) return
-      
-      // 计算移动距离
       const currentY = e.touches[0].pageY
       const diff = currentY - this.dragState.startY
-      
-      // 获取当前元素的高度，用于计算应该移动到哪个位置
-      const rect = e.currentTarget.getBoundingClientRect()
-      const itemHeight = rect.height
-      
-      // 计算应该移动到的目标索引
+      this.dragState.moveOffset = diff
+
+      const itemHeight = this.dragState.itemHeight
       const targetIndex = Math.max(
-        0, 
-        Math.min(
-          this.top10List.length - 1, 
-          Math.round((this.dragState.currentIndex * itemHeight + diff) / itemHeight)
-        )
+        0,
+        Math.min(this.top10List.length - 1, this.dragState.currentIndex + Math.round(diff / itemHeight))
       )
-      
-      // 如果目标索引和当前索引不同，则执行交换
-      if (targetIndex !== this.dragState.currentIndex) {
-        this.swapItems(this.dragState.currentIndex, targetIndex)
-        this.dragState.currentIndex = targetIndex
-      }
+      this.dragState.targetIndex = targetIndex
     },
 
-    onTouchEnd() {
+    onDragEnd() {
       if (!this.dragState.isDragging) return
-      
-      // 重置拖拽状态
+      if (this.dragState.targetIndex !== this.dragState.currentIndex) {
+        this.moveItem(this.dragState.currentIndex, this.dragState.targetIndex)
+        this.saveOrder()
+      }
       this.dragState.isDragging = false
-      
-      // 移除拖拽样式
-      const items = document.querySelectorAll('.top10-item')
-      items.forEach(item => item.classList.remove('dragging'))
-      
-      // 保存新顺序
-      this.saveOrder()
+      this.dragState.currentIndex = -1
+      this.dragState.targetIndex = -1
+      this.dragState.moveOffset = 0
+      this.scrollEnabled = true
     },
 
-    swapItems(fromIndex, toIndex) {
-      // 交换数组中的元素
+    getItemStyle(index) {
+      if (!this.dragState.isDragging) return ''
+      const { currentIndex, targetIndex, moveOffset, itemHeight } = this.dragState
+
+      // 当前拖拽项跟随手指
+      if (index === currentIndex) {
+        return `transform: translateY(${moveOffset}px); z-index: 100;`
+      }
+
+      // 被经过的项上下移让位
+      if (currentIndex < targetIndex) {
+        if (index > currentIndex && index <= targetIndex) {
+          return `transform: translateY(-${itemHeight}px);`
+        }
+      } else if (currentIndex > targetIndex) {
+        if (index >= targetIndex && index < currentIndex) {
+          return `transform: translateY(${itemHeight}px);`
+        }
+      }
+
+      return ''
+    },
+
+    moveItem(fromIndex, toIndex) {
       const list = [...this.top10List]
-      const temp = list[fromIndex]
-      list[fromIndex] = list[toIndex]
-      list[toIndex] = temp
+      const item = list.splice(fromIndex, 1)[0]
+      list.splice(toIndex, 0, item)
       this.top10List = list
     },
 
@@ -424,13 +447,13 @@ export default {
   padding: 20rpx;
   margin-bottom: 16rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
   position: relative;
-  
+
   &.dragging {
-    z-index: 1000;
     background: #f0f8ff;
     box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
+    opacity: 0.95;
   }
 }
 
@@ -503,16 +526,24 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   margin-left: 10rpx;
-  padding: 10rpx;
+  padding: 20rpx 16rpx;
   cursor: move;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+
+  &:active {
+    opacity: 0.6;
+  }
 }
 
 .drag-line {
-  width: 6rpx;
-  height: 6rpx;
+  width: 36rpx;
+  height: 4rpx;
   background-color: var(--text-tertiary);
-  border-radius: 3rpx;
+  border-radius: 2rpx;
   margin: 3rpx 0;
 }
 

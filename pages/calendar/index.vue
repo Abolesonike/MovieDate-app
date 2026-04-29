@@ -4,25 +4,25 @@
     <view class="header">
       <view class="mode-switch">
         <button
+          :class="['mode-btn', viewMode === 'today' ? 'mode-btn-active' : '']"
+          size="mini"
+          @click="switchMode('today')"
+        >
+          今日
+        </button>
+        <button
           :class="['mode-btn', viewMode === 'week' ? 'mode-btn-active' : '']"
           size="mini"
           @click="switchMode('week')"
         >
-          周视图
+          周
         </button>
         <button
             :class="['mode-btn', viewMode === 'month' ? 'mode-btn-active' : '']"
             size="mini"
             @click="switchMode('month')"
         >
-          月视图
-        </button>
-        <button
-            :class="['mode-btn', viewMode === 'today' ? 'mode-btn-active' : '']"
-            size="mini"
-            @click="switchMode('today')"
-        >
-          每日一部
+          月
         </button>
       </view>
       <view v-if="viewMode !== 'today'" class="date-nav">
@@ -180,7 +180,7 @@ import MovieCardVertical from '@/components/movie-card/movie-card-vertical.vue'
 import MovieCardCompact from '@/components/movie-card/movie-card-compact.vue'
 import DailyRecommendCard from '@/components/daily-recommend/DailyRecommendCard.vue'
 
-const viewMode = ref('week')
+const viewMode = ref('today')
 const currentDate = ref(new Date())
 const weekdays = ['一', '二', '三', '四', '五', '六', '日']
 const calendarDays = ref([])
@@ -532,7 +532,7 @@ onShow(() => {
 /* 头部样式 */
 .header {
   background: var(--primary);
-  padding: 20px 15px;
+  padding: 10px 6px;
   color: #fff;
 }
 
@@ -540,7 +540,6 @@ onShow(() => {
   display: flex;
   justify-content: center;
   gap: 15px;
-  margin-bottom: 15px;
 }
 
 .mode-btn {
