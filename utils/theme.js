@@ -172,7 +172,10 @@ function syncTabBar(primaryColor, isDark) {
     color,
     selectedColor,
     backgroundColor: bgColor,
-    borderStyle
+    borderStyle,
+    fail: () => {
+      // 非 tabBar 页面调用会失败，静默忽略
+    }
   })
 }
 

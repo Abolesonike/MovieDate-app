@@ -76,7 +76,7 @@
         scroll-with-animation
       >
         <view
-          v-for="day in currentWeekDays"
+          v-for="(day, index) in currentWeekDays"
           :key="day.dateKey"
           :id="'day-row-' + index"
           class="week-day-row"
@@ -141,7 +141,7 @@
             </view>
           </view>
 
-          <view v-for="movie in selectedDayMovies" :key="movie.id" class="movie-detail-item">
+          <view v-for="(movie, index) in selectedDayMovies" :key="movie.id" class="movie-detail-item">
             <movie-card-compact
               :movie="movie"
               :show-status="true"

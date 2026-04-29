@@ -2,7 +2,7 @@ import { formatDate } from './utils.js'
 import { getAllMovieStatus } from './movieStatus.js'
 import { getAllCalendarEvents } from './calendar.js'
 import { getPersonalTop10 } from './personalTop10.js'
-import { _saveMovieStatus, _saveCalendarEvents } from './movieStatus.js'
+import { _saveMovieStatus } from './movieStatus.js'
 import { _saveCalendarEvents as _saveCalendarEventsRaw } from './calendar.js'
 import { _savePersonalTop10 } from './personalTop10.js'
 

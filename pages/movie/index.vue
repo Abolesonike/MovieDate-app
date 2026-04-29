@@ -222,6 +222,9 @@ export default {
       movieTypes: ['全部', '动作', '喜剧', '爱情', '科幻', '悬疑', '恐怖', '剧情'],
       hasSearched: false,
 
+      // 导航防抖
+      navigating: false,
+
       // 电影数据
       hotMovies: [],
       findMovies: [],
@@ -415,9 +418,13 @@ export default {
     // ========== 通用方法 ==========
 
     goToMovieDetail(movie) {
-      // 只传递 movieId，详情页从 TMDB API 获取完整信息
+      if (this.navigating) return
+      this.navigating = true
       uni.navigateTo({
-        url: `/pages/movie/detail/index?movieId=${movie.id}`
+        url: `/pages/movie/detail/index?movieId=${movie.id}`,
+        complete: () => {
+          this.navigating = false
+        }
       })
     },
 
