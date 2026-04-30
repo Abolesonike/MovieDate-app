@@ -18,12 +18,19 @@
 
       <template v-else>
         <!-- 封面区域 -->
-        <view class="cover-section">
+        <view class="cover-section" @click="goToCoverPicker">
           <view v-if="playlist.coverImage" class="cover-image">
             <image :src="playlist.coverImage" mode="aspectFill" />
+            <view class="cover-edit-icon">
+              <text class="cover-edit-text">✏️</text>
+            </view>
           </view>
           <view v-else class="cover-placeholder">
-            <text class="cover-placeholder-text">📋</text>
+            <text class="cover-placeholder-icon">📋</text>
+            <text class="cover-placeholder-hint">点击设置封面</text>
+            <view class="cover-edit-icon">
+              <text class="cover-edit-text">✏️</text>
+            </view>
           </view>
         </view>
 
@@ -181,6 +188,11 @@ export default {
         url: `/pages/playlist/edit/index?playlistId=${this.playlistId}`
       })
     },
+    goToCoverPicker() {
+      uni.navigateTo({
+        url: `/pages/playlist/cover-picker/index?playlistId=${this.playlistId}`
+      })
+    },
     goToDetail(movie) {
       uni.navigateTo({
         url: `/pages/movie/detail/index?movieId=${movie.id}`
@@ -291,9 +303,11 @@ export default {
 
 .cover-section {
   margin: 16px;
+  cursor: pointer;
 }
 
 .cover-image {
+  position: relative;
   height: 180px;
   border-radius: 12px;
   overflow: hidden;
@@ -305,16 +319,43 @@ export default {
 }
 
 .cover-placeholder {
-  height: 120px;
-  background: var(--primary);
+  position: relative;
+  height: 180px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   border-radius: 12px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-.cover-placeholder-text {
+.cover-placeholder-icon {
   font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.cover-placeholder-hint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 封面编辑图标 */
+.cover-edit-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cover-edit-text {
+  font-size: 16px;
 }
 
 .description-section {

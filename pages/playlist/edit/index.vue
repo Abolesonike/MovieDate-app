@@ -19,6 +19,26 @@
         />
       </view>
 
+      <!-- 封面设置 -->
+      <view class="form-item">
+        <text class="form-label">封面设置</text>
+        <view class="cover-setting" @click="goToCoverPicker">
+          <view class="cover-preview">
+            <image
+              v-if="formData.coverImage"
+              class="cover-preview-image"
+              :src="formData.coverImage"
+              mode="aspectFill"
+            />
+            <view v-else class="cover-preview-placeholder">
+              <text class="cover-preview-icon">📋</text>
+            </view>
+          </view>
+          <text class="cover-setting-text">{{ formData.coverImage ? '更换封面' : '设置封面' }}</text>
+          <text class="cover-setting-arrow">›</text>
+        </view>
+      </view>
+
       <!-- 片单描述 -->
       <view class="form-item">
         <text class="form-label">片单描述（可选）</text>
@@ -71,7 +91,8 @@ export default {
       formData: {
         name: '',
         description: '',
-        tags: []
+        tags: [],
+        coverImage: ''
       },
       hotTags: ['科幻', '喜剧', '剧情', '动作', '爱情', '悬疑', '恐怖', '动画']
     }
@@ -82,6 +103,11 @@ export default {
       this.isEdit = true
       this.loadPlaylist()
     }
+    // 监听封面更新事件
+    uni.$on('playlistCoverUpdated', this.onCoverUpdated)
+  },
+  onUnload() {
+    uni.$off('playlistCoverUpdated', this.onCoverUpdated)
   },
   methods: {
     loadPlaylist() {
@@ -90,10 +116,29 @@ export default {
         this.formData.name = playlist.name
         this.formData.description = playlist.description || ''
         this.formData.tags = [...(playlist.tags || [])]
+        this.formData.coverImage = playlist.coverImage || ''
+      }
+    },
+    onCoverUpdated(data) {
+      if (data && data.playlistId === this.playlistId) {
+        const playlist = storage.getPlaylist(this.playlistId)
+        if (playlist) {
+          this.formData.coverImage = playlist.coverImage || ''
+        }
       }
     },
     goBack() {
       uni.navigateBack()
+    },
+    goToCoverPicker() {
+      if (!this.isEdit) {
+        // 新建片单时，先保存再选封面
+        uni.showToast({ title: '请先保存片单', icon: 'none' })
+        return
+      }
+      uni.navigateTo({
+        url: `/pages/playlist/cover-picker/index?playlistId=${this.playlistId}`
+      })
     },
     savePlaylist() {
       if (!this.formData.name.trim()) {
@@ -213,6 +258,55 @@ export default {
   min-height: 80px;
   width: 100%;
   box-sizing: border-box;
+}
+
+/* 封面设置 */
+.cover-setting {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 16rpx;
+  cursor: pointer;
+}
+
+.cover-preview {
+  width: 60rpx;
+  height: 90rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg-hover);
+}
+
+.cover-preview-image {
+  width: 100%;
+  height: 100%;
+}
+
+.cover-preview-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+}
+
+.cover-preview-icon {
+  font-size: 24rpx;
+}
+
+.cover-setting-text {
+  flex: 1;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.cover-setting-arrow {
+  font-size: 20px;
+  color: var(--text-tertiary);
 }
 
 .tags-container {

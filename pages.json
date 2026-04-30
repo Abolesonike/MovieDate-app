@@ -126,6 +126,13 @@
 				"navigationBarTitleText": "编辑片单",
 				"enablePullDownRefresh": false
 			}
+		},
+		{
+			"path": "pages/playlist/cover-picker/index",
+			"style": {
+				"navigationBarTitleText": "选择封面",
+				"enablePullDownRefresh": false
+			}
 		}
 	],
 	"globalStyle": {

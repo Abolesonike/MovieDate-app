@@ -25,14 +25,20 @@
           </view>
         </view>
 
-        <!-- 片单卡片列表 -->
-        <playlist-card
-          v-for="playlist in playlists"
-          :key="playlist.id"
-          :playlist="playlist"
-          :progress="getPlaylistProgress(playlist.id)"
-          @click="goToDetail(playlist)"
-        />
+        <!-- 片单双列网格 -->
+        <view v-else class="playlist-grid">
+          <view
+            v-for="playlist in playlists"
+            :key="playlist.id"
+            class="playlist-grid-item"
+          >
+            <playlist-card
+              :playlist="playlist"
+              :progress="getPlaylistProgress(playlist.id)"
+              @click="goToDetail(playlist)"
+            />
+          </view>
+        </view>
       </view>
     </scroll-view>
   </view>
@@ -124,39 +130,52 @@ export default {
 }
 
 .list-content {
-  padding: 12px 16px;
+  padding: 24rpx;
 }
 
+/* 双列网格 */
+.playlist-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.playlist-grid-item {
+  width: calc((100% - 16rpx) / 2);
+}
+
+/* 空状态 */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 120rpx 40rpx;
 }
 
 .empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 96rpx;
+  margin-bottom: 32rpx;
 }
 
 .empty-text {
-  font-size: 16px;
+  font-size: 32rpx;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: 16rpx;
+  font-weight: 500;
 }
 
 .empty-hint {
-  font-size: 14px;
+  font-size: 28rpx;
   color: var(--text-tertiary);
-  margin-bottom: 24px;
+  margin-bottom: 48rpx;
 }
 
 .empty-action {
   background: #007AFF;
   color: #fff;
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 20rpx 48rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
 }
 </style>
