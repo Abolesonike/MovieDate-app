@@ -5,9 +5,10 @@
 ## 功能概览
 
 ### 日历
-- 支持**周视图**与**月视图**切换
+- 支持**今日**，**周**与**月**切换
 - 在日历上标记计划观看和已观看的电影
 - 点击日期查看当日观影安排
+- 每日一部电影日历
 
 ### 电影
 - **热门电影**：浏览 TMDB 热门电影列表
@@ -21,10 +22,12 @@
 - **TMDB Top250**：查看全球评分最高的 250 部电影，记录观看进度
 - **时间轴海报**：按时间回顾观影历程，支持选择时间范围（半年/1年/2年/3年），可导出为图片分享
 - **个人 TOP10**：自定义个人年度最佳电影榜单，支持搜索添加、排序调整，可生成海报分享
+- **30 格喜好海报墙**：自定义个人喜好表，填充 30 部代表不同喜好的电影，可生成海报分享
 
 ### 我的
 - **数据统计**：想看 / 已看 / 待看 / 日历事件数量统计
 - **列表管理**：快速进入各状态电影列表
+- **片单**：创建自定义电影片单，归类管理电影
 - **TMDB API 设置**：配置 API Key 与代理地址（国内网络建议配置代理）
 - **数据导入导出**：支持 JSON 格式的本地备份与恢复
 - **云同步**：支持 WebDAV 等云端同步方式
@@ -41,20 +44,28 @@
 ```
 MovieDate-app/
 ├── pages/                          # 页面
-│   ├── calendar/                   # 日历页
-│   ├── movie/                      # 电影浏览页
-│   ├── movie-detail/               # 电影详情页
-│   ├── person-detail/              # 影人详情页
-│   ├── list-want/                  # 想看列表
-│   ├── list-watched/               # 已看列表
-│   ├── list-planned/               # 待看列表
-│   ├── poster-wall/                # 海报墙入口
-│   ├── movie-tops/                 # 榜单与 Top10
-│   │   ├── douban-top250.vue
-│   │   ├── tmdb-top250.vue
-│   │   ├── personal-top10.vue
-│   │   └── personal-top10-search.vue
-│   ├── timeline-poster/            # 时间轴海报
+│   ├── calendar/                   # 日历页（周视图/月视图）
+│   ├── movie/                      # 电影相关
+│   │   ├── index                   # 电影浏览页（热门/找电影）
+│   │   ├── detail                  # 电影详情页
+│   │   ├── person                  # 影人详情页
+│   │   └── picker                  # 电影选择器
+│   ├── tops/                       # 榜单
+│   │   ├── douban                  # 豆瓣 Top250
+│   │   ├── tmdb                    # TMDB Top250
+│   │   └── personal                # 个人 Top10
+│   ├── poster/                     # 海报墙入口
+│   ├── generate/                   # 海报生成
+│   │   ├── favorite                # 30 格喜好海报墙
+│   │   └── timeline                # 时间轴海报
+│   ├── lists/                      # 影单列表
+│   │   ├── want                    # 想看列表
+│   │   ├── watched                 # 已看列表
+│   │   └── planned                 # 待看列表
+│   ├── playlist/                   # 自定义片单
+│   │   ├── index                   # 片单列表
+│   │   ├── detail                  # 片单详情
+│   │   └── edit                    # 片单编辑
 │   └── me/                         # 我的/设置页
 ├── utils/                          # 工具类
 │   ├── tmdb.js                     # TMDB API 封装
@@ -62,8 +73,15 @@ MovieDate-app/
 │   ├── posterShare.js              # 海报 Canvas 生成
 │   ├── doubanMapping.js            # 豆瓣 Top250 数据映射
 │   ├── cloudSync.js                # 云同步逻辑
+│   ├── dailyRecommend.js           # 每日推荐
+│   ├── theme.js                    # 主题管理
 │   └── permissions.js              # 权限管理
 ├── components/                     # 公共组件
+│   └── movie-card/                 # 电影卡片组件
+│       ├── movie-card-horizontal   # 横向卡片
+│       ├── movie-card-compact      # 紧凑卡片
+│       ├── movie-card-vertical     # 纵向小卡片
+│       └── shared.js               # 共享逻辑
 ├── static/                         # 静态资源
 ├── App.vue                         # 应用入口
 ├── main.js                         # 主脚本
@@ -112,6 +130,7 @@ npm run dev:mp-weixin
 | 电影状态 | 每部电影的观看状态（想看/已看/待看）及时间线 |
 | 日历事件 | 与观影计划关联的日历数据 |
 | 个人 Top10 | 用户自定义的 Top10 电影榜单及排序 |
+| 喜好海报墙 | 30 格个人喜好表的电影填充数据 |
 | 用户设置 | API Key、代理地址等配置 |
 | 云同步配置 | WebDAV 等同步服务的连接信息 |
 
