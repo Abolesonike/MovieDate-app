@@ -53,11 +53,13 @@ class TMDBApi {
   constructor() {
     this.API_KEY_STORAGE = 'tmdb_api_key'
     this.API_PROXY_STORAGE = 'tmdb_api_proxy'
+    this.TOP250_CACHE_KEY = 'tmdb_top250_full_cache'
+    this.TOP250_CACHE_TTL = 7 * 24 * 60 * 60 * 1000 // 7 天
     // 默认使用官方地址,可配置为代理地址
     this.DEFAULT_BASE_URL = 'https://api.themoviedb.org/3'
     this.IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
     this.LANGUAGE = 'zh-CN'
-    
+
     // 常见的国内可用代理地址
     this.COMMON_PROXIES = [
       'https://api.tmdb.org/3',
@@ -351,6 +353,62 @@ class TMDBApi {
       totalPages: data.total_pages,
       totalResults: data.total_results
     }
+  }
+
+  /**
+   * 获取完整的 TMDB Top250 电影列表（带本地缓存）
+   * @param {boolean} forceRefresh - 是否强制刷新缓存
+   * @returns {Promise<Array>} 250 部电影的数组，每项包含 rank 字段
+   */
+  async getTopRatedMoviesFull(forceRefresh = false) {
+    if (!forceRefresh) {
+      try {
+        const cached = uni.getStorageSync(this.TOP250_CACHE_KEY)
+        if (cached && cached.movies && cached.timestamp) {
+          const age = Date.now() - cached.timestamp
+          if (age < this.TOP250_CACHE_TTL) {
+            console.log('[TMDB] Top250 命中缓存，共', cached.movies.length, '部')
+            return cached.movies
+          }
+        }
+      } catch (e) {
+        console.warn('[TMDB] 读取 Top250 缓存失败:', e)
+      }
+    }
+
+    console.log('[TMDB] Top250 缓存失效，开始重新拉取...')
+    const allMovies = []
+    let page = 1
+    const maxPages = 13
+    let totalPages = 1
+
+    try {
+      while (page <= maxPages && page <= totalPages) {
+        const result = await this.getTopRatedMovies(page)
+        totalPages = result.totalPages
+        const pageMovies = result.movies.map((movie, index) => ({
+          ...movie,
+          rank: (page - 1) * 20 + index + 1
+        }))
+        allMovies.push(...pageMovies)
+        page++
+      }
+    } catch (error) {
+      console.error('[TMDB] 拉取 Top250 失败:', error)
+      throw error
+    }
+
+    try {
+      uni.setStorageSync(this.TOP250_CACHE_KEY, {
+        movies: allMovies,
+        timestamp: Date.now()
+      })
+      console.log('[TMDB] Top250 缓存已更新，共', allMovies.length, '部')
+    } catch (e) {
+      console.warn('[TMDB] 保存 Top250 缓存失败:', e)
+    }
+
+    return allMovies
   }
 
   /**

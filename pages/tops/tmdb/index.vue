@@ -70,7 +70,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onShow, onPullDownRefresh } from '@dcloudio/uni-app'
 import tmdbApi from '@/utils/tmdb.js'
 import storage from '@/utils/storage.js'
 import { generatePosterWallImage } from '@/utils/posterShare.js'
@@ -80,7 +80,7 @@ const loading = ref(false)
 const stats = ref({ total: 250, watchedCount: 0 })
 const previewImage = ref('')
 
-async function loadData() {
+async function loadData(forceRefresh = false) {
   loading.value = true
   try {
     const movieStatus = storage.getAllMovieStatus()
@@ -88,22 +88,10 @@ async function loadData() {
       .filter(([_, data]) => data.status === 'watched')
       .map(([id]) => parseInt(id))
 
-    const allMovies = []
-    let page = 1
-    let totalPages = 1
-    while (page <= 13 && page <= totalPages) {
-      const result = await tmdbApi.getTopRatedMovies(page)
-      totalPages = result.totalPages
-      const pageMovies = result.movies.map((movie, index) => {
-        const rank = (page - 1) * 20 + index + 1
-        return { ...movie, rank, isWatched: watchedIds.includes(movie.id) }
-      })
-      allMovies.push(...pageMovies)
-      page++
-    }
+    const allMovies = await tmdbApi.getTopRatedMoviesFull(forceRefresh)
 
     watchedMovies.value = allMovies
-      .filter(m => m.isWatched)
+      .filter(m => watchedIds.includes(m.id))
       .sort((a, b) => a.rank - b.rank)
 
     stats.value.watchedCount = watchedMovies.value.length
@@ -113,8 +101,13 @@ async function loadData() {
     uni.showToast({ title: '加载失败，请重试', icon: 'none' })
   } finally {
     loading.value = false
+    uni.stopPullDownRefresh()
   }
 }
+
+onPullDownRefresh(() => {
+  loadData(true)
+})
 
 async function onExport() {
   if (watchedMovies.value.length === 0) return
@@ -156,7 +149,7 @@ async function saveImage() {
   }
 }
 
-onLoad(() => loadData())
+onShow(() => loadData())
 </script>
 
 <style lang="scss" scoped>

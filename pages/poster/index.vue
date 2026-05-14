@@ -186,8 +186,31 @@ export default {
     },
 
     loadTmdbStats() {
-      const count = uni.getStorageSync('tmdb_top250_watched_count')
-      this.tmdbWatchedCount = count || 0
+      try {
+        const movieStatus = storage.getAllMovieStatus()
+        const watchedIds = new Set(
+          Object.entries(movieStatus)
+            .filter(([_, data]) => data.status === 'watched')
+            .map(([id]) => parseInt(id))
+        )
+
+        const cached = uni.getStorageSync('tmdb_top250_full_cache')
+        if (cached && cached.movies) {
+          const tmdb250Ids = new Set(cached.movies.map(m => m.id))
+          let count = 0
+          for (const id of watchedIds) {
+            if (tmdb250Ids.has(id)) count++
+          }
+          this.tmdbWatchedCount = count
+          // 同步更新缓存计数，保持数据一致
+          uni.setStorageSync('tmdb_top250_watched_count', count)
+        } else {
+          this.tmdbWatchedCount = uni.getStorageSync('tmdb_top250_watched_count') || 0
+        }
+      } catch (error) {
+        console.error('[PosterWall] 加载TMDB统计失败:', error)
+        this.tmdbWatchedCount = 0
+      }
     },
 
     goToDoubanTop250() {
