@@ -45,11 +45,6 @@ export function addCalendarEvent(dateStr, movieEvent) {
     all[dateStr] = []
   }
 
-  const exists = all[dateStr].find(e => e.movieId === movieEvent.movieId)
-  if (exists) {
-    return { success: false, message: '该电影已在当天安排中' }
-  }
-
   const event = {
     id: `${dateStr}_${movieEvent.movieId}_${Date.now()}`,
     movieId: movieEvent.movieId,

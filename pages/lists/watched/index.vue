@@ -24,13 +24,16 @@
         @click="goToDetail(movie)"
       >
         <template #extra>
-          <view class="user-review-section" v-if="movie.userRating || movie.userReview">
+          <view class="user-review-section" v-if="movie.userRating || movie.userReview || movie.watchCount > 1">
             <view class="user-rating" v-if="movie.userRating">
               <text class="rating-label">我的评分</text>
               <text class="rating-stars">{{ '⭐'.repeat(movie.userRating) }}</text>
             </view>
             <text v-if="movie.userReview" class="user-review-text">{{ movie.userReview }}</text>
-            <text v-if="movie.watchedDate" class="watched-date">观看于 {{ movie.watchedDate }}</text>
+            <view class="watched-meta">
+              <text v-if="movie.watchCount > 1" class="watch-count">看过 {{ movie.watchCount }} 次</text>
+              <text v-if="movie.watchedDate" class="watched-date">观看于 {{ movie.watchedDate }}</text>
+            </view>
           </view>
         </template>
       </movie-card-horizontal>
@@ -68,7 +71,8 @@ const {
   mapItem: (item) => ({
     userRating: item.timeline?.watched?.rating,
     userReview: item.timeline?.watched?.review,
-    watchedDate: item.timeline?.watched?.date
+    watchedDate: item.timeline?.watched?.date,
+    watchCount: item.watchCount || 1
   })
 })
 
@@ -185,10 +189,24 @@ onPullDownRefresh(() => loadData().finally(() => uni.stopPullDownRefresh()))
   -webkit-box-orient: vertical;
 }
 
+.watched-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.watch-count {
+  font-size: 11px;
+  color: var(--primary);
+  background: rgba(102, 126, 234, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 .watched-date {
   font-size: 11px;
   color: var(--text-tertiary);
-  margin-top: 4px;
 }
 
 .list-footer {

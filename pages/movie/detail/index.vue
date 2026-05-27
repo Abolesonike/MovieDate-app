@@ -46,8 +46,8 @@
         :class="['action-btn', movieCurrentStatus === 'watched' ? 'btn-primary' : 'btn-default']"
         @click="markAsWatched"
       >
-        <text class="btn-icon">{{ movieCurrentStatus === 'watched' ? '✓' : '○' }}</text>
-        {{ movieCurrentStatus === 'watched' ? '已看过' : '标记已看' }}
+        <text class="btn-icon">{{ movieCurrentStatus === 'watched' ? '↻' : '○' }}</text>
+        {{ movieCurrentStatus === 'watched' ? '重刷' : '标记已看' }}
       </button>
     </view>
 
@@ -150,11 +150,33 @@
       </view>
     </view>
 
+    <!-- 观影历史 -->
+    <view v-if="watchRecords.length > 0" class="history-section">
+      <text class="section-title">观影记录（共 {{ watchRecords.length }} 次）</text>
+      <view
+        v-for="(record, index) in reversedWatchRecords"
+        :key="record.id"
+        class="history-item"
+      >
+        <view class="history-header">
+          <view class="history-meta">
+            <text class="history-index">{{ watchRecords.length - index }}</text>
+            <text v-if="index === 0" class="history-latest-tag">最新</text>
+            <text class="history-date">{{ record.date }}</text>
+          </view>
+          <view v-if="record.rating" class="history-rating">
+            <text v-for="s in record.rating" :key="s">⭐</text>
+          </view>
+        </view>
+        <text v-if="record.review" class="history-review">{{ record.review }}</text>
+      </view>
+    </view>
+
     <!-- 日历选择器 -->
     <view v-if="showCalendarPicker" class="calendar-mask" @click="showCalendarPicker = false">
       <view class="calendar-popup" @click.stop>
         <view class="calendar-header">
-          <text class="calendar-title">{{ calendarPickerMode === 'watched' ? '选择观看日期' : '选择日期' }}</text>
+          <text class="calendar-title">{{ calendarPickerMode === 'watched' ? (movieCurrentStatus === 'watched' ? '记录重刷' : '选择观看日期') : '选择日期' }}</text>
           <text class="calendar-close" @click="showCalendarPicker = false">✕</text>
         </view>
         <picker mode="date" :value="selectedDate" :start="calendarPickerMode === 'planned' ? minDateStr : undefined" :end="calendarPickerMode === 'watched' ? maxDateStr : undefined" @change="onDateChange">
@@ -163,7 +185,34 @@
             <text class="picker-arrow">›</text>
           </view>
         </picker>
-         <button class="confirm-btn" @click="onPickerConfirm">确定</button>
+
+        <!-- 重刷时显示评分和评论 -->
+        <view v-if="calendarPickerMode === 'watched' && movieCurrentStatus === 'watched'" class="rewatch-review-section">
+          <view class="rating-row">
+            <text class="label">本次评分：</text>
+            <view class="rating-stars">
+              <text
+                v-for="star in 5"
+                :key="star"
+                class="star"
+                :class="{ 'star-active': star <= rewatchRating }"
+                @click="setRewatchRating(star)"
+              >
+                ⭐
+              </text>
+            </view>
+            <text class="rating-value">{{ rewatchRating }} 分</text>
+          </view>
+          <textarea
+            v-model="rewatchReview"
+            class="review-textarea"
+            placeholder="写下本次观影感受..."
+            :maxlength="200"
+          />
+          <text class="word-count">{{ rewatchReview.length }}/200</text>
+        </view>
+
+        <button class="confirm-btn" @click="onPickerConfirm">确定</button>
       </view>
     </view>
   </view>
@@ -193,6 +242,9 @@ export default {
       movieCurrentStatus: MOVIE_STATUS.UNWATCHED,
       userRating: 0,
       userReview: '',
+      watchRecords: [],
+      rewatchRating: 0,
+      rewatchReview: '',
       showCalendarPicker: false,
       calendarPickerMode: 'planned', // 'planned' 或 'watched'
       selectedDate: '',
@@ -209,6 +261,9 @@ export default {
       return this.credits.cast.length > 0 ||
         this.credits.directors.length > 0 ||
         this.credits.writers.length > 0
+    },
+    reversedWatchRecords() {
+      return [...this.watchRecords].reverse()
     }
   },
   onLoad(options) {
@@ -270,10 +325,11 @@ export default {
     loadMovieStatus(movieId) {
       const statusData = storage.getMovieStatus(movieId)
       this.movieCurrentStatus = statusData.status
-      // 从 watched 时间线中读取评分和评价
-      const watchedData = statusData.timeline?.watched || {}
-      this.userRating = watchedData.rating || 0
-      this.userReview = watchedData.review || ''
+      // 从 watched 数组中读取所有观影记录
+      this.watchRecords = storage.getWatchedRecords(movieId) || []
+      const latest = this.watchRecords[this.watchRecords.length - 1] || {}
+      this.userRating = latest.rating || 0
+      this.userReview = latest.review || ''
     },
 
     _checkMovieLoaded() {
@@ -344,19 +400,21 @@ export default {
     },
 
     markAsWatched() {
-      if (this.movieCurrentStatus === MOVIE_STATUS.WATCHED) {
-        return
-      }
-
       // 打开日期选择器，让用户选择观看日期
       this.calendarPickerMode = 'watched'
-      // 对于标记已看，默认选中今天，但允许选择过去日期（补录）
       const today = new Date()
       this.watchedDateStr = this.formatDate(today)
       this.selectedDate = this.watchedDateStr
       // 标记已看时不限制最小日期，但限制最大日期为今天（不能选择未来）
       this.minDateStr = ''
       this.maxDateStr = this.watchedDateStr
+
+      // 如果是重刷，初始化弹窗内的评分评论
+      if (this.movieCurrentStatus === MOVIE_STATUS.WATCHED) {
+        this.rewatchRating = 0
+        this.rewatchReview = ''
+      }
+
       this.showCalendarPicker = true
     },
 
@@ -367,20 +425,27 @@ export default {
         return
       }
 
+      const isRewatch = this.movieCurrentStatus === MOVIE_STATUS.WATCHED
+
       const result = storage.markAsWatched(this.movie.id, {
-        rating: this.userRating || undefined,
-        review: this.userReview || undefined,
+        rating: isRewatch ? (this.rewatchRating || undefined) : (this.userRating || undefined),
+        review: isRewatch ? (this.rewatchReview || undefined) : (this.userReview || undefined),
         date: this.selectedDate
       })
 
       if (result.success) {
         this.movieCurrentStatus = MOVIE_STATUS.WATCHED
+        this.loadMovieStatus(this.movie.id)
         uni.showToast({ title: result.message, icon: 'success' })
       } else {
         uni.showToast({ title: '标记失败', icon: 'none' })
       }
 
       this.showCalendarPicker = false
+    },
+
+    setRewatchRating(value) {
+      this.rewatchRating = value
     },
 
     setRating(value) {
@@ -745,6 +810,73 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   margin-top: 2px;
+}
+
+/* 观影历史 */
+.history-section {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.history-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-index {
+  font-size: 13px;
+  color: var(--primary);
+  font-weight: 600;
+  min-width: 20px;
+}
+
+.history-latest-tag {
+  font-size: 11px;
+  color: #fff;
+  background: var(--primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.history-date {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.history-rating {
+  font-size: 12px;
+}
+
+.history-review {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* 重刷弹窗评分区 */
+.rewatch-review-section {
+  margin-bottom: 16px;
 }
 
 /* 日历选择器 */

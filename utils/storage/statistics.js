@@ -10,10 +10,15 @@ export function getStatistics() {
   let wantCount = 0
   let watchedCount = 0
   let plannedCount = 0
+  let totalWatchedCount = 0
 
   Object.values(status).forEach(item => {
     if (item.status === MOVIE_STATUS.WANT_TO_WATCH) wantCount++
-    else if (item.status === MOVIE_STATUS.WATCHED) watchedCount++
+    else if (item.status === MOVIE_STATUS.WATCHED) {
+      watchedCount++
+      const records = Array.isArray(item.timeline?.watched) ? item.timeline.watched : []
+      totalWatchedCount += records.length
+    }
     else if (item.status === MOVIE_STATUS.PLANNED) plannedCount++
   })
 
@@ -24,6 +29,7 @@ export function getStatistics() {
     watchedCount,
     plannedCount,
     totalEvents,
+    totalWatchedCount,
     thisMonthWatched: getThisMonthWatched(events)
   }
 }

@@ -19,6 +19,8 @@ import {
   getMovieTimeline,
   updateWatchedReview,
   getMovieTimelineHistory,
+  getWatchedRecords,
+  removeWatchedRecord,
   movieStatusCache
 } from './movieStatus.js'
 
@@ -126,9 +128,14 @@ class StorageManager {
       if (data.timeline.planned?.calendarEventId) {
         removeCalendarEvent(data.timeline.planned.date, data.timeline.planned.calendarEventId)
       }
-      if (data.timeline.watched?.calendarEventId) {
-        removeCalendarEvent(data.timeline.watched.date, data.timeline.watched.calendarEventId)
-      }
+      const watchedRecords = Array.isArray(data.timeline.watched)
+        ? data.timeline.watched
+        : (data.timeline.watched ? [data.timeline.watched] : [])
+      watchedRecords.forEach(r => {
+        if (r.calendarEventId) {
+          removeCalendarEvent(r.date, r.calendarEventId)
+        }
+      })
     }
     removeMovieStatus(movieId)
     this.cache.movieStatus = null
@@ -143,18 +150,32 @@ class StorageManager {
   markAsWatched(movieId, data = {}) {
     const dateStr = data.date || formatDate(new Date())
 
+    // 判断是否重刷
+    const currentStatus = getMovieStatus(movieId)
+    const isRewatch = currentStatus.status === MOVIE_STATUS.WATCHED
+
     // 添加到日历
     let calendarEvent = null
-    const existingEvents = getEventsByDate(dateStr)
-    const exists = existingEvents.find(e => e.movieId === movieId)
 
-    if (!exists) {
+    if (!isRewatch) {
+      // 首次标记已看：检查是否已有 planned 事件
+      const existingEvents = getEventsByDate(dateStr)
+      const exists = existingEvents.find(e => e.movieId === movieId)
+
+      if (!exists) {
+        const result = addCalendarEvent(dateStr, { movieId })
+        if (result.success) {
+          calendarEvent = result.event
+        }
+      } else {
+        calendarEvent = exists
+      }
+    } else {
+      // 重刷：总是创建新日历事件
       const result = addCalendarEvent(dateStr, { movieId })
       if (result.success) {
         calendarEvent = result.event
       }
-    } else {
-      calendarEvent = exists
     }
 
     if (calendarEvent) {
@@ -173,7 +194,7 @@ class StorageManager {
       success: true,
       movie,
       event: calendarEvent,
-      message: `已标记为已看并添加到 ${dateStr}`
+      message: isRewatch ? `已记录重刷 (${dateStr})` : `已标记为已看并添加到 ${dateStr}`
     }
   }
 
@@ -190,6 +211,18 @@ class StorageManager {
 
   getMovieTimelineHistory(movieId) {
     return getMovieTimelineHistory(movieId)
+  }
+
+  getWatchedRecords(movieId) {
+    return getWatchedRecords(movieId)
+  }
+
+  removeWatchedRecord(movieId, recordId) {
+    const result = removeWatchedRecord(movieId, recordId)
+    if (result) {
+      this.cache.movieStatus = getAllMovieStatus()
+    }
+    return result
   }
 
   // ==================== 日历事件管理 ====================

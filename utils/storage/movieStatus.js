@@ -41,10 +41,23 @@ export function setMovieStatus(movieId, status, extra = {}) {
   const timeline = existing.timeline || {}
   const dateStr = extra.date || formatDate(new Date())
 
-  timeline[status] = {
-    date: dateStr,
-    timestamp: now,
-    ...extra
+  if (status === MOVIE_STATUS.WATCHED) {
+    const record = {
+      id: `watch_${now}_${Math.random().toString(36).substr(2, 9)}`,
+      date: dateStr,
+      timestamp: now,
+      ...extra
+    }
+    if (!Array.isArray(timeline.watched)) {
+      timeline.watched = []
+    }
+    timeline.watched.push(record)
+  } else {
+    timeline[status] = {
+      date: dateStr,
+      timestamp: now,
+      ...extra
+    }
   }
 
   all[movieId] = { status, timeline, updatedAt: now }
@@ -88,7 +101,19 @@ export function getWatchedList() {
   const all = getAllMovieStatus()
   return Object.entries(all)
     .filter(([_, data]) => data.status === MOVIE_STATUS.WATCHED)
-    .map(([id, data]) => ({ movieId: parseInt(id), ...data }))
+    .map(([id, data]) => {
+      const records = Array.isArray(data.timeline?.watched) ? data.timeline.watched : []
+      const latest = records[records.length - 1] || {}
+      return {
+        movieId: parseInt(id),
+        status: data.status,
+        updatedAt: data.updatedAt,
+        timeline: {
+          watched: latest
+        },
+        watchCount: records.length
+      }
+    })
     .sort((a, b) => (b.timeline?.watched?.timestamp || 0) - (a.timeline?.watched?.timestamp || 0))
 }
 
@@ -115,10 +140,23 @@ export function updateWatchedReview(movieId, data) {
   }
 
   if (!movie.timeline) movie.timeline = {}
-  if (!movie.timeline.watched) movie.timeline.watched = {}
+  if (!Array.isArray(movie.timeline.watched)) {
+    movie.timeline.watched = []
+  }
 
-  if (data.rating !== undefined) movie.timeline.watched.rating = data.rating
-  if (data.review !== undefined) movie.timeline.watched.review = data.review
+  const watchedArr = movie.timeline.watched
+  if (watchedArr.length === 0) {
+    return null
+  }
+
+  const targetIndex = data.recordId
+    ? watchedArr.findIndex(r => r.id === data.recordId)
+    : watchedArr.length - 1
+
+  if (targetIndex === -1) return null
+
+  if (data.rating !== undefined) watchedArr[targetIndex].rating = data.rating
+  if (data.review !== undefined) watchedArr[targetIndex].review = data.review
 
   movie.updatedAt = Date.now()
   _saveMovieStatus(all)
@@ -134,9 +172,50 @@ export function getMovieTimelineHistory(movieId) {
 
   statusOrder.forEach(status => {
     if (timeline[status]) {
-      history.push({ status, statusName: statusNames[status], ...timeline[status] })
+      if (status === 'watched' && Array.isArray(timeline[status])) {
+        timeline[status].forEach(record => {
+          history.push({ status, statusName: statusNames[status], ...record })
+        })
+      } else {
+        history.push({ status, statusName: statusNames[status], ...timeline[status] })
+      }
     }
   })
 
   return history.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+}
+
+export function getWatchedRecords(movieId) {
+  const statusData = getMovieStatus(movieId)
+  const watched = statusData.timeline?.watched
+  return Array.isArray(watched) ? watched : []
+}
+
+export function getLatestWatchedRecord(movieId) {
+  const records = getWatchedRecords(movieId)
+  return records[records.length - 1] || null
+}
+
+export function removeWatchedRecord(movieId, recordId) {
+  validateMovieId(movieId)
+  const all = getAllMovieStatus()
+  const movie = all[movieId]
+
+  if (!movie || !Array.isArray(movie.timeline?.watched)) {
+    return false
+  }
+
+  const idx = movie.timeline.watched.findIndex(r => r.id === recordId)
+  if (idx === -1) return false
+
+  movie.timeline.watched.splice(idx, 1)
+
+  if (movie.timeline.watched.length === 0) {
+    movie.status = MOVIE_STATUS.UNWATCHED
+    delete movie.timeline.watched
+  }
+
+  movie.updatedAt = Date.now()
+  _saveMovieStatus(all)
+  return true
 }
