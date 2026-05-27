@@ -24,6 +24,28 @@
       </view>
     </view>
 
+        <!-- 观影历史 -->
+    <view v-if="watchRecords.length > 0" class="history-section">
+      <text class="section-title">观影记录（共 {{ watchRecords.length }} 次）</text>
+      <view
+        v-for="(record, index) in reversedWatchRecords"
+        :key="record.id"
+        class="history-item"
+      >
+        <view class="history-header">
+          <view class="history-meta">
+            <text class="history-index">{{ watchRecords.length - index }}</text>
+            <text v-if="index === 0" class="history-latest-tag">最新</text>
+            <text class="history-date">{{ record.date }}</text>
+          </view>
+          <view v-if="record.rating" class="history-rating">
+            <text v-for="s in record.rating" :key="s">⭐</text>
+          </view>
+        </view>
+        <text v-if="record.review" class="history-review">{{ record.review }}</text>
+      </view>
+    </view>
+
     <!-- 操作按钮 -->
     <view class="action-section">
       <button
@@ -147,28 +169,6 @@
             <text class="credit-name">{{ p.name }}</text>
           </view>
         </scroll-view>
-      </view>
-    </view>
-
-    <!-- 观影历史 -->
-    <view v-if="watchRecords.length > 0" class="history-section">
-      <text class="section-title">观影记录（共 {{ watchRecords.length }} 次）</text>
-      <view
-        v-for="(record, index) in reversedWatchRecords"
-        :key="record.id"
-        class="history-item"
-      >
-        <view class="history-header">
-          <view class="history-meta">
-            <text class="history-index">{{ watchRecords.length - index }}</text>
-            <text v-if="index === 0" class="history-latest-tag">最新</text>
-            <text class="history-date">{{ record.date }}</text>
-          </view>
-          <view v-if="record.rating" class="history-rating">
-            <text v-for="s in record.rating" :key="s">⭐</text>
-          </view>
-        </view>
-        <text v-if="record.review" class="history-review">{{ record.review }}</text>
       </view>
     </view>
 
