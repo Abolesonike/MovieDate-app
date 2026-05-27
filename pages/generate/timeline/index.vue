@@ -79,6 +79,7 @@
                   <view class="entry-info">
                     <view class="entry-meta">
                       <text class="entry-status">看过</text>
+                      <text v-if="movie.watchCount > 1" class="entry-rewatch">x{{ movie.watchCount }}</text>
                       <text v-if="movie.userRating" class="entry-stars">{{ '⭐'.repeat(movie.userRating) }}</text>
                     </view>
                     <text class="entry-title">{{ movie.title }}({{ movie.year }})</text>
@@ -202,7 +203,8 @@ export default {
               ...details,
               userRating: item.timeline?.watched?.rating,
               userReview: item.timeline?.watched?.review,
-              watchedDate: item.timeline?.watched?.date
+              watchedDate: item.timeline?.watched?.date,
+              watchCount: item.watchCount || 1
             }
           } catch (error) {
             console.error(`[TimelinePoster] 获取电影详情失败: ${item.movieId}`, error)
@@ -564,6 +566,15 @@ export default {
 
 .entry-stars {
   font-size: 22rpx;
+}
+
+.entry-rewatch {
+  font-size: 20rpx;
+  color: #fff;
+  background: #ff6b6b;
+  padding: 2rpx 10rpx;
+  border-radius: 10rpx;
+  margin-left: 4rpx;
 }
 
 .entry-title {

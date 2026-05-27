@@ -312,6 +312,23 @@ export function generateTimelinePosterImage({
                 ctx.fillText(movie.title[0], px + POSTER_W / 2, py + POSTER_H / 2 + 6)
               }
             }
+
+            // 重刷次数角标
+            if (movie.watchCount > 1) {
+              const badgeH = 22
+              const badgePadding = 6
+              ctx.setFontSize(14)
+              const badgeText = `x${movie.watchCount}`
+              const textWidth = ctx.measureText ? ctx.measureText(badgeText).width : 18
+              const badgeW = textWidth + badgePadding * 2
+              const bx = px + POSTER_W - badgeW
+              const by = py
+              ctx.setFillStyle('#ff6b6b')
+              ctx.fillRect(bx, by, badgeW, badgeH)
+              ctx.setFillStyle('#ffffff')
+              ctx.setTextAlign('center')
+              ctx.fillText(badgeText, bx + badgeW / 2, by + badgeH / 2 + 5)
+            }
           })
 
           const posterRows = Math.ceil(monthGroup.movies.length / POSTERS_PER_ROW)
