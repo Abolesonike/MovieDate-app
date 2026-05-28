@@ -1,6 +1,6 @@
 <template>
   <view class="movie-detail-page">
-    <!-- 电影头部信息 -->
+    <!-- 媒体头部信息 -->
     <view class="movie-header">
       <image :src="movie.poster" class="header-poster" mode="aspectFill" />
       <view class="header-info">
@@ -11,6 +11,7 @@
             {{ movie.rating }}
           </text>
           <text class="header-year">{{ movie.year }}</text>
+          <text v-if="movie.numberOfSeasons" class="header-seasons">{{ movie.numberOfSeasons }}季</text>
           <text class="header-genre">{{ movie.genre }}</text>
         </view>
       </view>
@@ -24,9 +25,9 @@
       </view>
     </view>
 
-        <!-- 观影历史 -->
+    <!-- 观看历史 -->
     <view v-if="watchRecords.length > 0" class="history-section">
-      <text class="section-title">观影记录（共 {{ watchRecords.length }} 次）</text>
+      <text class="section-title">{{ mediaType === 'tv' ? '追剧' : '观影' }}记录（共 {{ watchRecords.length }} 次）</text>
       <view
         v-for="(record, index) in reversedWatchRecords"
         :key="record.id"
@@ -69,7 +70,7 @@
         @click="markAsWatched"
       >
         <text class="btn-icon">{{ movieCurrentStatus === 'watched' ? '↻' : '○' }}</text>
-        {{ movieCurrentStatus === 'watched' ? '重刷' : '标记已看' }}
+        {{ movieCurrentStatus === 'watched' ? (mediaType === 'tv' ? '重看' : '重刷') : (mediaType === 'tv' ? '标记追完' : '标记已看') }}
       </button>
     </view>
 
@@ -78,8 +79,8 @@
       <view class="rating-row">
         <text class="label">我的评分：</text>
         <view class="rating-stars">
-          <text 
-            v-for="star in 5" 
+          <text
+            v-for="star in 5"
             :key="star"
             class="star"
             :class="{ 'star-active': star <= userRating }"
@@ -93,14 +94,14 @@
       <textarea
         v-model="userReview"
         class="review-textarea"
-        placeholder="写下你的观影感受..."
+        :placeholder="mediaType === 'tv' ? '写下你的追剧感受...' : '写下你的观影感受...'"
         :maxlength="200"
         @blur="saveReview"
       />
       <text class="word-count">{{ userReview.length }}/200</text>
     </view>
 
-    <!-- 电影简介 -->
+    <!-- 剧情简介 -->
     <view class="summary-section">
       <text class="section-title">剧情简介</text>
       <text class="summary-text">{{ movie.summary || '暂无简介' }}</text>
@@ -110,9 +111,9 @@
     <view class="credits-section" v-if="hasCredits">
       <text class="section-title">演职人员</text>
 
-      <!-- 导演 -->
+      <!-- 导演/主创 -->
       <view v-if="credits.directors.length" class="credit-group">
-        <text class="credit-label">导演</text>
+        <text class="credit-label">{{ mediaType === 'tv' ? '主创' : '导演' }}</text>
         <scroll-view scroll-x class="credit-scroll">
           <view
             v-for="p in credits.directors"
@@ -176,7 +177,7 @@
     <view v-if="showCalendarPicker" class="calendar-mask" @click="showCalendarPicker = false">
       <view class="calendar-popup" @click.stop>
         <view class="calendar-header">
-          <text class="calendar-title">{{ calendarPickerMode === 'watched' ? (movieCurrentStatus === 'watched' ? '记录重刷' : '选择观看日期') : '选择日期' }}</text>
+          <text class="calendar-title">{{ calendarPickerMode === 'watched' ? (movieCurrentStatus === 'watched' ? (mediaType === 'tv' ? '记录重看' : '记录重刷') : (mediaType === 'tv' ? '选择追完日期' : '选择观看日期')) : '选择日期' }}</text>
           <text class="calendar-close" @click="showCalendarPicker = false">✕</text>
         </view>
         <picker mode="date" :value="selectedDate" :start="calendarPickerMode === 'planned' ? minDateStr : undefined" :end="calendarPickerMode === 'watched' ? maxDateStr : undefined" @change="onDateChange">
@@ -206,7 +207,7 @@
           <textarea
             v-model="rewatchReview"
             class="review-textarea"
-            placeholder="写下本次观影感受..."
+            :placeholder="mediaType === 'tv' ? '写下本次重看感受...' : '写下本次观影感受...'"
             :maxlength="200"
           />
           <text class="word-count">{{ rewatchReview.length }}/200</text>
@@ -225,6 +226,7 @@ import storage, { MOVIE_STATUS } from '@/utils/storage.js'
 export default {
   data() {
     return {
+      mediaType: 'movie', // 'movie' | 'tv'
       movie: {
         id: '',
         title: '',
@@ -232,7 +234,8 @@ export default {
         rating: 0,
         year: '',
         genre: '',
-        summary: ''
+        summary: '',
+        numberOfSeasons: 0
       },
       credits: {
         cast: [],
@@ -267,7 +270,8 @@ export default {
     }
   },
   onLoad(options) {
-    // 从路由参数获取 movieId
+    // 从路由参数获取 mediaType 和 movieId
+    this.mediaType = options.type === 'tv' ? 'tv' : 'movie'
     let movieId = null
 
     if (options.movieId) {
@@ -277,14 +281,14 @@ export default {
         const data = JSON.parse(decodeURIComponent(options.movieData))
         movieId = data.movieId || data.id
       } catch (e) {
-        console.error('解析电影数据失败', e)
+        console.error('解析媒体数据失败', e)
       }
     }
 
     if (movieId) {
-      // 始终从 TMDB API 获取完整电影信息
+      // 始终从 TMDB API 获取完整媒体信息
       this.loadMovieDetail(movieId)
-      // 加载电影状态（评分、评价等）
+      // 加载媒体状态（评分、评价等）
       this.loadMovieStatus(movieId)
     }
 
@@ -302,10 +306,18 @@ export default {
   methods: {
     async loadMovieDetail(movieId) {
       try {
-        const [result, credits] = await Promise.all([
-          tmdbApi.getMovieDetails(movieId),
-          tmdbApi.getMovieCredits(movieId)
-        ])
+        let result, credits
+        if (this.mediaType === 'tv') {
+          ;[result, credits] = await Promise.all([
+            tmdbApi.getTVDetails(movieId),
+            tmdbApi.getTVCredits(movieId)
+          ])
+        } else {
+          ;[result, credits] = await Promise.all([
+            tmdbApi.getMovieDetails(movieId),
+            tmdbApi.getMovieCredits(movieId)
+          ])
+        }
         this.movie = {
           id: result.id,
           title: result.title,
@@ -313,20 +325,22 @@ export default {
           rating: result.rating,
           year: result.year,
           genre: result.genre,
-          summary: result.summary
+          summary: result.summary,
+          numberOfSeasons: result.numberOfSeasons || 0
         }
         this.credits = credits
       } catch (err) {
-        uni.showToast({ title: '加载电影详情失败', icon: 'none' })
+        uni.showToast({ title: this.mediaType === 'tv' ? '加载剧集详情失败' : '加载电影详情失败', icon: 'none' })
         console.error(err)
       }
     },
 
     loadMovieStatus(movieId) {
-      const statusData = storage.getMovieStatus(movieId)
+      const compositeId = this.mediaType === 'tv' ? `tv_${movieId}` : `movie_${movieId}`
+      const statusData = storage.getMovieStatus(compositeId)
       this.movieCurrentStatus = statusData.status
       // 从 watched 数组中读取所有观影记录
-      this.watchRecords = storage.getWatchedRecords(movieId) || []
+      this.watchRecords = storage.getWatchedRecords(compositeId) || []
       const latest = this.watchRecords[this.watchRecords.length - 1] || {}
       this.userRating = latest.rating || 0
       this.userReview = latest.review || ''
@@ -334,7 +348,7 @@ export default {
 
     _checkMovieLoaded() {
       if (!this.movie.id) {
-        uni.showToast({ title: '电影信息未加载完成', icon: 'none' })
+        uni.showToast({ title: this.mediaType === 'tv' ? '剧集信息未加载完成' : '电影信息未加载完成', icon: 'none' })
         return false
       }
       return true
@@ -342,13 +356,13 @@ export default {
 
     toggleWantToWatch() {
       if (!this._checkMovieLoaded()) return
-      const movieId = this.movie.id
+      const compositeId = this.mediaType === 'tv' ? `tv_${this.movie.id}` : `movie_${this.movie.id}`
       if (this.movieCurrentStatus === MOVIE_STATUS.WANT_TO_WATCH) {
-        storage.removeMovieStatus(movieId)
+        storage.removeMovieStatus(compositeId)
         this.movieCurrentStatus = MOVIE_STATUS.UNWATCHED
         uni.showToast({ title: '已取消', icon: 'success' })
       } else {
-        storage.markAsWant(movieId)
+        storage.markAsWant(compositeId)
         this.movieCurrentStatus = MOVIE_STATUS.WANT_TO_WATCH
         uni.showToast({ title: '已添加想看', icon: 'success' })
       }
@@ -374,8 +388,9 @@ export default {
       }
 
       const dateStr = this.selectedDate
+      const compositeId = this.mediaType === 'tv' ? `tv_${this.movie.id}` : `movie_${this.movie.id}`
       const result = storage.addCalendarEvent(dateStr, {
-        movieId: this.movie.id,
+        movieId: compositeId,
         title: this.movie.title,
         poster: this.movie.poster,
         rating: this.movie.rating
@@ -421,13 +436,14 @@ export default {
     onWatchedDateConfirm() {
       if (!this._checkMovieLoaded()) return
       if (!this.selectedDate) {
-        uni.showToast({ title: '请选择观看日期', icon: 'none' })
+        uni.showToast({ title: this.mediaType === 'tv' ? '请选择追完日期' : '请选择观看日期', icon: 'none' })
         return
       }
 
       const isRewatch = this.movieCurrentStatus === MOVIE_STATUS.WATCHED
+      const compositeId = this.mediaType === 'tv' ? `tv_${this.movie.id}` : `movie_${this.movie.id}`
 
-      const result = storage.markAsWatched(this.movie.id, {
+      const result = storage.markAsWatched(compositeId, {
         rating: isRewatch ? (this.rewatchRating || undefined) : (this.userRating || undefined),
         review: isRewatch ? (this.rewatchReview || undefined) : (this.userReview || undefined),
         date: this.selectedDate
@@ -452,14 +468,16 @@ export default {
       if (!this._checkMovieLoaded()) return
       this.userRating = value
       if (this.movieCurrentStatus === MOVIE_STATUS.WATCHED) {
-        storage.updateWatchedReview(this.movie.id, { rating: value })
+        const compositeId = this.mediaType === 'tv' ? `tv_${this.movie.id}` : `movie_${this.movie.id}`
+        storage.updateWatchedReview(compositeId, { rating: value })
       }
     },
 
     saveReview() {
       if (!this._checkMovieLoaded()) return
       if (this.movieCurrentStatus === MOVIE_STATUS.WATCHED) {
-        storage.updateWatchedReview(this.movie.id, { review: this.userReview })
+        const compositeId = this.mediaType === 'tv' ? `tv_${this.movie.id}` : `movie_${this.movie.id}`
+        storage.updateWatchedReview(compositeId, { review: this.userReview })
       }
     },
 
@@ -568,6 +586,12 @@ export default {
 .header-genre {
   color: var(--text-tertiary);
   font-size: 13px;
+}
+
+.header-seasons {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* 状态区域 */

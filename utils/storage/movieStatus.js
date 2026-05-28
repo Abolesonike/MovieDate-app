@@ -93,7 +93,7 @@ export function getWantList() {
   const all = getAllMovieStatus()
   return Object.entries(all)
     .filter(([_, data]) => data.status === MOVIE_STATUS.WANT_TO_WATCH)
-    .map(([id, data]) => ({ movieId: parseInt(id), ...data }))
+    .map(([id, data]) => ({ movieId: id, ...data }))
     .sort((a, b) => (b.timeline?.want?.timestamp || 0) - (a.timeline?.want?.timestamp || 0))
 }
 
@@ -105,7 +105,7 @@ export function getWatchedList() {
       const records = Array.isArray(data.timeline?.watched) ? data.timeline.watched : []
       const latest = records[records.length - 1] || {}
       return {
-        movieId: parseInt(id),
+        movieId: id,
         status: data.status,
         updatedAt: data.updatedAt,
         timeline: {
@@ -121,7 +121,7 @@ export function getPlannedList() {
   const all = getAllMovieStatus()
   return Object.entries(all)
     .filter(([_, data]) => data.status === MOVIE_STATUS.PLANNED)
-    .map(([id, data]) => ({ movieId: parseInt(id), ...data }))
+    .map(([id, data]) => ({ movieId: id, ...data }))
     .sort((a, b) => (b.timeline?.planned?.timestamp || 0) - (a.timeline?.planned?.timestamp || 0))
 }
 

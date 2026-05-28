@@ -3,8 +3,8 @@
  * 文档: https://developers.themoviedb.org/3
  */
 
-// 类型 ID 到中文名称的映射
-const GENRE_MAP = {
+// 电影类型 ID 到中文名称的映射
+const MOVIE_GENRE_MAP = {
   28: '动作',
   12: '冒险',
   16: '动画',
@@ -26,8 +26,31 @@ const GENRE_MAP = {
   37: '西部'
 }
 
-// 中文名称到类型 ID 的映射（用于搜索）
-const GENRE_ID_MAP = {
+// 剧集类型 ID 到中文名称的映射
+const TV_GENRE_MAP = {
+  10759: '动作冒险',
+  16: '动画',
+  35: '喜剧',
+  80: '犯罪',
+  99: '纪录',
+  18: '剧情',
+  10751: '家庭',
+  10762: '儿童',
+  9648: '悬疑',
+  10763: '新闻',
+  10764: '真人秀',
+  10765: '科幻奇幻',
+  10766: '肥皂剧',
+  10767: '脱口秀',
+  10768: '战争政治',
+  37: '西部'
+}
+
+// 合并类型映射（用于详情页展示）
+const GENRE_MAP = { ...MOVIE_GENRE_MAP, ...TV_GENRE_MAP }
+
+// 电影中文名称到类型 ID 的映射（用于搜索）
+const MOVIE_GENRE_ID_MAP = {
   '动作': 28,
   '冒险': 12,
   '动画': 16,
@@ -48,6 +71,29 @@ const GENRE_ID_MAP = {
   '战争': 10752,
   '西部': 37
 }
+
+// 剧集中文名称到类型 ID 的映射（用于搜索）
+const TV_GENRE_ID_MAP = {
+  '动作冒险': 10759,
+  '动画': 16,
+  '喜剧': 35,
+  '犯罪': 80,
+  '纪录': 99,
+  '剧情': 18,
+  '家庭': 10751,
+  '儿童': 10762,
+  '悬疑': 9648,
+  '新闻': 10763,
+  '真人秀': 10764,
+  '科幻奇幻': 10765,
+  '肥皂剧': 10766,
+  '脱口秀': 10767,
+  '战争政治': 10768,
+  '西部': 37
+}
+
+// 合并类型 ID 映射
+const GENRE_ID_MAP = { ...MOVIE_GENRE_ID_MAP, ...TV_GENRE_ID_MAP }
 
 class TMDBApi {
   constructor() {
@@ -341,6 +387,38 @@ class TMDBApi {
   }
 
   /**
+   * 获取热门剧集
+   * @param {number} page - 页码
+   * @returns {Promise<object>}
+   */
+  async getPopularTV(page = 1) {
+    console.log('[TMDB] 获取热门剧集:', { page, timestamp: new Date().toISOString() })
+
+    try {
+      const data = await this.request('/tv/popular', { page })
+      const result = {
+        movies: this.transformTVs(data.results),
+        page: data.page,
+        totalPages: data.total_pages,
+        totalResults: data.total_results
+      }
+
+      console.log('[TMDB] 获取热门剧集成功:', {
+        page: result.page,
+        totalPages: result.totalPages,
+        totalResults: result.totalResults,
+        movieCount: result.movies.length,
+        timestamp: new Date().toISOString()
+      })
+
+      return result
+    } catch (error) {
+      console.error('[TMDB] 获取热门剧集失败:', error)
+      throw error
+    }
+  }
+
+  /**
    * 获取高分电影（Top Rated）
    * @param {number} page - 页码
    * @returns {Promise<object>}
@@ -349,6 +427,21 @@ class TMDBApi {
     const data = await this.request('/movie/top_rated', { page })
     return {
       movies: this.transformMovies(data.results),
+      page: data.page,
+      totalPages: data.total_pages,
+      totalResults: data.total_results
+    }
+  }
+
+  /**
+   * 获取高分剧集（Top Rated）
+   * @param {number} page - 页码
+   * @returns {Promise<object>}
+   */
+  async getTopRatedTV(page = 1) {
+    const data = await this.request('/tv/top_rated', { page })
+    return {
+      movies: this.transformTVs(data.results),
       page: data.page,
       totalPages: data.total_pages,
       totalResults: data.total_results
@@ -458,6 +551,52 @@ class TMDBApi {
   }
 
   /**
+   * 搜索剧集
+   * @param {string} query - 搜索关键词
+   * @param {number} page - 页码
+   * @returns {Promise<object>}
+   */
+  async searchTV(query, page = 1) {
+    const trimmedQuery = query && query.trim()
+    console.log('[TMDB] 搜索剧集:', {
+      query: trimmedQuery,
+      originalQuery: query,
+      page,
+      hasQuery: !!trimmedQuery,
+      timestamp: new Date().toISOString()
+    })
+
+    if (!trimmedQuery) {
+      console.log('[TMDB] 搜索关键词为空，返回空结果')
+      return { movies: [], page: 1, totalPages: 0, totalResults: 0 }
+    }
+
+    try {
+      const data = await this.request('/search/tv', { query: trimmedQuery, page })
+      const result = {
+        movies: this.transformTVs(data.results),
+        page: data.page,
+        totalPages: data.total_pages,
+        totalResults: data.total_results
+      }
+
+      console.log('[TMDB] 搜索剧集成功:', {
+        query: trimmedQuery,
+        page: result.page,
+        totalPages: result.totalPages,
+        totalResults: result.totalResults,
+        movieCount: result.movies.length,
+        timestamp: new Date().toISOString()
+      })
+
+      return result
+    } catch (error) {
+      console.error('[TMDB] 搜索剧集失败:', error)
+      throw error
+    }
+  }
+
+  /**
    * 按类型发现电影
    * @param {number} genreId - 类型 ID
    * @param {number} page - 页码
@@ -471,6 +610,26 @@ class TMDBApi {
     })
     return {
       movies: this.transformMovies(data.results),
+      page: data.page,
+      totalPages: data.total_pages,
+      totalResults: data.total_results
+    }
+  }
+
+  /**
+   * 按类型发现剧集
+   * @param {number} genreId - 类型 ID
+   * @param {number} page - 页码
+   * @returns {Promise<object>}
+   */
+  async discoverTVByGenre(genreId, page = 1) {
+    const data = await this.request('/discover/tv', {
+      with_genres: genreId,
+      page,
+      sort_by: 'popularity.desc'
+    })
+    return {
+      movies: this.transformTVs(data.results),
       page: data.page,
       totalPages: data.total_pages,
       totalResults: data.total_results
@@ -506,6 +665,39 @@ class TMDBApi {
       return result
     } catch (error) {
       console.error('[TMDB] 获取电影详情失败:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 获取剧集详情
+   * @param {number} tvId - 剧集 ID
+   * @returns {Promise<object>}
+   */
+  async getTVDetails(tvId) {
+    console.log('[TMDB] 获取剧集详情:', {
+      tvId,
+      timestamp: new Date().toISOString()
+    })
+
+    try {
+      const data = await this.request(`/tv/${tvId}`, { append_to_response: 'credits' })
+      const result = this.transformTV(data)
+
+      console.log('[TMDB] 获取剧集详情成功:', {
+        tvId: result.id,
+        title: result.title,
+        hasPoster: !!result.poster,
+        rating: result.rating,
+        year: result.year,
+        genres: result.genre,
+        summaryLength: result.summary.length,
+        timestamp: new Date().toISOString()
+      })
+
+      return result
+    } catch (error) {
+      console.error('[TMDB] 获取剧集详情失败:', error)
       throw error
     }
   }
@@ -576,6 +768,35 @@ class TMDBApi {
   }
 
   /**
+   * 获取剧集演职人员
+   * @param {number} tvId - 剧集 ID
+   * @returns {Promise<object>}
+   */
+  async getTVCredits(tvId) {
+    const data = await this.request(`/tv/${tvId}/credits`)
+    return {
+      cast: (data.cast || []).slice(0, 12).map(p => ({
+        id: p.id,
+        name: p.name,
+        role: p.character,
+        profile: p.profile_path ? `${this.IMAGE_BASE_URL}${p.profile_path}` : ''
+      })),
+      directors: (data.crew || []).filter(p => p.job === 'Director' || p.job === 'Executive Producer').slice(0, 5).map(p => ({
+        id: p.id,
+        name: p.name,
+        role: p.job === 'Director' ? '导演' : '执行制片',
+        profile: p.profile_path ? `${this.IMAGE_BASE_URL}${p.profile_path}` : ''
+      })),
+      writers: (data.crew || []).filter(p => ['Writer', 'Screenplay', 'Story'].includes(p.job)).map(p => ({
+        id: p.id,
+        name: p.name,
+        role: p.job === 'Screenplay' ? '编剧' : (p.job === 'Story' ? '故事' : '编剧'),
+        profile: p.profile_path ? `${this.IMAGE_BASE_URL}${p.profile_path}` : ''
+      }))
+    }
+  }
+
+  /**
    * 获取电影人详情
    * @param {number} personId - 电影人 ID
    * @returns {Promise<object>}
@@ -612,8 +833,8 @@ class TMDBApi {
         name: p.name,
         profile: p.profile_path ? `${this.IMAGE_BASE_URL}${p.profile_path}` : '',
         knownFor: p.known_for_department || '',
-        knownForMovies: (p.known_for || [])
-          .filter(k => k.media_type === 'movie')
+        knownForMedia: (p.known_for || [])
+          .filter(k => k.media_type === 'movie' || k.media_type === 'tv')
           .map(k => k.title || k.name)
           .filter(Boolean)
           .slice(0, 3)
@@ -625,7 +846,7 @@ class TMDBApi {
   }
 
   /**
-   * 获取电影人作品
+   * 获取电影人作品（电影）
    * @param {number} personId - 电影人 ID
    * @returns {Promise<object>}
    */
@@ -639,6 +860,28 @@ class TMDBApi {
       return Array.from(map.values())
         .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
         .map(m => this.transformMovie(m))
+    }
+    return {
+      cast: transformAndSort(data.cast || []),
+      crew: transformAndSort(data.crew || [])
+    }
+  }
+
+  /**
+   * 获取电影人作品（剧集）
+   * @param {number} personId - 电影人 ID
+   * @returns {Promise<object>}
+   */
+  async getPersonTVCredits(personId) {
+    const data = await this.request(`/person/${personId}/tv_credits`)
+    const transformAndSort = (list) => {
+      const map = new Map()
+      list.forEach(m => {
+        if (!map.has(m.id)) map.set(m.id, m)
+      })
+      return Array.from(map.values())
+        .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+        .map(m => this.transformTV(m))
     }
     return {
       cast: transformAndSort(data.cast || []),
@@ -670,6 +913,7 @@ class TMDBApi {
 
     const result = {
       id: tmdbMovie.id,
+      mediaType: 'movie',
       title: tmdbMovie.title,
       originalTitle: tmdbMovie.original_title || tmdbMovie.title,
       poster: tmdbMovie.poster_path
@@ -690,6 +934,54 @@ class TMDBApi {
   }
 
   /**
+   * 转换单个剧集数据
+   * @param {object} tmdbTV - TMDB 剧集对象
+   * @returns {object}
+   */
+  transformTV(tmdbTV) {
+    if (!tmdbTV) {
+      console.error('[TMDB] transformTV: 输入为空')
+      return null
+    }
+
+    // 从 credits 中提取主创（当通过 append_to_response=credits 获取时）
+    let director = ''
+    if (tmdbTV.created_by && tmdbTV.created_by.length > 0) {
+      director = tmdbTV.created_by.map(d => d.name).join(' / ')
+    } else if (tmdbTV.credits && tmdbTV.credits.crew) {
+      const creators = tmdbTV.credits.crew.filter(p => p.job === 'Executive Producer')
+      if (creators.length > 0) {
+        director = creators.map(c => c.name).join(' / ')
+      }
+    }
+
+    const result = {
+      id: tmdbTV.id,
+      mediaType: 'tv',
+      title: tmdbTV.name,
+      originalTitle: tmdbTV.original_name || tmdbTV.name,
+      poster: tmdbTV.poster_path
+        ? `${this.IMAGE_BASE_URL}${tmdbTV.poster_path}`
+        : '',
+      rating: tmdbTV.vote_average
+        ? tmdbTV.vote_average.toFixed(1)
+        : '0.0',
+      year: tmdbTV.first_air_date
+        ? tmdbTV.first_air_date.split('-')[0]
+        : '',
+      genre: this.getGenreNames(tmdbTV.genre_ids || (tmdbTV.genres ? tmdbTV.genres.map(g => g.id) : [])),
+      summary: tmdbTV.overview || '',
+      director,
+      numberOfSeasons: tmdbTV.number_of_seasons || 0,
+      episodeRunTime: tmdbTV.episode_run_time && tmdbTV.episode_run_time.length > 0
+        ? tmdbTV.episode_run_time[0]
+        : 0
+    }
+
+    return result
+  }
+
+  /**
    * 转换电影列表
    * @param {array} tmdbMovies - TMDB 电影数组
    * @returns {array}
@@ -697,6 +989,29 @@ class TMDBApi {
   transformMovies(tmdbMovies) {
     if (!Array.isArray(tmdbMovies)) return []
     return tmdbMovies.map(movie => this.transformMovie(movie))
+  }
+
+  /**
+   * 转换剧集列表
+   * @param {array} tmdbTVs - TMDB 剧集数组
+   * @returns {array}
+   */
+  transformTVs(tmdbTVs) {
+    if (!Array.isArray(tmdbTVs)) return []
+    return tmdbTVs.map(tv => this.transformTV(tv))
+  }
+
+  /**
+   * 通用媒体转换
+   * @param {object} tmdbItem - TMDB 媒体对象
+   * @param {string} mediaType - 媒体类型 'movie' | 'tv'
+   * @returns {object}
+   */
+  transformMedia(tmdbItem, mediaType) {
+    if (mediaType === 'tv') {
+      return this.transformTV(tmdbItem)
+    }
+    return this.transformMovie(tmdbItem)
   }
 
   /**

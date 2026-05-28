@@ -272,9 +272,15 @@ export default {
           return
         }
 
-        // 异步获取每部电影详情
+        // 异步获取每部媒体详情（支持复合 ID）
         const details = await Promise.all(
-          movieIds.map(id => tmdbApi.getMovieDetails(id).catch(() => null))
+          movieIds.map(id => {
+            const isTV = String(id).startsWith('tv_')
+            const rawId = String(id).replace(/^(movie_|tv_)/, '')
+            return isTV
+              ? tmdbApi.getTVDetails(rawId).catch(() => null)
+              : tmdbApi.getMovieDetails(rawId).catch(() => null)
+          })
         )
 
         this.movies = details.filter(Boolean)
@@ -304,6 +310,11 @@ export default {
           this.persons = result.persons || []
           this.page = result.page || 1
           this.hasMore = result.page < result.totalPages
+        } else if (this.pickType === 'tv') {
+          const result = await tmdbApi.searchTV(query, 1)
+          this.movies = result.movies || []
+          this.page = result.page || 1
+          this.hasMore = result.page < result.totalPages
         } else {
           const result = await tmdbApi.searchMovies(query, 1)
           this.movies = result.movies || []
@@ -331,6 +342,11 @@ export default {
         if (this.activeTab === 'personSearch') {
           const result = await tmdbApi.searchPerson(query, nextPage)
           this.persons = [...this.persons, ...(result.persons || [])]
+          this.page = result.page || nextPage
+          this.hasMore = result.page < result.totalPages
+        } else if (this.pickType === 'tv') {
+          const result = await tmdbApi.searchTV(query, nextPage)
+          this.movies = [...this.movies, ...(result.movies || [])]
           this.page = result.page || nextPage
           this.hasMore = result.page < result.totalPages
         } else {
@@ -371,7 +387,7 @@ export default {
               knownFor: item.knownFor
             }
           : {
-              type: 'movie',
+              type: this.pickType === 'tv' ? 'tv' : 'movie',
               id: item.id,
               title: item.title,
               poster: item.poster,
@@ -412,10 +428,12 @@ export default {
           uni.showToast({ title: '缺少日期参数', icon: 'none' })
           return
         }
-        result = storage.addCalendarEvent(this.dateKey, { movieId: itemId })
+        const compositeId = this.pickType === 'tv' ? `tv_${itemId}` : `movie_${itemId}`
+        result = storage.addCalendarEvent(this.dateKey, { movieId: compositeId })
         successMsg = '已添加到日历'
       } else if (this.source === 'personal-top10') {
-        result = storage.addToPersonalTop10(itemId)
+        const compositeId = this.pickType === 'tv' ? `tv_${itemId}` : `movie_${itemId}`
+        result = storage.addToPersonalTop10(compositeId)
         successMsg = '添加成功'
       } else {
         uni.showToast({ title: '未知来源', icon: 'none' })

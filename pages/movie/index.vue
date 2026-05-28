@@ -12,21 +12,37 @@
 
     <!-- 主内容 -->
     <view v-else class="tabs-container">
+      <!-- 媒体类型切换 -->
+      <view class="media-type-bar">
+        <view
+          :class="['media-type-item', mediaType === 'movie' ? 'media-type-active' : '']"
+          @click="switchMediaType('movie')"
+        >
+          电影
+        </view>
+        <view
+          :class="['media-type-item', mediaType === 'tv' ? 'media-type-active' : '']"
+          @click="switchMediaType('tv')"
+        >
+          剧集
+        </view>
+      </view>
+
       <!-- Tab 头部 -->
       <view class="tab-header">
-        <view 
+        <view
           :class="['tab-item', activeTab === 'hot' ? 'tab-active' : '']"
           @click="activeTab = 'hot'; onTabChange('hot')"
         >
-          热门电影
+          {{ mediaType === 'tv' ? '热门剧集' : '热门电影' }}
         </view>
-        <view 
+        <view
           :class="['tab-item', activeTab === 'find' ? 'tab-active' : '']"
           @click="activeTab = 'find'; onTabChange('find')"
         >
-          找电影
+          {{ mediaType === 'tv' ? '找剧集' : '找电影' }}
         </view>
-        <view 
+        <view
           :class="['tab-item', activeTab === 'top250' ? 'tab-active' : '']"
           @click="activeTab = 'top250'; onTabChange('top250')"
         >
@@ -36,7 +52,7 @@
 
       <!-- Tab 内容区域 -->
       <scroll-view scroll-y class="tab-content-scroll">
-        <!-- 热门电影 Tab -->
+        <!-- 热门 Tab -->
         <view v-if="activeTab === 'hot'" class="tab-content">
           <!-- 加载状态 -->
           <view v-if="loading.hot" class="loading-wrapper">
@@ -46,7 +62,7 @@
           <view v-else-if="error.hot" class="error-wrapper">
             <view class="empty-state">
               <text class="empty-text">加载失败</text>
-              <button class="retry-btn" @click="fetchPopularMovies">重试</button>
+              <button class="retry-btn" @click="fetchPopular">重试</button>
             </view>
           </view>
           <!-- 空状态 -->
@@ -55,7 +71,7 @@
               <text class="empty-text">暂无数据</text>
             </view>
           </view>
-          <!-- 电影列表 -->
+          <!-- 列表 -->
           <view v-else class="movie-list">
             <movie-card-horizontal
               v-for="(movie, index) in hotMovies"
@@ -72,7 +88,7 @@
           </view>
         </view>
 
-        <!-- 找电影 Tab -->
+        <!-- 找电影/剧集 Tab -->
         <view v-if="activeTab === 'find'" class="tab-content">
           <!-- 搜索框 -->
           <view class="search-box">
@@ -80,7 +96,7 @@
               <input
                 v-model="searchValue"
                 class="search-input"
-                placeholder="搜索电影名称"
+                :placeholder="mediaType === 'tv' ? '搜索剧集名称' : '搜索电影名称'"
                 @confirm="onSearch"
               />
               <text v-if="searchValue" class="clear-icon" @click="onClearSearch">✕</text>
@@ -92,7 +108,7 @@
             <view class="filter-title">类型筛选</view>
             <view class="filter-tags">
               <view
-                v-for="(type, index) in movieTypes"
+                v-for="(type, index) in currentTypes"
                 :key="index"
                 :class="['filter-tag', selectedType === type ? 'filter-tag-active' : '']"
                 @click="selectType(type)"
@@ -110,22 +126,22 @@
           <view v-else-if="error.find" class="error-wrapper">
             <view class="empty-state">
               <text class="empty-text">搜索失败</text>
-              <button class="retry-btn" @click="searchMovies">重试</button>
+              <button class="retry-btn" @click="searchMedia">重试</button>
             </view>
           </view>
           <!-- 空状态 -->
           <view v-else-if="findMovies.length === 0 && hasSearched" class="empty-wrapper">
             <view class="empty-state">
-              <text class="empty-text">未找到相关电影</text>
+              <text class="empty-text">未找到相关{{ mediaType === 'tv' ? '剧集' : '电影' }}</text>
             </view>
           </view>
           <!-- 初始提示 -->
           <view v-else-if="findMovies.length === 0 && !hasSearched" class="empty-wrapper">
             <view class="empty-state">
-              <text class="empty-text">输入关键词搜索电影</text>
+              <text class="empty-text">输入关键词搜索{{ mediaType === 'tv' ? '剧集' : '电影' }}</text>
             </view>
           </view>
-          <!-- 电影列表 -->
+          <!-- 列表 -->
           <view v-else class="movie-list">
             <movie-card-horizontal
               v-for="(movie, index) in findMovies"
@@ -142,9 +158,9 @@
           <view class="top250-header">
             <view class="ranking-title">
               <text class="medal-icon">🏅</text>
-              <text>高分电影榜单</text>
+              <text>高分{{ mediaType === 'tv' ? '剧集' : '电影' }}榜单</text>
             </view>
-            <text class="ranking-desc">来自 TMDB 的经典高分电影</text>
+            <text class="ranking-desc">来自 TMDB 的经典高分{{ mediaType === 'tv' ? '剧集' : '电影' }}</text>
           </view>
 
           <!-- 加载状态 -->
@@ -155,7 +171,7 @@
           <view v-else-if="error.top250" class="error-wrapper">
             <view class="empty-state">
               <text class="empty-text">加载失败</text>
-              <button class="retry-btn" @click="fetchTopRatedMovies">重试</button>
+              <button class="retry-btn" @click="fetchTopRated">重试</button>
             </view>
           </view>
           <!-- 空状态 -->
@@ -215,17 +231,19 @@ export default {
     return {
       activeTab: 'hot',
       hasApiKey: false,
+      mediaType: 'movie', // 'movie' | 'tv'
 
       // 搜索相关
       searchValue: '',
       selectedType: '全部',
       movieTypes: ['全部', '动作', '喜剧', '爱情', '科幻', '悬疑', '恐怖', '剧情'],
+      tvTypes: ['全部', '动作冒险', '动画', '喜剧', '犯罪', '纪录', '剧情', '悬疑', '科幻奇幻', '真人秀'],
       hasSearched: false,
 
       // 导航防抖
       navigating: false,
 
-      // 电影数据
+      // 数据
       hotMovies: [],
       findMovies: [],
       top250Movies: [],
@@ -257,6 +275,11 @@ export default {
       }
     }
   },
+  computed: {
+    currentTypes() {
+      return this.mediaType === 'tv' ? this.tvTypes : this.movieTypes
+    }
+  },
   onLoad() {
     this.checkApiKey()
   },
@@ -272,8 +295,8 @@ export default {
 
       // 如果 API Key 状态变化，重新加载数据
       if (this.hasApiKey && !hadApiKey) {
-        this.fetchPopularMovies()
-        this.fetchTopRatedMovies()
+        this.fetchPopular()
+        this.fetchTopRated()
       }
     },
 
@@ -282,24 +305,44 @@ export default {
       uni.switchTab({ url: '/pages/me/index' })
     },
 
-    // Tab 切换
-    onTabChange(name) {
-      if (name === 'hot' && this.hotMovies.length === 0) {
-        this.fetchPopularMovies()
-      } else if (name === 'top250' && this.top250Movies.length === 0) {
-        this.fetchTopRatedMovies()
+    // 切换媒体类型
+    switchMediaType(type) {
+      if (this.mediaType === type) return
+      this.mediaType = type
+      this.selectedType = '全部'
+      this.searchValue = ''
+      this.findMovies = []
+      this.hasSearched = false
+      // 清空当前 Tab 数据并重新加载
+      if (this.activeTab === 'hot') {
+        this.hotMovies = []
+        this.fetchPopular()
+      } else if (this.activeTab === 'top250') {
+        this.top250Movies = []
+        this.fetchTopRated()
       }
     },
 
-    // ========== 热门电影 ==========
+    // Tab 切换
+    onTabChange(name) {
+      if (name === 'hot' && this.hotMovies.length === 0) {
+        this.fetchPopular()
+      } else if (name === 'top250' && this.top250Movies.length === 0) {
+        this.fetchTopRated()
+      }
+    },
 
-    async fetchPopularMovies() {
+    // ========== 热门 ==========
+
+    async fetchPopular() {
       this.loading.hot = true
       this.error.hot = null
       this.currentPage.hot = 1
 
       try {
-        const result = await tmdbApi.getPopularMovies(1)
+        const result = this.mediaType === 'tv'
+          ? await tmdbApi.getPopularTV(1)
+          : await tmdbApi.getPopularMovies(1)
         this.hotMovies = result.movies
         this.hasMore.hot = result.page < result.totalPages
       } catch (err) {
@@ -316,7 +359,9 @@ export default {
       this.currentPage.hot++
 
       try {
-        const result = await tmdbApi.getPopularMovies(this.currentPage.hot)
+        const result = this.mediaType === 'tv'
+          ? await tmdbApi.getPopularTV(this.currentPage.hot)
+          : await tmdbApi.getPopularMovies(this.currentPage.hot)
         this.hotMovies = [...this.hotMovies, ...result.movies]
         this.hasMore.hot = result.page < result.totalPages
       } catch (err) {
@@ -327,9 +372,9 @@ export default {
       }
     },
 
-    // ========== 搜索电影 ==========
+    // ========== 搜索 ==========
 
-    async searchMovies() {
+    async searchMedia() {
       const query = this.searchValue.trim()
       const genreId = tmdbApi.getGenreId(this.selectedType)
 
@@ -341,7 +386,9 @@ export default {
         let result
         if (query) {
           // 关键词搜索
-          result = await tmdbApi.searchMovies(query)
+          result = this.mediaType === 'tv'
+            ? await tmdbApi.searchTV(query)
+            : await tmdbApi.searchMovies(query)
           // 如果选择了类型，再进行客户端过滤
           if (genreId && result.movies.length > 0) {
             const genreName = this.selectedType
@@ -349,7 +396,9 @@ export default {
           }
         } else if (genreId) {
           // 仅按类型筛选
-          result = await tmdbApi.discoverByGenre(genreId)
+          result = this.mediaType === 'tv'
+            ? await tmdbApi.discoverTVByGenre(genreId)
+            : await tmdbApi.discoverByGenre(genreId)
         } else {
           // 无搜索条件
           result = { movies: [] }
@@ -365,12 +414,12 @@ export default {
     selectType(type) {
       this.selectedType = type
       if (this.searchValue.trim() || type !== '全部') {
-        this.searchMovies()
+        this.searchMedia()
       }
     },
 
     onSearch() {
-      this.searchMovies()
+      this.searchMedia()
     },
 
     onClearSearch() {
@@ -381,13 +430,15 @@ export default {
 
     // ========== Top250 ==========
 
-    async fetchTopRatedMovies() {
+    async fetchTopRated() {
       this.loading.top250 = true
       this.error.top250 = null
       this.currentPage.top250 = 1
 
       try {
-        const result = await tmdbApi.getTopRatedMovies(1)
+        const result = this.mediaType === 'tv'
+          ? await tmdbApi.getTopRatedTV(1)
+          : await tmdbApi.getTopRatedMovies(1)
         this.top250Movies = result.movies
         this.hasMore.top250 = result.page < result.totalPages
       } catch (err) {
@@ -404,7 +455,9 @@ export default {
       this.currentPage.top250++
 
       try {
-        const result = await tmdbApi.getTopRatedMovies(this.currentPage.top250)
+        const result = this.mediaType === 'tv'
+          ? await tmdbApi.getTopRatedTV(this.currentPage.top250)
+          : await tmdbApi.getTopRatedMovies(this.currentPage.top250)
         this.top250Movies = [...this.top250Movies, ...result.movies]
         this.hasMore.top250 = result.page < result.totalPages
       } catch (err) {
@@ -421,7 +474,7 @@ export default {
       if (this.navigating) return
       this.navigating = true
       uni.navigateTo({
-        url: `/pages/movie/detail/index?movieId=${movie.id}`,
+        url: `/pages/movie/detail/index?movieId=${movie.id}&type=${movie.mediaType || 'movie'}`,
         complete: () => {
           this.navigating = false
         }
@@ -430,7 +483,8 @@ export default {
 
     // 获取带状态的电影数据（用于电影卡片显示状态标签）
     getMovieWithStatus(movie) {
-      const statusData = storage.getMovieStatus(movie.id)
+      const compositeId = movie.mediaType === 'tv' ? `tv_${movie.id}` : `movie_${movie.id}`
+      const statusData = storage.getMovieStatus(compositeId)
       return {
         ...movie,
         status: statusData.status || MOVIE_STATUS.UNWATCHED
@@ -487,6 +541,32 @@ export default {
   height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* 媒体类型切换 */
+.media-type-bar {
+  display: flex;
+  background: var(--bg-card);
+  padding: 8px 16px;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.media-type-item {
+  flex: 1;
+  text-align: center;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  border-radius: 16px;
+  background: var(--bg-page);
+  transition: all 0.3s;
+}
+
+.media-type-active {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 500;
 }
 
 .tab-header {

@@ -18,12 +18,40 @@ export function generateId() {
 }
 
 /**
- * 验证电影 ID 有效性
+ * 验证媒体 ID 有效性
+ * 支持复合 ID 格式: movie_123, tv_123
+ * 向后兼容纯数字格式: 123
  */
 export function validateMovieId(movieId) {
-  if (!movieId || Number.isNaN(Number(movieId))) {
-    throw new Error(`无效的电影ID: ${movieId}`)
+  if (!movieId) {
+    throw new Error(`无效的媒体ID: ${movieId}`)
   }
+  // 支持复合 ID 格式 movie_123 或 tv_123
+  if (typeof movieId === 'string' && (movieId.startsWith('movie_') || movieId.startsWith('tv_'))) {
+    const numericPart = movieId.split('_')[1]
+    if (!Number.isNaN(Number(numericPart))) {
+      return
+    }
+  }
+  // 向后兼容纯数字
+  if (!Number.isNaN(Number(movieId))) {
+    return
+  }
+  throw new Error(`无效的媒体ID: ${movieId}`)
+}
+
+/**
+ * 从复合 ID 中提取媒体类型和原始 ID
+ * @param {string|number} movieId - 媒体 ID
+ * @returns {{mediaType: string, id: string}}
+ */
+export function parseMediaId(movieId) {
+  if (typeof movieId === 'string' && movieId.includes('_')) {
+    const [mediaType, id] = movieId.split('_')
+    return { mediaType, id }
+  }
+  // 向后兼容：纯数字默认为电影
+  return { mediaType: 'movie', id: String(movieId) }
 }
 
 /**

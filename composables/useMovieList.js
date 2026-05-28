@@ -4,10 +4,10 @@ import tmdbApi from '@/utils/tmdb.js'
 const PAGE_SIZE = 10
 
 /**
- * 电影列表分页加载 Composable
+ * 媒体列表分页加载 Composable
  * @param {Object} options
  * @param {() => Array} options.fetchList - 获取原始列表数据的函数
- * @param {(item: any) => Object} [options.mapItem] - 将原始数据映射为电影详情补充字段
+ * @param {(item: any) => Object} [options.mapItem] - 将原始数据映射为媒体详情补充字段
  */
 export function useMovieList(options) {
   const { fetchList, mapItem = () => ({}) } = options
@@ -54,13 +54,17 @@ export function useMovieList(options) {
 
     const moviePromises = pageData.map(async (item) => {
       try {
-        const movieDetails = await tmdbApi.getMovieDetails(item.movieId)
+        const mediaType = item.mediaType || (String(item.movieId).startsWith('tv_') ? 'tv' : 'movie')
+        const rawId = String(item.movieId).replace(/^(movie_|tv_)/, '')
+        const movieDetails = mediaType === 'tv'
+          ? await tmdbApi.getTVDetails(rawId)
+          : await tmdbApi.getMovieDetails(rawId)
         return {
           ...movieDetails,
           ...mapItem(item)
         }
       } catch (error) {
-        console.error(`获取电影 ${item.movieId} 详情失败:`, error)
+        console.error(`获取媒体 ${item.movieId} 详情失败:`, error)
         return null
       }
     })
@@ -94,8 +98,9 @@ export function useMovieList(options) {
   }
 
   function goToDetail(movie) {
+    const type = movie.mediaType || 'movie'
     uni.navigateTo({
-      url: `/pages/movie/detail/index?movieId=${movie.id}`
+      url: `/pages/movie/detail/index?movieId=${movie.id}&type=${type}`
     })
   }
 

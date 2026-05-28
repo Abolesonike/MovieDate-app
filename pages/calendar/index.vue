@@ -464,8 +464,10 @@ async function removeEvent(event) {
 }
 
 function goToMovieDetail(movie) {
+  const isTV = movie.mediaType === 'tv'
+  const id = isTV ? movie.movieId.replace('tv_', '') : movie.movieId
   uni.navigateTo({
-    url: `/pages/movie/detail/index?movieId=${movie.movieId}`
+    url: `/pages/movie/detail/index?movieId=${id}&type=${isTV ? 'tv' : 'movie'}`
   })
 }
 
@@ -475,17 +477,21 @@ async function enrichMoviesWithDetails(events) {
   return Promise.all(
     events.map(async (event) => {
       try {
-        const movieDetail = await tmdbApi.getMovieDetails(event.movieId)
+        const isTV = String(event.movieId).startsWith('tv_')
+        const detail = isTV
+          ? await tmdbApi.getTVDetails(event.movieId.replace('tv_', ''))
+          : await tmdbApi.getMovieDetails(event.movieId)
         return {
           ...event,
-          id: movieDetail.id,
-          movieId: movieDetail.id,
-          title: movieDetail.title,
-          poster: movieDetail.poster,
-          rating: movieDetail.rating,
-          year: movieDetail.year,
-          genre: movieDetail.genre,
-          summary: movieDetail.summary
+          id: detail.id,
+          movieId: isTV ? `tv_${detail.id}` : detail.id,
+          title: detail.title,
+          poster: detail.poster,
+          rating: detail.rating,
+          year: detail.year,
+          genre: detail.genre,
+          summary: detail.summary,
+          mediaType: detail.mediaType
         }
       } catch (err) {
         console.error('获取电影详情失败:', event.movieId, err)
